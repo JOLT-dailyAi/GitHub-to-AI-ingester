@@ -328,7 +328,7 @@ body {
     display: block;
 }
 
-/* Showcase Section */
+/* Showcase Section - Carousel Style */
 .showcase {
     margin-top: 3rem;
     padding: 2rem 0;
@@ -354,20 +354,31 @@ body {
     color: #e6edf3;
 }
 
-.showcase-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    gap: 1.5rem;
-    max-width: 1400px;
+.showcase-carousel {
+    position: relative;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 0 2rem;
+    overflow: hidden;
+    border-radius: 12px;
+    background-color: #161b22;
+    border: 1px solid #30363d;
+}
+
+.carousel-container {
+    display: flex;
+    transition: transform 0.3s ease;
 }
 
 .showcase-item {
+    min-width: 100%;
+    width: auto;
+    height: 600px;
     background-color: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 8px;
+    border: none;
+    border-radius: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .showcase-header {
@@ -377,6 +388,7 @@ body {
     padding: 1rem;
     background-color: #21262d;
     border-bottom: 1px solid #30363d;
+    flex-shrink: 0;
 }
 
 .showcase-header h3 {
@@ -401,7 +413,7 @@ body {
 
 .showcase-item textarea {
     width: 100%;
-    height: 300px;
+    flex: 1;
     padding: 1rem;
     background-color: #0d1117;
     color: #e6edf3;
@@ -409,7 +421,66 @@ body {
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
     font-size: 0.8rem;
     line-height: 1.4;
-    resize: vertical;
+    resize: none;
+    overflow-y: auto;
+}
+
+/* Carousel Navigation */
+.carousel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(33, 38, 45, 0.8);
+    border: 1px solid #30363d;
+    color: #e6edf3;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+}
+
+.carousel-nav:hover {
+    background-color: rgba(33, 38, 45, 0.9);
+    border-color: #1f6feb;
+}
+
+.carousel-prev {
+    left: 10px;
+}
+
+.carousel-next {
+    right: 10px;
+}
+
+/* Carousel Dots */
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.carousel-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #30363d;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.carousel-dot.active {
+    background-color: #1f6feb;
+}
+
+.carousel-dot:hover {
+    background-color: #58a6ff;
 }
 
 /* Modals */
@@ -492,11 +563,66 @@ button:focus, input:focus, textarea:focus {
 }
 
 /* Mobile Responsive Design */
-@media (max-width: 1024px) {
+/* Better Landscape Mobile Support */
+@media (max-width: 1024px) and (orientation: landscape) {
+    .container {
+        grid-template-columns: 180px 1fr 180px;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .container > * {
+        min-height: 350px;
+    }
+    
+    .form-container {
+        min-height: 350px;
+        padding: 1.5rem;
+    }
+    
+    .sidebar-left, .sidebar-right {
+        min-height: 350px;
+        padding: 1rem;
+    }
+    
+    .reviews {
+        max-height: 180px;
+    }
+}
+
+@media (max-width: 1024px) and (orientation: portrait) {
     .container {
         grid-template-columns: 200px 1fr 200px;
         gap: 1.5rem;
         padding: 1.5rem;
+    }
+}
+
+/* Tablet Landscape Fixes */
+@media (max-width: 1024px) and (min-width: 769px) and (orientation: landscape) {
+    .header {
+        padding: 1rem 0;
+    }
+    
+    .header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .subtitle {
+        font-size: 1rem;
+    }
+    
+    .pricing-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .pricing-card h3 {
+        font-size: 1rem;
+    }
+    
+    .pricing-card .price {
+        font-size: 1.3rem;
     }
 }
 
@@ -546,13 +672,12 @@ button:focus, input:focus, textarea:focus {
     }
     
     /* Showcase adjustments */
-    .showcase-grid {
-        grid-template-columns: 1fr;
-        padding: 0 1rem;
+    .showcase-carousel {
+        height: 400px;
     }
     
-    .showcase-item textarea {
-        height: 200px;
+    .showcase-item {
+        height: 400px;
     }
     
     .search-container input {
