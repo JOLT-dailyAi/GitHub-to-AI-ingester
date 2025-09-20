@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub to AI Ingester</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="header">
+        <h1>GitHub to AI Ingester</h1>
+    </header>
+
+    <!-- Main Content Container -->
+    <div class="container">
+        <!-- Right Sidebar - Pricing & Options -->
+        <aside class="sidebar-right">
+            <div class="pricing-card">
+                <h3>Free Trial</h3>
+                <p>Try once for free</p>
+                <button class="btn-secondary" id="freeTrial">Try Free</button>
+            </div>
+            
+            <div class="pricing-card">
+                <h3>Single Analysis</h3>
+                <p>$3 per repository</p>
+                <button class="btn-secondary" id="singlePurchase">Buy Single</button>
+            </div>
+            
+            <div class="pricing-card highlight">
+                <h3>Multi-Pack Credits</h3>
+                <p>10 credits: $5</p>
+                <p>30 credits: $10</p>
+                <a href="https://joltdailyai.gumroad.com/l/github-to-ai-ingester" class="btn-primary">Buy Credits</a>
+            </div>
+        </aside>
+
+        <!-- Main Form Section -->
+        <main class="main-form">
+            <div class="form-container">
+                <h2>Repository Analysis</h2>
+                <form id="analysisForm">
+                    <div class="form-group">
+                        <label for="licenseKey">License Key</label>
+                        <input type="text" id="licenseKey" name="licenseKey" placeholder="Enter your license key" required>
+                        <div class="license-info" id="licenseInfo"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="repoUrl">GitHub Repository URL</label>
+                        <input type="url" id="repoUrl" name="repoUrl" placeholder="https://github.com/username/repository" required>
+                        <div class="url-validation" id="urlValidation"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" id="submitBtn" disabled>
+                        Analyze Repository
+                    </button>
+                </form>
+                
+                <div class="status-message" id="statusMessage"></div>
+            </div>
+        </main>
+
+        <!-- Left Sidebar - Reviews -->
+        <aside class="sidebar-left">
+            <div class="review-section">
+                <h3>Leave a Review</h3>
+                <textarea placeholder="Share your experience..." rows="3"></textarea>
+                <button class="btn-secondary">Submit Review</button>
+                
+                <div class="reviews">
+                    <h4>Recent Reviews</h4>
+                    <div class="review">
+                        <p>"Perfect for AI code analysis. Saved hours of manual work."</p>
+                        <small>- Developer</small>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Showcase Section -->
+    <section class="showcase">
+        <h2>Sample Analyses</h2>
+        <div class="search-container">
+            <input type="text" id="showcaseSearch" placeholder="🔍 Search analyses...">
+        </div>
+        
+        <div class="showcase-grid" id="showcaseGrid">
+            <!-- Showcase items will be loaded here -->
+            <div class="showcase-item">
+                <div class="showcase-header">
+                    <h3>sample-repository.txt</h3>
+                    <button class="copy-btn" onclick="copyToClipboard('showcase1')">📋</button>
+                </div>
+                <textarea id="showcase1" readonly>Loading sample analysis...</textarea>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal for Free Trial -->
+    <div id="freeTrialModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Free Trial</h2>
+            <form id="freeTrialForm">
+                <div class="form-group">
+                    <label for="trialEmail">Email Address</label>
+                    <input type="email" id="trialEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="discordId">Discord Username (Optional)</label>
+                    <input type="text" id="discordId" placeholder="username#1234">
+                </div>
+                <button type="submit" class="btn-primary">Start Free Trial</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Single Purchase Info -->
+    <div id="singlePurchaseModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Single Purchase</h2>
+            <p>Already purchased single analysis? Check your email for repository submission instructions or visit our Discord support channel with your order number.</p>
+            <div class="modal-actions">
+                <a href="https://discord.gg/ADnN97tDVz" class="btn-primary" target="_blank">Discord Support</a>
+                <a href="https://joltdailyai.gumroad.com/l/github-to-ai-ingester" class="btn-secondary" target="_blank">Buy Single Analysis</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
