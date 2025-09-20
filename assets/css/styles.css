@@ -28,15 +28,7 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 0 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-.header-text {
-    flex: 1;
+    text-align: center;
 }
 
 .header h1 {
@@ -50,38 +42,6 @@ body {
     font-size: clamp(0.9rem, 2.5vw, 1.1rem);
     color: #7d8590;
     font-weight: 400;
-}
-
-/* Social Icons in Header */
-.social-icons {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-.social-icon-link {
-    display: inline-block;
-    transition: transform 0.2s ease, opacity 0.2s ease;
-}
-
-.social-icon-link:hover {
-    transform: scale(1.1);
-    opacity: 0.8;
-}
-
-.social-icon {
-    width: 70px;
-    height: 70px;
-    object-fit: contain;
-    border-radius: 8px;
-    border: 2px solid #30363d;
-    padding: 8px;
-    background-color: #0d1117;
-    transition: border-color 0.2s ease;
-}
-
-.social-icon:hover {
-    border-color: #1f6feb;
 }
 
 /* Main Container - Equal Height Layout */
@@ -538,11 +498,6 @@ button:focus, input:focus, textarea:focus {
         gap: 1.5rem;
         padding: 1.5rem;
     }
-    
-    .social-icon {
-        width: 60px;
-        height: 60px;
-    }
 }
 
 @media (max-width: 768px) {
@@ -556,44 +511,38 @@ button:focus, input:focus, textarea:focus {
     
     .main-form {
         order: 1; /* Form goes first on mobile */
+        width: 100%;
     }
     
     .sidebar-left {
         order: 2;
+        width: 100%;
     }
     
     .sidebar-right {
         order: 3;
+        width: 100%;
     }
     
     /* Equal height not needed on mobile */
     .container > * {
         min-height: auto;
+        width: 100%;
     }
     
     .form-container {
         min-height: auto;
+        width: 100%;
     }
     
     .sidebar-left, .sidebar-right {
         min-height: auto;
+        width: 100%;
     }
     
     /* Header adjustments */
     .header-content {
-        flex-direction: column;
-        text-align: center;
-        gap: 1.5rem;
         padding: 0 1rem;
-    }
-    
-    .social-icons {
-        justify-content: center;
-    }
-    
-    .social-icon {
-        width: 50px;
-        height: 50px;
     }
     
     /* Showcase adjustments */
@@ -623,11 +572,6 @@ button:focus, input:focus, textarea:focus {
     
     .subtitle {
         font-size: 1rem;
-    }
-    
-    .social-icon {
-        width: 45px;
-        height: 45px;
     }
     
     .pricing-card, .form-container, .review-section {
