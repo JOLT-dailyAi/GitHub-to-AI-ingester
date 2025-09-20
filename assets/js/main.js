@@ -8,6 +8,13 @@ const CONFIG = {
     LICENSE_VALIDATION_ENDPOINT: 'https://api.yourdomain.com/webhook/validate-license'
 };
 
+// In-memory storage for session data (replacing localStorage)
+const sessionData = {
+    licenseKey: '',
+    userEmail: '',
+    discordId: ''
+};
+
 // DOM Elements
 const licenseKeyInput = document.getElementById('licenseKey');
 const repoUrlInput = document.getElementById('repoUrl');
@@ -19,15 +26,12 @@ const analysisForm = document.getElementById('analysisForm');
 
 // Modal elements
 const freeTrialModal = document.getElementById('freeTrialModal');
-const singlePurchaseModal = document.getElementById('singlePurchaseModal');
 const freeTrialBtn = document.getElementById('freeTrial');
-const singlePurchaseBtn = document.getElementById('singlePurchase');
 const closeBtns = document.querySelectorAll('.close');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
-    loadCachedLicenseKey();
     loadShowcaseFiles();
 });
 
@@ -40,8 +44,9 @@ function initializeEventListeners() {
     analysisForm.addEventListener('submit', handleFormSubmission);
     
     // Modal controls
-    freeTrialBtn.addEventListener('click', () => openModal(freeTrialModal));
-    singlePurchaseBtn.addEventListener('click', () => openModal(singlePurchaseModal));
+    if (freeTrialBtn) {
+        freeTrialBtn.addEventListener('click', () => openModal(freeTrialModal));
+    }
     
     closeBtns.forEach(btn => {
         btn.addEventListener('click', closeModals);
@@ -54,10 +59,22 @@ function initializeEventListeners() {
     });
     
     // Free trial form
-    document.getElementById('freeTrialForm').addEventListener('submit', handleFreeTrialSubmission);
+    const freeTrialForm = document.getElementById('freeTrialForm');
+    if (freeTrialForm) {
+        freeTrialForm.addEventListener('submit', handleFreeTrialSubmission);
+    }
     
     // Showcase search
-    document.getElementById('showcaseSearch').addEventListener('input', debounce(searchShowcase, 300));
+    const showcaseSearch = document.getElementById('showcaseSearch');
+    if (showcaseSearch) {
+        showcaseSearch.addEventListener('input', debounce(searchShowcase, 300));
+    }
+
+    // Submit review button
+    const submitReviewBtn = document.getElementById('submitReview');
+    if (submitReviewBtn) {
+        submitReviewBtn.addEventListener('click', handleReviewSubmission);
+    }
 }
 
 // License Key Validation
@@ -72,7 +89,7 @@ async function validateLicenseKey() {
     // Check for free trial key
     if (licenseKey === generateFreeLicenseKey()) {
         updateLicenseInfo('Free trial license - 1 analysis available', 'valid');
-        cacheLicenseKey(licenseKey);
+        sessionData.licenseKey = licenseKey;
         checkFormValidity();
         return;
     }
@@ -101,7 +118,7 @@ async function validateLicenseKey() {
             if (data.success && data.uses < data.max_uses) {
                 const remaining = data.max_uses - data.uses;
                 updateLicenseInfo(`Valid license - ${remaining} analyses remaining`, 'valid');
-                cacheLicenseKey(licenseKey);
+                sessionData.licenseKey = licenseKey;
             } else {
                 updateLicenseInfo('License key expired or invalid', 'invalid');
             }
@@ -181,6 +198,8 @@ async function handleFormSubmission(e) {
             body: JSON.stringify({
                 license_key: licenseKey,
                 repository_url: repoUrl,
+                user_email: sessionData.userEmail || '',
+                discord_id: sessionData.discordId || '',
                 timestamp: new Date().toISOString()
             })
         });
@@ -217,16 +236,36 @@ function handleFreeTrialSubmission(e) {
     const discordId = document.getElementById('discordId').value;
     const freeKey = generateFreeLicenseKey();
     
+    // Store user info in session
+    sessionData.userEmail = email;
+    sessionData.discordId = discordId;
+    sessionData.licenseKey = freeKey;
+    
     // Auto-populate main form
     licenseKeyInput.value = freeKey;
     licenseKeyInput.disabled = true;
     
     // Show success and close modal
-    alert(`Free trial activated! License key: ${freeKey}`);
+    showStatusMessage('Free trial activated! You can now analyze one repository for free.', 'success');
     closeModals();
     
     // Validate the pre-filled license
     validateLicenseKey();
+}
+
+// Review Submission Handler
+function handleReviewSubmission() {
+    const reviewText = document.getElementById('reviewText').value.trim();
+    
+    if (!reviewText) {
+        alert('Please write a review before submitting.');
+        return;
+    }
+    
+    // Here you would typically send the review to your backend
+    // For now, just show a success message
+    alert('Thank you for your review! It will be displayed after moderation.');
+    document.getElementById('reviewText').value = '';
 }
 
 // Utility Functions
@@ -234,11 +273,12 @@ function generateFreeLicenseKey() {
     const today = new Date();
     const day = today.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
     const year = today.getFullYear();
-    return `FREETRIAL${day}${year}`;
+    const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
+    return `FREETRIAL${day}${year}${randomSuffix}`;
 }
 
 function isValidLicenseFormat(key) {
-    // Basic validation - adjust based on Gumroad's actual format
+    // Basic validation - adjust based on your actual format
     return key.length >= 8 && /^[A-Z0-9-]+$/i.test(key);
 }
 
@@ -285,37 +325,38 @@ function setFormLoading(loading) {
     analysisForm.classList.toggle('loading', loading);
 }
 
-function cacheLicenseKey(key) {
-    localStorage.setItem('github_ai_license', key);
-}
-
-function loadCachedLicenseKey() {
-    const cached = localStorage.getItem('github_ai_license');
-    if (cached) {
-        licenseKeyInput.value = cached;
-        validateLicenseKey();
+// Modal Functions
+function openModal(modal) {
+    if (modal) {
+        modal.style.display = 'block';
     }
 }
 
-// Modal Functions
-function openModal(modal) {
-    modal.style.display = 'block';
-}
-
 function closeModals() {
-    freeTrialModal.style.display = 'none';
-    singlePurchaseModal.style.display = 'none';
+    if (freeTrialModal) {
+        freeTrialModal.style.display = 'none';
+    }
 }
 
 // Showcase Functions
 async function loadShowcaseFiles() {
-    // This would load files from your data/showcase directory
-    // For now, showing placeholder
-    const showcaseGrid = document.getElementById('showcaseGrid');
-    
-    // You'll need to implement this based on your actual file structure
-    // This is just a placeholder for the structure
-    console.log('Showcase files would be loaded here');
+    try {
+        // Load VibeDrips showcase file
+        const vibeDripsResponse = await fetch('data/showcase/VibeDrips.txt');
+        if (vibeDripsResponse.ok) {
+            const vibeDripsContent = await vibeDripsResponse.text();
+            document.getElementById('showcase1').value = vibeDripsContent;
+        }
+        
+        // You can add more showcase files here
+        // For the GitHub-to-AI-ingester showcase, you might generate it dynamically
+        // or have a pre-created file
+        
+    } catch (error) {
+        console.error('Error loading showcase files:', error);
+        document.getElementById('showcase1').value = 'Error loading showcase content.';
+        document.getElementById('showcase2').value = 'Error loading showcase content.';
+    }
 }
 
 function searchShowcase() {
@@ -332,16 +373,27 @@ function searchShowcase() {
 
 function copyToClipboard(textareaId) {
     const textarea = document.getElementById(textareaId);
-    textarea.select();
-    document.execCommand('copy');
-    
-    // Visual feedback
-    const copyBtn = textarea.parentElement.querySelector('.copy-btn');
-    const originalText = copyBtn.textContent;
-    copyBtn.textContent = 'Copied!';
-    setTimeout(() => {
-        copyBtn.textContent = originalText;
-    }, 2000);
+    if (textarea) {
+        textarea.select();
+        textarea.setSelectionRange(0, 99999); // For mobile devices
+        
+        try {
+            document.execCommand('copy');
+            
+            // Visual feedback
+            const copyBtn = textarea.parentElement.querySelector('.copy-btn');
+            if (copyBtn) {
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            }
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            alert('Failed to copy to clipboard. Please select the text manually.');
+        }
+    }
 }
 
 // Debounce function to limit API calls
@@ -352,4 +404,39 @@ function debounce(func, wait) {
             clearTimeout(timeout);
             func(...args);
         };
-        clearTimeout(
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Escape key closes modals
+    if (e.key === 'Escape') {
+        closeModals();
+    }
+    
+    // Ctrl/Cmd + Enter submits form
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !submitBtn.disabled) {
+        handleFormSubmission(e);
+    }
+});
+
+// Error handling for uncaught errors
+window.addEventListener('error', function(e) {
+    console.error('Global error:', e.error);
+    showStatusMessage('An unexpected error occurred. Please refresh the page and try again.', 'error');
+});
+
+// Service worker registration (if you have one)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+                console.log('SW registered: ', registration);
+            })
+            .catch(function(registrationError) {
+                console.log('SW registration failed: ', registrationError);
+            });
+    });
+}
