@@ -232,8 +232,14 @@ async function handleFormSubmission(e) {
 function handleFreeTrialSubmission(e) {
     e.preventDefault();
     
-    const email = document.getElementById('trialEmail').value;
-    const discordId = document.getElementById('discordId').value;
+    const email = document.getElementById('trialEmail').value.trim();
+    const discordId = document.getElementById('discordId').value.trim();
+    
+    if (!email) {
+        alert('Please enter your email address.');
+        return;
+    }
+    
     const freeKey = generateFreeLicenseKey();
     
     // Store user info in session
@@ -243,17 +249,15 @@ function handleFreeTrialSubmission(e) {
     
     // Auto-populate main form
     licenseKeyInput.value = freeKey;
-    licenseKeyInput.disabled = true;
     
-    // Show success and close modal
-    showStatusMessage('Free trial activated! You can now analyze one repository for free.', 'success');
+    // Close modal first
     closeModals();
     
+    // Show success message
+    showStatusMessage(`Free trial activated! License key: ${freeKey}`, 'success');
+    
     // Validate the pre-filled license
-    validateLicenseKey();
-}
-
-// Review Submission Handler
+    // Review Submission Handler
 function handleReviewSubmission() {
     const reviewText = document.getElementById('reviewText').value.trim();
     
@@ -329,6 +333,7 @@ function setFormLoading(loading) {
 function openModal(modal) {
     if (modal) {
         modal.style.display = 'block';
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
     }
 }
 
@@ -336,26 +341,61 @@ function closeModals() {
     if (freeTrialModal) {
         freeTrialModal.style.display = 'none';
     }
+    document.body.style.overflow = ''; // Restore scrolling
 }
 
 // Showcase Functions
 async function loadShowcaseFiles() {
     try {
         // Load VibeDrips showcase file
-        const vibeDripsResponse = await fetch('data/showcase/VibeDrips.txt');
+        const vibeDripsUrl = 'https://raw.githubusercontent.com/JOLT-dailyAi/GitHub-to-AI-ingester/main/data/showcase/VibeDrips.txt';
+        const vibeDripsResponse = await fetch(vibeDripsUrl);
         if (vibeDripsResponse.ok) {
             const vibeDripsContent = await vibeDripsResponse.text();
-            document.getElementById('showcase1').value = vibeDripsContent;
+            const showcase1 = document.getElementById('showcase1');
+            if (showcase1) {
+                showcase1.value = vibeDripsContent;
+            }
+        } else {
+            console.error('Failed to load VibeDrips showcase file');
+            const showcase1 = document.getElementById('showcase1');
+            if (showcase1) {
+                showcase1.value = 'Failed to load VibeDrips analysis content.';
+            }
         }
         
-        // You can add more showcase files here
-        // For the GitHub-to-AI-ingester showcase, you might generate it dynamically
-        // or have a pre-created file
+        // For GitHub-to-AI-ingester showcase, create dynamic content or load from file
+        const showcase2 = document.getElementById('showcase2');
+        if (showcase2) {
+            showcase2.value = `Loading GitHub-to-AI-ingester analysis...
+
+This would contain the analysis output for the GitHub-to-AI-ingester repository itself.
+You can replace this with actual content from a file or generate it dynamically.
+
+Example structure:
+════════════════════════════════════════════════════════════════════════════════
+📊 REPOSITORY: GITHUB-TO-AI-INGESTER (👤 JOLT-dailyAi)
+════════════════════════════════════════════════════════════════════════════════
+🌐 Web Application
+🔗 https://github.com/JOLT-dailyAi/GitHub-to-AI-ingester
+
+📊 STATS
+├── 📏 Size: 192.29 KB
+├── 📁 Directories: 6
+├── 📄 Files: 10
+└── 🏗️ Max Depth: 2
+
+💡 TECH STACK:
+Markdown 📖, HTML 🌐, JavaScript ⚡, CSS 🎨
+════════════════════════════════════════════════════════════════════════════════`;
+        }
         
     } catch (error) {
         console.error('Error loading showcase files:', error);
-        document.getElementById('showcase1').value = 'Error loading showcase content.';
-        document.getElementById('showcase2').value = 'Error loading showcase content.';
+        const showcase1 = document.getElementById('showcase1');
+        const showcase2 = document.getElementById('showcase2');
+        if (showcase1) showcase1.value = 'Error loading showcase content.';
+        if (showcase2) showcase2.value = 'Error loading showcase content.';
     }
 }
 
