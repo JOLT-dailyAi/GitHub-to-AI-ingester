@@ -99,22 +99,17 @@
             <input type="text" id="showcaseSearch" placeholder="🔍 Search analyses...">
         </div>
         
-        <div class="showcase-grid" id="showcaseGrid">
-            <div class="showcase-item">
-                <div class="showcase-header">
-                    <h3>VibeDrips</h3>
-                    <button class="copy-btn" onclick="copyToClipboard('showcase1')">📋</button>
-                </div>
-                <textarea id="showcase1" readonly>Loading VibeDrips analysis...</textarea>
+        <div class="showcase-carousel" id="showcaseCarousel">
+            <div class="carousel-container" id="carouselContainer">
+                <!-- Showcase items will be loaded dynamically -->
             </div>
             
-            <div class="showcase-item">
-                <div class="showcase-header">
-                    <h3>GitHub-to-AI-ingester</h3>
-                    <button class="copy-btn" onclick="copyToClipboard('showcase2')">📋</button>
-                </div>
-                <textarea id="showcase2" readonly>Loading GitHub-to-AI-ingester analysis...</textarea>
-            </div>
+            <button class="carousel-nav carousel-prev" id="prevBtn">‹</button>
+            <button class="carousel-nav carousel-next" id="nextBtn">›</button>
+        </div>
+        
+        <div class="carousel-dots" id="carouselDots">
+            <!-- Dots will be generated dynamically -->
         </div>
     </section>
 
