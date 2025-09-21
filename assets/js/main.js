@@ -94,8 +94,21 @@ function initializeEventListeners() {
 function initializeShowcase() {
     showcaseItems = document.querySelectorAll('.showcase-item');
     filteredItems = Array.from(showcaseItems);
++
++    // Auto-resize textareas inside Showcase items
++    const showcaseTextareas = document.querySelectorAll('.showcase-item textarea');
++    showcaseTextareas.forEach((el) => {
++        el.style.height = el.scrollHeight + "px";
++        el.style.overflowY = "hidden";
++        el.addEventListener("input", (e) => {
++            e.target.style.height = "auto";
++            e.target.style.height = e.target.scrollHeight + "px";
++        });
++    });
++
     updateShowcaseDisplay();
 }
+
 
 function updateShowcaseDisplay() {
     // Hide all items
