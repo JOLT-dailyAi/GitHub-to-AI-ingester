@@ -321,6 +321,7 @@ let autocompleteData = [];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing application...');
     initializeEventListeners();
     loadCachedLicenseKey();
     initializeShowcase();
@@ -335,7 +336,9 @@ function initializeEventListeners() {
     analysisForm.addEventListener('submit', handleFormSubmission);
     
     // Modal controls
-    freeTrialBtn.addEventListener('click', () => openModal(freeTrialModal));
+    if (freeTrialBtn) {
+        freeTrialBtn.addEventListener('click', () => openModal(freeTrialModal));
+    }
     
     closeBtns.forEach(btn => {
         btn.addEventListener('click', closeModals);
@@ -348,39 +351,55 @@ function initializeEventListeners() {
     });
     
     // Free trial form
-    document.getElementById('freeTrialForm').addEventListener('submit', handleFreeTrialSubmission);
+    const freeTrialForm = document.getElementById('freeTrialForm');
+    if (freeTrialForm) {
+        freeTrialForm.addEventListener('submit', handleFreeTrialSubmission);
+    }
     
     // Showcase navigation
-    prevBtn.addEventListener('click', showPreviousShowcase);
-    nextBtn.addEventListener('click', showNextShowcase);
+    if (prevBtn && nextBtn) {
+        prevBtn.addEventListener('click', showPreviousShowcase);
+        nextBtn.addEventListener('click', showNextShowcase);
+    }
     
     // Showcase search with autocomplete
-    showcaseSearch.addEventListener('input', debounce(handleSearchInput, 300));
-    showcaseSearch.addEventListener('focus', showAutocomplete);
-    showcaseSearch.addEventListener('blur', () => {
-        // Delay hiding to allow clicks on dropdown items
-        setTimeout(hideAutocomplete, 200);
-    });
-    showcaseSearch.addEventListener('keydown', handleSearchKeydown);
+    if (showcaseSearch) {
+        showcaseSearch.addEventListener('input', debounce(handleSearchInput, 300));
+        showcaseSearch.addEventListener('focus', showAutocomplete);
+        showcaseSearch.addEventListener('blur', () => {
+            setTimeout(hideAutocomplete, 200);
+        });
+        showcaseSearch.addEventListener('keydown', handleSearchKeydown);
+    }
+    
+    console.log('Event listeners initialized');
 }
 
 // Showcase Management
 function initializeShowcase() {
+    console.log('Initializing showcase...');
+    
     showcaseItems = document.querySelectorAll('.showcase-item');
     filteredItems = Array.from(showcaseItems);
     
-    // Initialize autocomplete data
-    autocompleteData = Array.from(showcaseItems).map(item => {
-        const title = item.querySelector('h3').textContent;
-        const content = item.querySelector('textarea').value;
+    console.log(`Found ${showcaseItems.length} showcase items`);
+    
+    // Initialize autocomplete data with empty content first
+    autocompleteData = Array.from(showcaseItems).map((item, index) => {
         return {
-            title: title,
-            keywords: extractKeywords(title + ' ' + content)
+            title: `Loading ${index + 1}...`,
+            keywords: []
         };
     });
     
     updateShowcaseDisplay();
-    loadShowcaseContent();
+    
+    // Load content after DOM is ready
+    setTimeout(() => {
+        loadShowcaseContent();
+    }, 100);
+    
+    console.log('Showcase initialized');
 }
 
 function extractKeywords(text) {
@@ -547,37 +566,89 @@ function handleSearchKeydown(e) {
 
 async function loadShowcaseContent() {
     try {
-        // Load content from the actual JSON file
-        const response = await fetch('/data/showcase/Showcase.json');
-        if (response.ok) {
-            const showcaseData = await response.json();
-            
+        // Try multiple possible paths for the JSON file
+        const possiblePaths = [
+            'data/showcase/Showcase.json',
+            './data/showcase/Showcase.json',
+            '/data/showcase/Showcase.json'
+        ];
+        
+        let showcaseData = null;
+        let loadSuccess = false;
+        
+        for (const path of possiblePaths) {
+            try {
+                const response = await fetch(path);
+                if (response.ok) {
+                    showcaseData = await response.json();
+                    loadSuccess = true;
+                    console.log(`Successfully loaded showcase data from: ${path}`);
+                    break;
+                }
+            } catch (pathError) {
+                console.log(`Failed to load from ${path}:`, pathError.message);
+                continue;
+            }
+        }
+        
+        if (loadSuccess && showcaseData && Array.isArray(showcaseData)) {
             // Load content into textareas
-            const textareas = document.querySelectorAll('.showcase-item textarea');
-            textareas.forEach((textarea, index) => {
-                if (showcaseData[index] && showcaseData[index].content) {
-                    textarea.value = showcaseData[index].content;
-                    // Update the title as well
-                    const titleElement = textarea.closest('.showcase-item').querySelector('h3');
+            const showcaseItems = document.querySelectorAll('.showcase-item');
+            
+            showcaseItems.forEach((item, index) => {
+                if (showcaseData[index]) {
+                    const textarea = item.querySelector('textarea');
+                    const titleElement = item.querySelector('h3');
+                    
+                    if (textarea && showcaseData[index].content) {
+                        textarea.value = showcaseData[index].content;
+                    }
+                    
                     if (titleElement && showcaseData[index].title) {
                         titleElement.textContent = showcaseData[index].title;
                     }
                 }
             });
+            
+            console.log(`Loaded ${showcaseData.length} showcase items`);
         } else {
-            console.warn('Could not load showcase data from JSON file');
+            console.warn('Could not load showcase data from any path, using fallback');
+            loadFallbackContent();
         }
     } catch (error) {
-        console.warn('Error loading showcase data:', error);
+        console.error('Error loading showcase data:', error);
+        loadFallbackContent();
     }
     
     // Reinitialize autocomplete data with loaded content
-    autocompleteData = Array.from(showcaseItems).map(item => {
-        const title = item.querySelector('h3').textContent;
-        const content = item.querySelector('textarea').value;
-        return {
-            title: title,
-            keywords: extractKeywords(title + ' ' + content)
-        };
+    setTimeout(() => {
+        autocompleteData = Array.from(showcaseItems).map(item => {
+            const title = item.querySelector('h3').textContent;
+            const content = item.querySelector('textarea').value;
+            return {
+                title: title,
+                keywords: extractKeywords(title + ' ' + content)
+            };
+        });
+    }, 100);
+}
+
+function loadFallbackContent() {
+    // Fallback: show that no content is available
+    const showcaseItems = document.querySelectorAll('.showcase-item');
+    
+    showcaseItems.forEach((item, index) => {
+        const textarea = item.querySelector('textarea');
+        const titleElement = item.querySelector('h3');
+        
+        if (titleElement) {
+            titleElement.textContent = `Repository ${index + 1}`;
+        }
+        
+        if (textarea) {
+            textarea.value = `No showcase content available.\n\nThis showcase item will display repository analysis once data is loaded from:\n- data/showcase/Showcase.json\n\nPlease ensure the JSON file is accessible from the web server.`;
+        }
     });
+    
+    console.log('Loaded fallback content for showcase');
 }
