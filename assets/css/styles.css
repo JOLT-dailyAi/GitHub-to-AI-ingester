@@ -482,7 +482,6 @@ body {
 .showcase-item textarea {
     width: 100%;
     min-height: 340px; /* Minimum content height */
-    height: auto; /* Auto height to fit content */
     padding: 1rem;
     background-color: #0d1117;
     color: #e6edf3;
@@ -490,12 +489,13 @@ body {
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
     font-size: 0.75rem;
     line-height: 1.4;
-    resize: none; /* Disable resize to maintain consistent dimensions */
+    resize: none; /* Disable manual resize */
     transform: scale(0.85);
     transform-origin: top left;
     width: 117.65%;
-    overflow: hidden; /* Remove scrollbar - content will expand container */
+    overflow: hidden !important; /* Force no scrollbar */
     box-sizing: border-box;
+    /* Remove height: auto - let JavaScript control it */
 }
 
 /* Footer */
