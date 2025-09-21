@@ -498,45 +498,9 @@ body {
     /* Remove height: auto - let JavaScript control it */
 }
 
-/* Footer */
-.footer {
-    background-color: #161b22;
-    border-top: 1px solid #30363d;
-    padding: 2rem 1rem;
-    margin-top: 3rem;
-}
-
-.footer-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    text-align: center;
-}
-
-.footer-links {
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    flex-wrap: wrap;
-}
-
-.footer-links a {
-    color: #1f6feb;
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: color 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.footer-links a:hover {
-    color: #58a6ff;
-    text-decoration: underline;
-}
-
 .social-icon {
-    width: 16px;
-    height: 16px;
+    width: 70px;
+    height: 70px;
     object-fit: contain;
     vertical-align: middle;
 }
