@@ -484,7 +484,7 @@ body {
 
 .showcase-item textarea {
     width: 100%;
-    min-height: 80px; /* Minimal baseline height */
+    min-height: 80px; /* Minimal baseline height - FIXED */
     padding: 1rem;
     background-color: #0d1117;
     color: #e6edf3;
