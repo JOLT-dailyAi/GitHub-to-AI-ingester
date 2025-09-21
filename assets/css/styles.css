@@ -431,6 +431,7 @@ body {
     display: none;
     width: 100%;
     max-width: 1200px;
+    height: 1000px; /* Set fixed height for the entire showcase item */
     margin: 0 auto;
 }
 
