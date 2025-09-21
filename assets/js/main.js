@@ -77,6 +77,7 @@ function initializeEventListeners() {
     // Showcase search
     const showcaseSearch = document.getElementById('showcaseSearch');
     if (showcaseSearch) {
+        showcaseSearch.placeholder = '🔍 Search repositories, owners, tech stacks, or content...';
         showcaseSearch.addEventListener('input', debounce(searchShowcase, 300));
     }
 
