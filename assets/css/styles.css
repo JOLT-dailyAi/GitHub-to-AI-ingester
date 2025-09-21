@@ -256,9 +256,6 @@ body {
 
 .btn-secondary:hover {
     background-color: #30363d;
-    border-color: #1f6feb;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(31, 111, 235, 0.3);
 }
 
 .btn-disabled {
@@ -484,7 +481,7 @@ body {
 
 .showcase-item textarea {
     width: 100%;
-    min-height: 80px; /* Minimal baseline height */
+    min-height: 340px; /* Minimum content height */
     padding: 1rem;
     background-color: #0d1117;
     color: #e6edf3;
@@ -498,7 +495,7 @@ body {
     width: 117.65%;
     overflow: hidden !important; /* Force no scrollbar */
     box-sizing: border-box;
-    /* Height controlled by JavaScript adjustTextareaHeight() */
+    /* Remove height: auto - let JavaScript control it */
 }
 
 .social-icon {
