@@ -417,13 +417,12 @@ body {
     text-align: center;
 }
 
-/* Showcase Container */
+/* Showcase Container - FIXED LAYOUT */
 .showcase-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 2rem;
     position: relative;
-    overflow: hidden;
 }
 
 .showcase-item {
@@ -434,13 +433,13 @@ body {
     display: none;
     width: 100%;
     max-width: 1200px;
-    min-height: 400px; /* Minimum height */
     margin: 0 auto;
-    /* Remove fixed height to allow dynamic sizing */
+    /* Use flexbox for proper content layout */
+    flex-direction: column;
 }
 
 .showcase-item.active {
-    display: block;
+    display: flex; /* Changed from block to flex */
     animation: fadeIn 0.3s ease-in-out;
 }
 
@@ -456,8 +455,8 @@ body {
     padding: 1rem;
     background-color: #21262d;
     border-bottom: 1px solid #30363d;
-    height: 60px; /* Fixed header height */
-    flex-shrink: 0;
+    height: 60px;
+    flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .showcase-header h3 {
@@ -482,23 +481,22 @@ body {
     border-color: #1f6feb;
 }
 
+/* FIXED TEXTAREA STYLES - REMOVED PROBLEMATIC SCALING */
 .showcase-item textarea {
     width: 100%;
-    min-height: 80px; /* Minimal baseline height - FIXED */
     padding: 1rem;
     background-color: #0d1117;
     color: #e6edf3;
     border: none;
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 0.75rem;
+    font-size: 0.8rem; /* Slightly larger than before for better readability */
     line-height: 1.4;
-    resize: none; /* Disable manual resize */
-    transform: scale(0.85);
-    transform-origin: top left;
-    width: 117.65%;
-    overflow: hidden !important; /* Force no scrollbar */
+    resize: vertical; /* Allow manual resize */
     box-sizing: border-box;
-    /* Height controlled by JavaScript adjustTextareaHeight() */
+    flex: 1; /* Take remaining space in flex container */
+    /* Remove all problematic transform and width overrides */
+    min-height: 300px; /* Reasonable minimum height */
+    overflow-y: auto; /* Show scrollbar when needed */
 }
 
 .social-icon {
@@ -597,11 +595,8 @@ body {
     }
     
     .showcase-item textarea {
-        height: 300px;
-        font-size: 0.7rem;
-        transform: scale(0.8);
-        width: 125%;
-        height: 375px;
+        font-size: 0.75rem;
+        min-height: 250px;
     }
 }
 
@@ -627,10 +622,8 @@ body {
     }
     
     .showcase-item textarea {
-        font-size: 0.65rem;
-        transform: scale(0.75);
-        width: 133.33%;
-        height: 400px;
+        font-size: 0.7rem;
+        min-height: 200px;
     }
 }
 
