@@ -9,10 +9,8 @@
 <body>
     <!-- Header Section -->
     <header class="header">
-        <div class="header-content">
-            <h1>GitHub to AI ingester</h1>
-            <p class="subtitle">Public Repository Analysis for Claude, GPT-4 & All AI Models</p>
-        </div>
+        <h1>GitHub to AI ingester</h1>
+        <p class="subtitle">Public Repository Analysis for Claude, GPT-4 & All AI Models</p>
     </header>
 
     <!-- Main Container -->
@@ -92,51 +90,59 @@
         </aside>
     </div>
 
-    <!-- Replace your existing showcase section with this -->
-<section class="showcase">
-    <h2>Showcase</h2>
-    <div class="search-container">
-        <input type="text" id="showcaseSearch" placeholder="🔍 Search repositories, owners, tech stacks, or content...">
-    </div>
-    
-    <!-- Carousel Structure -->
-    <div class="showcase-carousel">
-        <!-- Navigation Buttons -->
-        <div class="carousel-nav">
-            <button id="prevBtn" aria-label="Previous slide">‹</button>
-            <button id="nextBtn" aria-label="Next slide">›</button>
-        </div>
-        
-        <!-- Carousel Container (slides horizontally) -->
-        <div id="carouselContainer" class="showcase-container">
-            <!-- Items will be dynamically loaded here by JavaScript -->
-        </div>
-        
-        <!-- Carousel Dots -->
-        <div id="carouselDots" class="carousel-dots">
-            <!-- Dots will be dynamically created here -->
-        </div>
-    </div>
-    
-    <!-- Fallback: Keep original static showcase for backward compatibility -->
-    <div class="showcase-grid" id="showcaseGrid" style="display: none;">
-        <div class="showcase-item">
-            <div class="showcase-header">
-                <h3>VibeDrips</h3>
-                <button class="copy-btn" onclick="copyToClipboard('showcase1')">📋</button>
+    <!-- Showcase Section -->
+    <section class="showcase">
+        <h2>Showcase</h2>
+        <div class="search-container">
+            <div class="search-wrapper">
+                <input type="text" id="showcaseSearch" placeholder="🔍 Search analyses..." autocomplete="off">
+                <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
             </div>
-            <textarea id="showcase1" readonly>Loading VibeDrips analysis...</textarea>
         </div>
         
-        <div class="showcase-item">
-            <div class="showcase-header">
-                <h3>GitHub-to-AI-ingester</h3>
-                <button class="copy-btn" onclick="copyToClipboard('showcase2')">📋</button>
+        <!-- Navigation Controls -->
+        <div class="showcase-navigation">
+            <button class="nav-btn" id="prevBtn">
+                <span class="nav-arrow">←</span>
+                <span class="nav-text">Previous</span>
+            </button>
+            
+            <div class="showcase-counter">
+                <span id="currentIndex">1</span> / <span id="totalItems">0</span>
             </div>
-            <textarea id="showcase2" readonly>Loading GitHub-to-AI-ingester analysis...</textarea>
+            
+            <button class="nav-btn" id="nextBtn">
+                <span class="nav-text">Next</span>
+                <span class="nav-arrow">→</span>
+            </button>
         </div>
-    </div>
-</section>
+        
+        <div class="showcase-container">
+            <div class="showcase-item active" id="showcase-item-0">
+                <div class="showcase-header">
+                    <h3>Sample Project 1</h3>
+                    <button class="copy-btn" onclick="copyToClipboard('showcase1')">📋</button>
+                </div>
+                <textarea id="showcase1" readonly>Loading sample analysis...</textarea>
+            </div>
+            
+            <div class="showcase-item" id="showcase-item-1">
+                <div class="showcase-header">
+                    <h3>Sample Project 2</h3>
+                    <button class="copy-btn" onclick="copyToClipboard('showcase2')">📋</button>
+                </div>
+                <textarea id="showcase2" readonly>Loading sample analysis...</textarea>
+            </div>
+            
+            <div class="showcase-item" id="showcase-item-2">
+                <div class="showcase-header">
+                    <h3>Sample Project 3</h3>
+                    <button class="copy-btn" onclick="copyToClipboard('showcase3')">📋</button>
+                </div>
+                <textarea id="showcase3" readonly>Loading sample analysis...</textarea>
+            </div>
+        </div>
+    </section>
 
     <!-- Free Trial Modal -->
     <div id="freeTrialModal" class="modal">
@@ -157,6 +163,18 @@
             </form>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="https://discord.gg/ADnN97tDVz" target="_blank">
+                    <img src="assets/images/discord.png" alt="Discord" class="social-icon"> Discord Support
+                </a>
+                <a href="https://joltdailyai.gumroad.com/l/github-to-ai-ingester" target="_blank">Gumroad Store</a>
+            </div>
+        </div>
+    </footer>
 
     <script src="assets/js/main.js"></script>
 </body>
