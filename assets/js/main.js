@@ -6,91 +6,6 @@ const CONFIG = {
     GITHUB_API_BASE: 'https://api.github.com/repos/',
     // License validation endpoint (your backend)
     LICENSE_VALIDATION_ENDPOINT: 'https://api.yourdomain.com/webhook/validate-license'
-};
-
-// In-memory storage for session data (replacing localStorage)
-const sessionData = {
-    licenseKey: '',
-    userEmail: '',
-    discordId: ''
-};
-
-// Showcase data and carousel state
-const showcaseData = [];
-let currentSlide = 0;
-
-// DOM Elements
-const licenseKeyInput = document.getElementById('licenseKey');
-const repoUrlInput = document.getElementById('repoUrl');
-const submitBtn = document.getElementById('submitBtn');
-const licenseInfo = document.getElementById('licenseInfo');
-const urlValidation = document.getElementById('urlValidation');
-const statusMessage = document.getElementById('statusMessage');
-const analysisForm = document.getElementById('analysisForm');
-
-// Modal elements
-const freeTrialModal = document.getElementById('freeTrialModal');
-const freeTrialBtn = document.getElementById('freeTrial');
-const closeBtns = document.querySelectorAll('.close');
-
-// Carousel elements
-const carouselContainer = document.getElementById('carouselContainer');
-const carouselDots = document.getElementById('carouselDots');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    initializeEventListeners();
-    loadShowcaseFiles();
-});
-
-function initializeEventListeners() {
-    // Form validation
-    licenseKeyInput.addEventListener('input', debounce(validateLicenseKey, 500));
-    repoUrlInput.addEventListener('input', debounce(validateRepoUrl, 300));
-    
-    // Form submission
-    analysisForm.addEventListener('submit', handleFormSubmission);
-    
-    // Modal controls
-    if (freeTrialBtn) {
-        freeTrialBtn.addEventListener('click', () => openModal(freeTrialModal));
-    }
-    
-    closeBtns.forEach(btn => {
-        btn.addEventListener('click', closeModals);
-    });
-    
-    window.addEventListener('click', (e) => {
-        if (e.target.classList.contains('modal')) {
-            closeModals();
-        }
-    });
-    
-    // Free trial form
-    const freeTrialForm = document.getElementById('freeTrialForm');
-    if (freeTrialForm) {
-        freeTrialForm.addEventListener('submit', handleFreeTrialSubmission);
-    }
-    
-    // Showcase search
-    const showcaseSearch = document.getElementById('showcaseSearch');
-    if (showcaseSearch) {
-        showcaseSearch.placeholder = '🔍 Search repositories, owners, tech stacks, or content...';
-        showcaseSearch.addEventListener('input', debounce(searchShowcase, 300));
-    }
-
-    // Submit review button
-    const submitReviewBtn = document.getElementById('submitReview');
-    if (submitReviewBtn) {
-        submitReviewBtn.addEventListener('click', handleReviewSubmission);
-    }
-    
-    // Carousel controls
-    if (prevBtn) prevBtn.addEventListener('click', () => changeSlide(-1));
-    if (nextBtn) nextBtn.addEventListener('click', () => changeSlide(1));
-}
 
 // License Key Validation
 async function validateLicenseKey() {
@@ -104,7 +19,7 @@ async function validateLicenseKey() {
     // Check for free trial key
     if (licenseKey === generateFreeLicenseKey()) {
         updateLicenseInfo('Free trial license - 1 analysis available', 'valid');
-        sessionData.licenseKey = licenseKey;
+        cacheLicenseKey(licenseKey);
         checkFormValidity();
         return;
     }
@@ -133,7 +48,7 @@ async function validateLicenseKey() {
             if (data.success && data.uses < data.max_uses) {
                 const remaining = data.max_uses - data.uses;
                 updateLicenseInfo(`Valid license - ${remaining} analyses remaining`, 'valid');
-                sessionData.licenseKey = licenseKey;
+                cacheLicenseKey(licenseKey);
             } else {
                 updateLicenseInfo('License key expired or invalid', 'invalid');
             }
@@ -213,8 +128,6 @@ async function handleFormSubmission(e) {
             body: JSON.stringify({
                 license_key: licenseKey,
                 repository_url: repoUrl,
-                user_email: sessionData.userEmail || '',
-                discord_id: sessionData.discordId || '',
                 timestamp: new Date().toISOString()
             })
         });
@@ -247,47 +160,20 @@ async function handleFormSubmission(e) {
 function handleFreeTrialSubmission(e) {
     e.preventDefault();
     
-    const email = document.getElementById('trialEmail').value.trim();
-    const discordId = document.getElementById('discordId').value.trim();
-    
-    if (!email) {
-        alert('Please enter your email address.');
-        return;
-    }
-    
+    const email = document.getElementById('trialEmail').value;
+    const discordId = document.getElementById('discordId').value;
     const freeKey = generateFreeLicenseKey();
-    
-    // Store user info in session
-    sessionData.userEmail = email;
-    sessionData.discordId = discordId;
-    sessionData.licenseKey = freeKey;
     
     // Auto-populate main form
     licenseKeyInput.value = freeKey;
+    licenseKeyInput.disabled = true;
     
-    // Close modal first
+    // Show success and close modal
+    alert(`Free trial activated! License key: ${freeKey}`);
     closeModals();
-    
-    // Show success message
-    showStatusMessage(`Free trial activated! License key: ${freeKey}`, 'success');
     
     // Validate the pre-filled license
     validateLicenseKey();
-}
-
-// Review Submission Handler
-function handleReviewSubmission() {
-    const reviewText = document.getElementById('reviewText').value.trim();
-    
-    if (!reviewText) {
-        alert('Please write a review before submitting.');
-        return;
-    }
-    
-    // Here you would typically send the review to your backend
-    // For now, just show a success message
-    alert('Thank you for your review! It will be displayed after moderation.');
-    document.getElementById('reviewText').value = '';
 }
 
 // Utility Functions
@@ -295,12 +181,11 @@ function generateFreeLicenseKey() {
     const today = new Date();
     const day = today.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
     const year = today.getFullYear();
-    const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
-    return `FREETRIAL${day}${year}${randomSuffix}`;
+    return `FREETRIAL${day}${year}`;
 }
 
 function isValidLicenseFormat(key) {
-    // Basic validation - adjust based on your actual format
+    // Basic validation - adjust based on Gumroad's actual format
     return key.length >= 8 && /^[A-Z0-9-]+$/i.test(key);
 }
 
@@ -347,265 +232,50 @@ function setFormLoading(loading) {
     analysisForm.classList.toggle('loading', loading);
 }
 
+function cacheLicenseKey(key) {
+    try {
+        localStorage.setItem('github_ai_license', key);
+    } catch (e) {
+        // Fallback for environments without localStorage
+        console.log('License key cached in memory only');
+    }
+}
+
+function loadCachedLicenseKey() {
+    try {
+        const cached = localStorage.getItem('github_ai_license');
+        if (cached) {
+            licenseKeyInput.value = cached;
+            validateLicenseKey();
+        }
+    } catch (e) {
+        // Fallback for environments without localStorage
+        console.log('No cached license key available');
+    }
+}
+
 // Modal Functions
 function openModal(modal) {
-    if (modal) {
-        modal.style.display = 'block';
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
-    }
+    modal.style.display = 'block';
 }
 
 function closeModals() {
-    if (freeTrialModal) {
-        freeTrialModal.style.display = 'none';
-    }
-    document.body.style.overflow = ''; // Restore scrolling
+    freeTrialModal.style.display = 'none';
 }
 
-// Showcase Functions - Updated to use JSON array
-async function loadShowcaseFiles() {
-    try {
-        const showcaseUrl = 'https://raw.githubusercontent.com/JOLT-dailyAi/GitHub-to-AI-ingester/main/data/showcase/Showcase.json';
-        const response = await fetch(showcaseUrl);
-        
-        if (response.ok) {
-            const showcaseArray = await response.json();
-            
-            // Clear existing data and load new data
-            showcaseData.length = 0;
-            showcaseData.push(...showcaseArray);
-            
-            console.log(`Loaded ${showcaseData.length} showcase items from JSON`);
-            
-            // Populate static showcase elements if they exist
-            if (showcaseData.length > 0) {
-                const showcase1 = document.getElementById('showcase1');
-                if (showcase1) {
-                    showcase1.value = showcaseData[0].content;
-                }
-            }
-            
-            if (showcaseData.length > 1) {
-                const showcase2 = document.getElementById('showcase2');
-                if (showcase2) {
-                    showcase2.value = showcaseData[1].content;
-                }
-            }
-            
-        } else {
-            throw new Error(`Failed to load Showcase.json: ${response.status}`);
-        }
-    } catch (error) {
-        console.error('Error loading showcase data:', error);
-        
-        // Fallback for static elements
-        const showcase1 = document.getElementById('showcase1');
-        const showcase2 = document.getElementById('showcase2');
-        if (showcase1) showcase1.value = 'Error loading showcase content.';
-        if (showcase2) showcase2.value = 'Error loading showcase content.';
-        
-        // Add fallback data
-        showcaseData.push({
-            title: 'Showcase Unavailable',
-            content: 'Could not load showcase data. Please check the console for details.'
-        });
-    }
-    
-    // Build carousel if container exists
-    if (carouselContainer) {
-        buildCarousel();
-    }
-}
-
-function searchShowcase() {
-    const query = document.getElementById('showcaseSearch').value.toLowerCase();
-    
-    // Search in static showcase items (existing approach)
-    const items = document.querySelectorAll('.showcase-item');
-    items.forEach(item => {
-        const title = item.querySelector('h3')?.textContent.toLowerCase() || '';
-        const content = item.querySelector('textarea')?.value.toLowerCase() || '';
-        const matches = title.includes(query) || content.includes(query);
-        item.style.display = matches ? 'block' : 'none';
-    });
-    
-    // Also search in dynamic carousel data
-    if (showcaseData.length > 0 && carouselContainer) {
-        if (!query.trim()) {
-            showcaseData.forEach(item => item.visible = true);
-            buildCarousel();
-            return;
-        }
-        
-        let hasVisibleItems = false;
-        
-        showcaseData.forEach(item => {
-            const titleMatch = item.title?.toLowerCase().includes(query);
-            const contentMatch = item.content?.toLowerCase().includes(query);
-            
-            item.visible = titleMatch || contentMatch;
-            if (item.visible) hasVisibleItems = true;
-        });
-        
-        if (!hasVisibleItems) {
-            showNoResults();
-        } else {
-            buildFilteredCarousel();
-        }
-    }
-}
-
-function buildCarousel() {
-    if (!carouselContainer || showcaseData.length === 0) return;
-    
-    carouselContainer.innerHTML = '';
-    if (carouselDots) carouselDots.innerHTML = '';
-    
-    showcaseData.forEach((item, index) => {
-        const showcaseItem = document.createElement('div');
-        showcaseItem.className = 'showcase-item';
-        
-        showcaseItem.innerHTML = `
-            <div class="showcase-header">
-                <h3>${item.title}</h3>
-                <button class="copy-btn" onclick="copyToClipboard('showcase-${index}')">📋</button>
-            </div>
-            <textarea id="showcase-${index}" readonly>${item.content}</textarea>
-        `;
-        
-        carouselContainer.appendChild(showcaseItem);
-        
-        if (carouselDots) {
-            const dot = document.createElement('div');
-            dot.className = `carousel-dot ${index === 0 ? 'active' : ''}`;
-            dot.addEventListener('click', () => goToSlide(index));
-            carouselDots.appendChild(dot);
-        }
-    });
-    
-    updateCarousel();
-}
-
-function buildFilteredCarousel() {
-    if (!carouselContainer) return;
-    
-    carouselContainer.innerHTML = '';
-    if (carouselDots) carouselDots.innerHTML = '';
-    
-    const visibleItems = showcaseData.filter(item => item.visible !== false);
-    
-    visibleItems.forEach((item, index) => {
-        const showcaseItem = document.createElement('div');
-        showcaseItem.className = 'showcase-item';
-        
-        showcaseItem.innerHTML = `
-            <div class="showcase-header">
-                <h3>${item.title}</h3>
-                <button class="copy-btn" onclick="copyToClipboard('showcase-filtered-${index}')">📋</button>
-            </div>
-            <textarea id="showcase-filtered-${index}" readonly>${item.content}</textarea>
-        `;
-        
-        carouselContainer.appendChild(showcaseItem);
-        
-        if (carouselDots) {
-            const dot = document.createElement('div');
-            dot.className = `carousel-dot ${index === 0 ? 'active' : ''}`;
-            dot.addEventListener('click', () => goToSlide(index));
-            carouselDots.appendChild(dot);
-        }
-    });
-    
-    currentSlide = 0;
-    updateCarousel();
-}
-
-function showNoResults() {
-    if (carouselContainer) {
-        carouselContainer.innerHTML = `
-            <div class="showcase-item">
-                <div class="showcase-header">
-                    <h3>No Results Found</h3>
-                </div>
-                <div class="no-results">
-                    <p>No showcase items match your search.</p>
-                    <button onclick="clearSearch()">Clear Search</button>
-                </div>
-            </div>
-        `;
-        if (carouselDots) carouselDots.innerHTML = '';
-    }
-}
-
-function clearSearch() {
-    const searchInput = document.getElementById('showcaseSearch');
-    if (searchInput) {
-        searchInput.value = '';
-        showcaseData.forEach(item => item.visible = true);
-        buildCarousel();
-        
-        // Also clear static showcase search
-        const items = document.querySelectorAll('.showcase-item');
-        items.forEach(item => {
-            item.style.display = 'block';
-        });
-    }
-}
-
-function changeSlide(direction) {
-    currentSlide += direction;
-    
-    if (currentSlide >= showcaseData.length) {
-        currentSlide = 0;
-    } else if (currentSlide < 0) {
-        currentSlide = showcaseData.length - 1;
-    }
-    
-    updateCarousel();
-}
-
-function goToSlide(index) {
-    currentSlide = index;
-    updateCarousel();
-}
-
-function updateCarousel() {
-    if (!carouselContainer || showcaseData.length === 0) return;
-    
-    const translateX = -currentSlide * 100;
-    carouselContainer.style.transform = `translateX(${translateX}%)`;
-    
-    if (carouselDots) {
-        const dots = carouselDots.querySelectorAll('.carousel-dot');
-        dots.forEach((dot, index) => {
-            dot.classList.toggle('active', index === currentSlide);
-        });
-    }
-}
-
+// Copy to clipboard function
 function copyToClipboard(textareaId) {
     const textarea = document.getElementById(textareaId);
-    if (textarea) {
-        textarea.select();
-        textarea.setSelectionRange(0, 99999); // For mobile devices
-        
-        try {
-            document.execCommand('copy');
-            
-            // Visual feedback
-            const copyBtn = textarea.parentElement.querySelector('.copy-btn');
-            if (copyBtn) {
-                const originalText = copyBtn.textContent;
-                copyBtn.textContent = 'Copied!';
-                setTimeout(() => {
-                    copyBtn.textContent = originalText;
-                }, 2000);
-            }
-        } catch (err) {
-            console.error('Failed to copy text: ', err);
-            alert('Failed to copy to clipboard. Please select the text manually.');
-        }
-    }
+    textarea.select();
+    document.execCommand('copy');
+    
+    // Visual feedback
+    const copyBtn = textarea.parentElement.querySelector('.copy-btn');
+    const originalText = copyBtn.textContent;
+    copyBtn.textContent = 'Copied!';
+    setTimeout(() => {
+        copyBtn.textContent = originalText;
+    }, 2000);
 }
 
 // Debounce function to limit API calls
@@ -619,47 +289,295 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
+};
+
+// DOM Elements
+const licenseKeyInput = document.getElementById('licenseKey');
+const repoUrlInput = document.getElementById('repoUrl');
+const submitBtn = document.getElementById('submitBtn');
+const licenseInfo = document.getElementById('licenseInfo');
+const urlValidation = document.getElementById('urlValidation');
+const statusMessage = document.getElementById('statusMessage');
+const analysisForm = document.getElementById('analysisForm');
+
+// Modal elements
+const freeTrialModal = document.getElementById('freeTrialModal');
+const freeTrialBtn = document.getElementById('freeTrial');
+const closeBtns = document.querySelectorAll('.close');
+
+// Showcase elements
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const currentIndexSpan = document.getElementById('currentIndex');
+const totalItemsSpan = document.getElementById('totalItems');
+const showcaseSearch = document.getElementById('showcaseSearch');
+const autocompleteDropdown = document.getElementById('autocompleteDropdown');
+
+// Showcase state
+let currentShowcaseIndex = 0;
+let showcaseItems = [];
+let filteredItems = [];
+let autocompleteData = [];
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEventListeners();
+    loadCachedLicenseKey();
+    initializeShowcase();
+});
+
+function initializeEventListeners() {
+    // Form validation
+    licenseKeyInput.addEventListener('input', debounce(validateLicenseKey, 500));
+    repoUrlInput.addEventListener('input', debounce(validateRepoUrl, 300));
+    
+    // Form submission
+    analysisForm.addEventListener('submit', handleFormSubmission);
+    
+    // Modal controls
+    freeTrialBtn.addEventListener('click', () => openModal(freeTrialModal));
+    
+    closeBtns.forEach(btn => {
+        btn.addEventListener('click', closeModals);
+    });
+    
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal')) {
+            closeModals();
+        }
+    });
+    
+    // Free trial form
+    document.getElementById('freeTrialForm').addEventListener('submit', handleFreeTrialSubmission);
+    
+    // Showcase navigation
+    prevBtn.addEventListener('click', showPreviousShowcase);
+    nextBtn.addEventListener('click', showNextShowcase);
+    
+    // Showcase search with autocomplete
+    showcaseSearch.addEventListener('input', debounce(handleSearchInput, 300));
+    showcaseSearch.addEventListener('focus', showAutocomplete);
+    showcaseSearch.addEventListener('blur', () => {
+        // Delay hiding to allow clicks on dropdown items
+        setTimeout(hideAutocomplete, 200);
+    });
+    showcaseSearch.addEventListener('keydown', handleSearchKeydown);
 }
 
-// Keyboard shortcuts
-document.addEventListener('keydown', function(e) {
-    // Escape key closes modals
-    if (e.key === 'Escape') {
-        closeModals();
-    }
+// Showcase Management
+function initializeShowcase() {
+    showcaseItems = document.querySelectorAll('.showcase-item');
+    filteredItems = Array.from(showcaseItems);
     
-    // Ctrl/Cmd + Enter submits form
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !submitBtn.disabled) {
-        handleFormSubmission(e);
-    }
+    // Initialize autocomplete data
+    autocompleteData = Array.from(showcaseItems).map(item => {
+        const title = item.querySelector('h3').textContent;
+        const content = item.querySelector('textarea').value;
+        return {
+            title: title,
+            keywords: extractKeywords(title + ' ' + content)
+        };
+    });
     
-    // Arrow keys for carousel navigation
-    if (e.key === 'ArrowLeft' && showcaseData.length > 1) {
-        e.preventDefault();
-        changeSlide(-1);
-    }
-    
-    if (e.key === 'ArrowRight' && showcaseData.length > 1) {
-        e.preventDefault();
-        changeSlide(1);
-    }
-});
+    updateShowcaseDisplay();
+    loadShowcaseContent();
+}
 
-// Error handling for uncaught errors
-window.addEventListener('error', function(e) {
-    console.error('Global error:', e.error);
-    showStatusMessage('An unexpected error occurred. Please refresh the page and try again.', 'error');
-});
+function extractKeywords(text) {
+    // Extract meaningful keywords from text
+    const words = text.toLowerCase()
+        .replace(/[^\w\s-]/g, ' ')
+        .split(/\s+/)
+        .filter(word => word.length > 2)
+        .slice(0, 20); // Limit to prevent too many suggestions
+    
+    return [...new Set(words)]; // Remove duplicates
+}
 
-// Service worker registration (if you have one)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js')
-            .then(function(registration) {
-                console.log('SW registered: ', registration);
-            })
-            .catch(function(registrationError) {
-                console.log('SW registration failed: ', registrationError);
+function updateShowcaseDisplay() {
+    // Hide all items
+    showcaseItems.forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Show current item if exists
+    if (filteredItems.length > 0) {
+        filteredItems[currentShowcaseIndex].classList.add('active');
+        currentIndexSpan.textContent = currentShowcaseIndex + 1;
+        totalItemsSpan.textContent = filteredItems.length;
+        
+        // Update navigation buttons
+        prevBtn.disabled = currentShowcaseIndex === 0;
+        nextBtn.disabled = currentShowcaseIndex === filteredItems.length - 1;
+    } else {
+        currentIndexSpan.textContent = '0';
+        totalItemsSpan.textContent = '0';
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+    }
+}
+
+function showPreviousShowcase() {
+    if (currentShowcaseIndex > 0) {
+        currentShowcaseIndex--;
+        updateShowcaseDisplay();
+    }
+}
+
+function showNextShowcase() {
+    if (currentShowcaseIndex < filteredItems.length - 1) {
+        currentShowcaseIndex++;
+        updateShowcaseDisplay();
+    }
+}
+
+// Search and Autocomplete
+function handleSearchInput() {
+    const query = showcaseSearch.value.toLowerCase().trim();
+    
+    if (query === '') {
+        filteredItems = Array.from(showcaseItems);
+        currentShowcaseIndex = 0;
+        updateShowcaseDisplay();
+        updateAutocomplete([]);
+        return;
+    }
+    
+    // Filter showcase items
+    filteredItems = Array.from(showcaseItems).filter(item => {
+        const title = item.querySelector('h3').textContent.toLowerCase();
+        const content = item.querySelector('textarea').value.toLowerCase();
+        return title.includes(query) || content.includes(query);
+    });
+    
+    currentShowcaseIndex = 0;
+    updateShowcaseDisplay();
+    
+    // Update autocomplete suggestions
+    const suggestions = generateAutocompleteSuggestions(query);
+    updateAutocomplete(suggestions);
+}
+
+function generateAutocompleteSuggestions(query) {
+    if (query.length < 2) return [];
+    
+    const suggestions = new Set();
+    
+    // Add matching keywords from all items
+    autocompleteData.forEach(item => {
+        item.keywords.forEach(keyword => {
+            if (keyword.includes(query) && keyword !== query) {
+                suggestions.add(keyword);
+            }
+        });
+        
+        // Add title if it matches
+        if (item.title.toLowerCase().includes(query)) {
+            suggestions.add(item.title);
+        }
+    });
+    
+    return Array.from(suggestions).slice(0, 5); // Limit to 5 suggestions
+}
+
+function updateAutocomplete(suggestions) {
+    autocompleteDropdown.innerHTML = '';
+    
+    if (suggestions.length === 0) {
+        hideAutocomplete();
+        return;
+    }
+    
+    suggestions.forEach(suggestion => {
+        const item = document.createElement('div');
+        item.className = 'autocomplete-item';
+        item.textContent = suggestion;
+        item.addEventListener('click', () => {
+            showcaseSearch.value = suggestion;
+            handleSearchInput();
+            hideAutocomplete();
+        });
+        autocompleteDropdown.appendChild(item);
+    });
+    
+    showAutocomplete();
+}
+
+function showAutocomplete() {
+    if (autocompleteDropdown.children.length > 0) {
+        autocompleteDropdown.style.display = 'block';
+    }
+}
+
+function hideAutocomplete() {
+    autocompleteDropdown.style.display = 'none';
+}
+
+function handleSearchKeydown(e) {
+    const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+    let highlighted = autocompleteDropdown.querySelector('.autocomplete-item.highlighted');
+    
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!highlighted) {
+            if (items.length > 0) items[0].classList.add('highlighted');
+        } else {
+            highlighted.classList.remove('highlighted');
+            const next = highlighted.nextElementSibling || items[0];
+            next.classList.add('highlighted');
+        }
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!highlighted) {
+            if (items.length > 0) items[items.length - 1].classList.add('highlighted');
+        } else {
+            highlighted.classList.remove('highlighted');
+            const prev = highlighted.previousElementSibling || items[items.length - 1];
+            prev.classList.add('highlighted');
+        }
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (highlighted) {
+            highlighted.click();
+        }
+    } else if (e.key === 'Escape') {
+        hideAutocomplete();
+    }
+}
+
+async function loadShowcaseContent() {
+    try {
+        // Load content from the actual JSON file
+        const response = await fetch('/data/showcase/Showcase.json');
+        if (response.ok) {
+            const showcaseData = await response.json();
+            
+            // Load content into textareas
+            const textareas = document.querySelectorAll('.showcase-item textarea');
+            textareas.forEach((textarea, index) => {
+                if (showcaseData[index] && showcaseData[index].content) {
+                    textarea.value = showcaseData[index].content;
+                    // Update the title as well
+                    const titleElement = textarea.closest('.showcase-item').querySelector('h3');
+                    if (titleElement && showcaseData[index].title) {
+                        titleElement.textContent = showcaseData[index].title;
+                    }
+                }
             });
+        } else {
+            console.warn('Could not load showcase data from JSON file');
+        }
+    } catch (error) {
+        console.warn('Error loading showcase data:', error);
+    }
+    
+    // Reinitialize autocomplete data with loaded content
+    autocompleteData = Array.from(showcaseItems).map(item => {
+        const title = item.querySelector('h3').textContent;
+        const content = item.querySelector('textarea').value;
+        return {
+            title: title,
+            keywords: extractKeywords(title + ' ' + content)
+        };
     });
 }
