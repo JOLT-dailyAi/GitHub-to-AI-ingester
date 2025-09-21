@@ -498,12 +498,6 @@ body {
     /* Remove height: auto - let JavaScript control it */
 }
 
-/* Showcase textarea - auto resize, no scrollbars */
-.showcase textarea {
-  overflow: hidden;   /* hide scroll bar */
-  resize: none;       /* prevent manual resize */
-}
-
 /* Footer */
 .footer {
     background-color: #161b22;
