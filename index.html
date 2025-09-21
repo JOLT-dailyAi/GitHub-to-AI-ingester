@@ -17,13 +17,6 @@
     <div class="container">
         <!-- Left Sidebar - Pricing & Options -->
         <aside class="sidebar-left">
-            <div class="pricing-card">
-                <h3>Free Trial</h3>
-                <p class="price">$0</p>
-                <p class="description">Try once for free</p>
-                <button class="btn-secondary" id="freeTrial">Try Free</button>
-            </div>
-            
             <div class="pricing-card highlight">
                 <h3>Get Credits</h3>
                 <p class="price">From $3</p>
@@ -42,7 +35,10 @@
         <!-- Main Form Section -->
         <main class="main-form">
             <div class="form-container">
-                <h2>Repository Analysis</h2>
+                <div class="form-header" style="position: relative;">
+                    <h2>Repository Analysis</h2>
+                    <button class="btn-secondary" id="freeTrial" style="position: absolute; top: 0; right: 0;">Try once for free</button>
+                </div>
                 <form id="analysisForm">
                     <div class="form-group">
                         <label for="licenseKey">License Key (holds your credits)</label>
