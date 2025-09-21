@@ -434,6 +434,7 @@ body {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+    min-height: auto;
     /* Use flexbox for proper content layout */
     flex-direction: column;
 }
