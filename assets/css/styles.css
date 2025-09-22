@@ -363,142 +363,165 @@ body {
     border-bottom: none;
 }
 
-/* Showcase Navigation */
-.showcase-navigation {
+/* NEW CAROUSEL STYLES */
+
+/* Carousel Container */
+.carousel-container {
+    position: relative;
+    width: 100%;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.carousel-header {
+    background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.carousel {
+    position: relative;
+    width: 100%;
+    min-height: 400px;
+    overflow: hidden;
+}
+
+.carousel-track {
     display: flex;
-    justify-content: center;
+    transition: transform 0.4s ease-in-out;
+    width: 100%;
+}
+
+.carousel-item {
+    min-width: 100%;
+    padding: 30px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background-color: #161b22;
+}
+
+.item-header {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 2rem;
-    margin-bottom: 2rem;
-    padding: 1rem;
+    margin-bottom: 15px;
+}
+
+.item-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #f0f6fc;
+    margin: 0;
+}
+
+/* Enhanced textarea styling for carousel */
+.carousel-item textarea {
+    width: 100%;
+    min-height: 200px;
+    font-size: 14px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    resize: none;
+    overflow: hidden;
+    padding: 15px;
+    border: 2px solid #30363d;
+    border-radius: 8px;
+    box-sizing: border-box;
+    line-height: 1.5;
+    background: #0d1117;
+    color: #e6edf3;
+    transition: border-color 0.3s ease;
+}
+
+.carousel-item textarea:focus {
+    border-color: #1f6feb;
+    outline: none;
+    background: #0d1117;
+    box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.12);
+}
+
+/* Navigation controls */
+.controls {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    transform: translateY(-50%);
+    pointer-events: none;
 }
 
 .nav-btn {
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    border: none;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-radius: 50%;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    pointer-events: all;
+    margin: 0 20px;
+    min-width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    background-color: #21262d;
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    color: #e6edf3;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.9rem;
-    font-weight: 500;
-    min-width: 120px;
+    justify-content: center;
 }
 
 .nav-btn:hover:not(:disabled) {
-    background-color: #30363d;
-    border-color: #1f6feb;
-    transform: translateY(-1px);
+    background: rgba(0,0,0,0.9);
+    transform: scale(1.1);
 }
 
 .nav-btn:disabled {
-    opacity: 0.5;
+    opacity: 0.3;
     cursor: not-allowed;
     transform: none;
 }
 
-.nav-arrow {
-    font-size: 1.1rem;
-    font-weight: bold;
+/* Copy button styling */
+.copy-btn {
+    background: #238636;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
 }
 
+.copy-btn:hover {
+    background: #2ea043;
+    transform: translateY(-1px);
+}
+
+.copy-btn.copied {
+    background: #28a745;
+}
+
+/* Counter styling */
 .showcase-counter {
     padding: 0.75rem 1rem;
-    background-color: #161b22;
-    border: 1px solid #30363d;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 6px;
-    color: #f0f6fc;
+    color: white;
     font-weight: 500;
     min-width: 80px;
     text-align: center;
 }
 
-/* Showcase Container */
+/* Hide old showcase styles when carousel is active */
+.showcase-navigation, 
 .showcase-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.showcase-item {
-    background-color: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    overflow: hidden;
     display: none;
-    width: 100%;
-    max-width: 1200px;
-    min-height: 400px; /* Minimum height */
-    margin: 0 auto;
-    /* Remove fixed height to allow dynamic sizing */
-}
-
-.showcase-item.active {
-    display: block;
-    animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateX(20px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-
-.showcase-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background-color: #21262d;
-    border-bottom: 1px solid #30363d;
-    height: 60px; /* Fixed header height */
-    flex-shrink: 0;
-}
-
-.showcase-header h3 {
-    font-size: 1rem;
-    color: #f0f6fc;
-    margin: 0;
-}
-
-.copy-btn {
-    background: none;
-    border: 1px solid #30363d;
-    color: #e6edf3;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.875rem;
-    transition: all 0.2s ease;
-}
-
-.copy-btn:hover {
-    background-color: #30363d;
-    border-color: #1f6feb;
-}
-
-.showcase-item textarea {
-    width: 100%;
-    min-height: 80px; /* Minimal baseline height - FIXED */
-    padding: 1rem;
-    background-color: #0d1117;
-    color: #e6edf3;
-    border: none;
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 0.75rem;
-    line-height: 1.4;
-    resize: none; /* Disable manual resize */
-    transform: scale(0.85);
-    transform-origin: top left;
-    width: 117.65%;
-    overflow: hidden !important; /* Force no scrollbar */
-    box-sizing: border-box;
-    /* Height controlled by JavaScript adjustTextareaHeight() */
 }
 
 .social-icon {
@@ -563,10 +586,6 @@ body {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
-    
-    .showcase-container {
-        padding: 0 1rem;
-    }
 }
 
 @media (max-width: 768px) {
@@ -582,26 +601,33 @@ body {
         padding: 1rem;
     }
     
-    .showcase-navigation {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .nav-btn {
-        min-width: 200px;
-        justify-content: center;
-    }
-    
     .search-wrapper {
         width: 280px;
     }
     
-    .showcase-item textarea {
-        height: 300px;
-        font-size: 0.7rem;
-        transform: scale(0.8);
-        width: 125%;
-        height: 375px;
+    .carousel-item {
+        padding: 20px;
+    }
+    
+    .nav-btn {
+        margin: 0 10px;
+        padding: 10px 12px;
+        font-size: 16px;
+        min-width: 40px;
+        height: 40px;
+    }
+    
+    .item-title {
+        font-size: 18px;
+    }
+    
+    .carousel-item textarea {
+        font-size: 13px;
+        min-height: 150px;
+    }
+    
+    .carousel-header {
+        padding: 15px;
     }
 }
 
@@ -614,7 +640,7 @@ body {
         padding: 0.5rem;
     }
     
-    .pricing-card, .showcase-header {
+    .pricing-card {
         padding: 1rem;
     }
     
@@ -626,11 +652,24 @@ body {
         width: 250px;
     }
     
-    .showcase-item textarea {
-        font-size: 0.65rem;
-        transform: scale(0.75);
-        width: 133.33%;
-        height: 400px;
+    .carousel-item {
+        padding: 15px;
+    }
+    
+    .carousel-item textarea {
+        font-size: 12px;
+        min-height: 120px;
+    }
+    
+    .item-title {
+        font-size: 16px;
+    }
+    
+    .nav-btn {
+        margin: 0 5px;
+        min-width: 36px;
+        height: 36px;
+        font-size: 14px;
     }
 }
 
@@ -659,7 +698,7 @@ button:focus, input:focus, textarea:focus {
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-    .pricing-card, .showcase-item, .review {
+    .pricing-card, .carousel-container, .review {
         border-width: 2px;
     }
 }
