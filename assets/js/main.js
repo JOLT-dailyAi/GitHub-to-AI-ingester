@@ -22,334 +22,26 @@ const freeTrialModal = document.getElementById('freeTrialModal');
 const freeTrialBtn = document.getElementById('freeTrial');
 const closeBtns = document.querySelectorAll('.close');
 
-// Search elements
+// Showcase elements
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const currentIndexSpan = document.getElementById('currentIndex');
+const totalItemsSpan = document.getElementById('totalItems');
 const showcaseSearch = document.getElementById('showcaseSearch');
 const autocompleteDropdown = document.getElementById('autocompleteDropdown');
 
-// -------------------------
-// Showcase Carousel Class
-// -------------------------
-class ShowcaseCarousel {
-    constructor() {
-        this.currentIndex = 0;
-        this.items = [];
-        this.track = null;
-        this.prevBtn = null;
-        this.nextBtn = null;
-        this.currentCounter = null;
-        this.totalCounter = null;
-        this.showcaseData = [];
-        this.filteredData = [];
-        this.autocompleteData = [];
-    }
-
-    init() {
-        this.track = document.getElementById('carouselTrack');
-        this.prevBtn = document.getElementById('prevBtn');
-        this.nextBtn = document.getElementById('nextBtn');
-        this.currentCounter = document.getElementById('currentIndex');
-        this.totalCounter = document.getElementById('totalItems');
-
-        if (!this.track) {
-            console.warn('Carousel track not found, falling back to legacy showcase');
-            return false;
-        }
-
-        this.setupEventListeners();
-        this.loadShowcaseData();
-        return true;
-    }
-
-    setupEventListeners() {
-        if (this.prevBtn) {
-            this.prevBtn.addEventListener('click', () => this.previousSlide());
-        }
-        
-        if (this.nextBtn) {
-            this.nextBtn.addEventListener('click', () => this.nextSlide());
-        }
-
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') this.previousSlide();
-            if (e.key === 'ArrowRight') this.nextSlide();
-        });
-
-        // Touch/swipe support for mobile
-        let startX = 0;
-        let startY = 0;
-        
-        if (this.track) {
-            this.track.addEventListener('touchstart', (e) => {
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-            }, { passive: true });
-
-            this.track.addEventListener('touchend', (e) => {
-                if (!startX || !startY) return;
-                
-                const endX = e.changedTouches[0].clientX;
-                const endY = e.changedTouches[0].clientY;
-                const diffX = startX - endX;
-                const diffY = startY - endY;
-                
-                // Only trigger if horizontal swipe is more significant than vertical
-                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-                    if (diffX > 0) {
-                        this.nextSlide();
-                    } else {
-                        this.previousSlide();
-                    }
-                }
-                
-                startX = 0;
-                startY = 0;
-            }, { passive: true });
-        }
-    }
-
-    async loadShowcaseData() {
-        try {
-            const response = await fetch('data/showcase/Showcase.json');
-            if (response.ok) {
-                this.showcaseData = await response.json();
-                this.filteredData = [...this.showcaseData];
-                this.renderCarousel();
-                this.updateAutocompleteData();
-                console.log('Showcase carousel loaded successfully');
-            } else {
-                console.error('Failed to load showcase data');
-                this.renderEmptyCarousel();
-            }
-        } catch (error) {
-            console.error('Error loading showcase data:', error);
-            this.renderEmptyCarousel();
-        }
-    }
-
-    renderCarousel() {
-        if (!this.track) return;
-
-        this.track.innerHTML = '';
-
-        if (this.filteredData.length === 0) {
-            this.renderEmptyCarousel();
-            return;
-        }
-
-        this.filteredData.forEach((item, index) => {
-            const slideHtml = `
-                <div class="carousel-item">
-                    <div class="item-header">
-                        <h3 class="item-title">${this.escapeHtml(item.title || `Repository ${index + 1}`)}</h3>
-                        <button class="copy-btn" onclick="showcaseCarousel.copySlideContent(${index})">📋 Copy</button>
-                    </div>
-                    <textarea readonly>${this.escapeHtml(item.content || 'No content available')}</textarea>
-                </div>
-            `;
-            this.track.insertAdjacentHTML('beforeend', slideHtml);
-        });
-
-        this.items = this.track.querySelectorAll('.carousel-item');
-        this.currentIndex = 0;
-        this.initializeTextareas();
-        this.updateDisplay();
-    }
-
-    renderEmptyCarousel() {
-        if (!this.track) return;
-        
-        this.track.innerHTML = `
-            <div class="carousel-item">
-                <div class="item-header">
-                    <h3 class="item-title">No Results Found</h3>
-                </div>
-                <textarea readonly>No showcase data available or no matches for your search.</textarea>
-            </div>
-        `;
-        
-        this.items = this.track.querySelectorAll('.carousel-item');
-        this.currentIndex = 0;
-        this.updateDisplay();
-    }
-
-    initializeTextareas() {
-        this.items.forEach(item => {
-            const textarea = item.querySelector('textarea');
-            if (textarea) {
-                this.autoExpandTextarea(textarea);
-                textarea.addEventListener('input', () => {
-                    this.autoExpandTextarea(textarea);
-                });
-            }
-        });
-    }
-
-    autoExpandTextarea(textarea) {
-        if (!textarea) return;
-        try {
-            textarea.style.height = 'auto';
-            const scrollHeight = textarea.scrollHeight;
-            if (scrollHeight && scrollHeight > 0) {
-                textarea.style.height = Math.max(scrollHeight, 200) + 'px';
-            }
-        } catch (error) {
-            console.warn('Error adjusting textarea height:', error);
-        }
-    }
-
-    previousSlide() {
-        if (this.currentIndex > 0) {
-            this.currentIndex--;
-            this.updateDisplay();
-        }
-    }
-
-    nextSlide() {
-        if (this.currentIndex < this.items.length - 1) {
-            this.currentIndex++;
-            this.updateDisplay();
-        }
-    }
-
-    goToSlide(index) {
-        if (index >= 0 && index < this.items.length) {
-            this.currentIndex = index;
-            this.updateDisplay();
-        }
-    }
-
-    updateDisplay() {
-        if (this.track && this.items.length > 0) {
-            this.track.style.transform = `translateX(-${this.currentIndex * 100}%)`;
-        }
-        
-        if (this.currentCounter) {
-            this.currentCounter.textContent = this.items.length > 0 ? this.currentIndex + 1 : 0;
-        }
-        
-        if (this.totalCounter) {
-            this.totalCounter.textContent = this.items.length;
-        }
-        
-        if (this.prevBtn) {
-            this.prevBtn.disabled = this.currentIndex === 0 || this.items.length === 0;
-        }
-        
-        if (this.nextBtn) {
-            this.nextBtn.disabled = this.currentIndex === this.items.length - 1 || this.items.length === 0;
-        }
-
-        // Adjust current slide textarea after transition
-        setTimeout(() => {
-            const currentItem = this.items[this.currentIndex];
-            if (currentItem) {
-                const textarea = currentItem.querySelector('textarea');
-                if (textarea) {
-                    this.autoExpandTextarea(textarea);
-                }
-            }
-        }, 100);
-    }
-
-    copySlideContent(slideIndex) {
-        const slide = this.items[slideIndex];
-        if (!slide) return;
-
-        const textarea = slide.querySelector('textarea');
-        const copyBtn = slide.querySelector('.copy-btn');
-        
-        if (textarea) {
-            // Modern clipboard API
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(textarea.value).then(() => {
-                    this.showCopySuccess(copyBtn);
-                }).catch(() => {
-                    // Fallback to legacy method
-                    this.legacyCopy(textarea, copyBtn);
-                });
-            } else {
-                this.legacyCopy(textarea, copyBtn);
-            }
-        }
-    }
-
-    legacyCopy(textarea, copyBtn) {
-        try {
-            textarea.select();
-            document.execCommand('copy');
-            this.showCopySuccess(copyBtn);
-        } catch (err) {
-            console.error('Copy failed:', err);
-        }
-    }
-
-    showCopySuccess(copyBtn) {
-        if (copyBtn) {
-            const originalText = copyBtn.textContent;
-            copyBtn.textContent = '✅ Copied!';
-            copyBtn.classList.add('copied');
-            
-            setTimeout(() => {
-                copyBtn.textContent = originalText;
-                copyBtn.classList.remove('copied');
-            }, 2000);
-        }
-    }
-
-    // Enhanced search functionality
-    handleSearch(query) {
-        if (!query.trim()) {
-            this.filteredData = [...this.showcaseData];
-        } else {
-            const searchTerms = query.toLowerCase().split(/\s+/);
-            this.filteredData = this.showcaseData.filter(item => {
-                const searchText = (item.title + ' ' + item.content).toLowerCase();
-                return searchTerms.every(term => searchText.includes(term));
-            });
-        }
-        
-        this.renderCarousel();
-    }
-
-    updateAutocompleteData() {
-        this.autocompleteData = this.showcaseData.map(item => ({
-            title: item.title || 'Untitled',
-            keywords: this.extractKeywords((item.title || '') + ' ' + (item.content || ''))
-        }));
-    }
-
-    extractKeywords(text) {
-        return text.toLowerCase()
-            .replace(/[^\w\s-]/g, ' ')
-            .split(/\s+/)
-            .filter(word => word.length > 2)
-            .slice(0, 20);
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-}
-
-// Initialize carousel instance
-let showcaseCarousel;
+// Showcase state
+let currentShowcaseIndex = 0;
+let showcaseItems = [];
+let filteredItems = [];
+let autocompleteData = [];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     loadCachedLicenseKey();
-    
-    // Initialize the new carousel
-    showcaseCarousel = new ShowcaseCarousel();
-    const carouselInitialized = showcaseCarousel.init();
-    
-    // Fallback to legacy showcase if carousel fails
-    if (!carouselInitialized) {
-        initializeLegacyShowcase();
-    }
+    initializeShowcase();
+    loadShowcaseFiles();
 });
 
 function initializeEventListeners() {
@@ -381,6 +73,12 @@ function initializeEventListeners() {
         freeTrialForm.addEventListener('submit', handleFreeTrialSubmission);
     }
     
+    // Showcase navigation
+    if (prevBtn && nextBtn) {
+        prevBtn.addEventListener('click', showPreviousShowcase);
+        nextBtn.addEventListener('click', showNextShowcase);
+    }
+    
     // Showcase search with autocomplete
     if (showcaseSearch) {
         showcaseSearch.addEventListener('input', debounce(handleSearchInput, 300));
@@ -393,19 +91,104 @@ function initializeEventListeners() {
 }
 
 // -------------------------
-// Search and Autocomplete Functions  
+// Showcase Management
+// -------------------------
+function initializeShowcase() {
+    showcaseItems = document.querySelectorAll('.showcase-item');
+    filteredItems = Array.from(showcaseItems);
+
+    // Attach input listeners for textareas inside showcase items.
+    // We DO NOT measure/set height here for hidden items to avoid layout issues.
+    showcaseItems.forEach(item => {
+        const textareas = item.querySelectorAll('textarea');
+        textareas.forEach(el => {
+            // Defensive: only attach if element exists
+            if (!el) return;
+            // Attach input handler that adjusts height when user types
+            el.addEventListener('input', () => {
+                // Adjust on input (element is visible while typing)
+                try { adjustTextareaHeight(el); } catch (err) { /* swallow */ }
+            }, false);
+        });
+    });
+
+    updateShowcaseDisplay();
+}
+
+function updateShowcaseDisplay() {
+    // Hide all items
+    showcaseItems.forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Show current item if exists
+    if (filteredItems.length > 0) {
+        filteredItems[currentShowcaseIndex].classList.add('active');
+
+        // AFTER making active, adjust the textarea heights inside the now-visible item
+        try {
+            const activeItem = filteredItems[currentShowcaseIndex];
+            if (activeItem) {
+                const tas = activeItem.querySelectorAll('textarea');
+                tas.forEach(el => {
+                    // Only adjust when visible (we just added .active)
+                    adjustTextareaHeight(el);
+                });
+            }
+        } catch (err) {
+            console.warn('Error adjusting textarea height for active showcase item', err);
+        }
+
+        if (currentIndexSpan) currentIndexSpan.textContent = currentShowcaseIndex + 1;
+        if (totalItemsSpan) totalItemsSpan.textContent = filteredItems.length;
+        
+        // Update navigation buttons
+        if (prevBtn) prevBtn.disabled = currentShowcaseIndex === 0;
+        if (nextBtn) nextBtn.disabled = currentShowcaseIndex === filteredItems.length - 1;
+    } else {
+        if (currentIndexSpan) currentIndexSpan.textContent = '0';
+        if (totalItemsSpan) totalItemsSpan.textContent = '0';
+        if (prevBtn) prevBtn.disabled = true;
+        if (nextBtn) nextBtn.disabled = true;
+    }
+}
+
+function showPreviousShowcase() {
+    if (currentShowcaseIndex > 0) {
+        currentShowcaseIndex--;
+        updateShowcaseDisplay();
+    }
+}
+
+function showNextShowcase() {
+    if (currentShowcaseIndex < filteredItems.length - 1) {
+        currentShowcaseIndex++;
+        updateShowcaseDisplay();
+    }
+}
+
+// -------------------------
+// Search and Autocomplete Functions
 // -------------------------
 function handleSearchInput() {
     const query = showcaseSearch.value.toLowerCase().trim();
-    
-    // Use carousel search if available
-    if (showcaseCarousel && showcaseCarousel.handleSearch) {
-        showcaseCarousel.handleSearch(query);
-    } else {
-        // Fallback to legacy search
-        handleLegacySearch(query);
+    if (query === '') {
+        filteredItems = Array.from(showcaseItems);
+        currentShowcaseIndex = 0;
+        updateShowcaseDisplay();
+        updateAutocomplete([]);
+        return;
     }
-    
+    // Filter showcase items (original search functionality)
+    filteredItems = Array.from(showcaseItems).filter(item => {
+        const titleEl = item.querySelector('h3');
+        const taEl = item.querySelector('textarea');
+        const title = titleEl ? titleEl.textContent.toLowerCase() : '';
+        const content = taEl ? taEl.value.toLowerCase() : '';
+        return title.includes(query) || content.includes(query);
+    });
+    currentShowcaseIndex = 0;
+    updateShowcaseDisplay();
     // Update autocomplete suggestions
     const suggestions = generateAutocompleteSuggestions(query);
     updateAutocomplete(suggestions);
@@ -413,40 +196,29 @@ function handleSearchInput() {
 
 function generateAutocompleteSuggestions(query) {
     if (query.length < 2) return [];
-    
     const suggestions = new Set();
-    const autocompleteData = showcaseCarousel ? 
-        showcaseCarousel.autocompleteData : 
-        getLegacyAutocompleteData();
-    
     // Add matching keywords from all items
     autocompleteData.forEach(item => {
-        if (item.keywords) {
-            item.keywords.forEach(keyword => {
-                if (keyword.includes(query) && keyword !== query) {
-                    suggestions.add(keyword);
-                }
-            });
-        }
+        item.keywords.forEach(keyword => {
+            if (keyword.includes(query) && keyword !== query) {
+                suggestions.add(keyword);
+            }
+        });
         // Add title if it matches
-        if (item.title && item.title.toLowerCase().includes(query)) {
+        if (item.title.toLowerCase().includes(query)) {
             suggestions.add(item.title);
         }
     });
-    
     return Array.from(suggestions).slice(0, 5);
 }
 
 function updateAutocomplete(suggestions) {
     if (!autocompleteDropdown) return;
-    
     autocompleteDropdown.innerHTML = '';
-    
     if (suggestions.length === 0) {
         hideAutocomplete();
         return;
     }
-    
     suggestions.forEach(suggestion => {
         const item = document.createElement('div');
         item.className = 'autocomplete-item';
@@ -458,7 +230,6 @@ function updateAutocomplete(suggestions) {
         });
         autocompleteDropdown.appendChild(item);
     });
-    
     showAutocomplete();
 }
 
@@ -476,10 +247,8 @@ function hideAutocomplete() {
 
 function handleSearchKeydown(e) {
     if (!autocompleteDropdown) return;
-    
     const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
     let highlighted = autocompleteDropdown.querySelector('.autocomplete-item.highlighted');
-    
     if (e.key === 'ArrowDown') {
         e.preventDefault();
         if (!highlighted) {
@@ -508,137 +277,28 @@ function handleSearchKeydown(e) {
     }
 }
 
+function extractKeywords(text) {
+    const words = text.toLowerCase()
+        .replace(/[^\w\s-]/g, ' ')
+        .split(/\s+/)
+        .filter(word => word.length > 2)
+        .slice(0, 20);
+    return [...new Set(words)];
+}
+
 // -------------------------
-// Legacy Showcase Support (Fallback)
+// Showcase Files Loading (your original working function)
 // -------------------------
-let currentShowcaseIndex = 0;
-let showcaseItems = [];
-let filteredItems = [];
-let legacyAutocompleteData = [];
-
-function initializeLegacyShowcase() {
-    console.log('Initializing legacy showcase');
-    showcaseItems = document.querySelectorAll('.showcase-item');
-    filteredItems = Array.from(showcaseItems);
-    
-    // Legacy navigation buttons
-    const legacyPrevBtn = document.getElementById('legacyPrevBtn');
-    const legacyNextBtn = document.getElementById('legacyNextBtn');
-    
-    if (legacyPrevBtn && legacyNextBtn) {
-        legacyPrevBtn.addEventListener('click', showPreviousShowcase);
-        legacyNextBtn.addEventListener('click', showNextShowcase);
-    }
-
-    showcaseItems.forEach(item => {
-        const textareas = item.querySelectorAll('textarea');
-        textareas.forEach(el => {
-            if (!el) return;
-            el.addEventListener('input', () => {
-                try { adjustTextareaHeight(el); } catch (err) { /* swallow */ }
-            }, false);
-        });
-    });
-
-    updateShowcaseDisplay();
-    loadLegacyShowcaseFiles();
-}
-
-function updateShowcaseDisplay() {
-    // Hide all items
-    showcaseItems.forEach(item => {
-        item.classList.remove('active');
-    });
-    
-    // Show current item if exists
-    if (filteredItems.length > 0) {
-        filteredItems[currentShowcaseIndex].classList.add('active');
-
-        try {
-            const activeItem = filteredItems[currentShowcaseIndex];
-            if (activeItem) {
-                const tas = activeItem.querySelectorAll('textarea');
-                tas.forEach(el => {
-                    adjustTextareaHeight(el);
-                });
-            }
-        } catch (err) {
-            console.warn('Error adjusting textarea height for active showcase item', err);
-        }
-
-        const currentIndexSpan = document.getElementById('currentIndex');
-        const totalItemsSpan = document.getElementById('totalItems');
-        
-        if (currentIndexSpan) currentIndexSpan.textContent = currentShowcaseIndex + 1;
-        if (totalItemsSpan) totalItemsSpan.textContent = filteredItems.length;
-        
-        // Update navigation buttons
-        const legacyPrevBtn = document.getElementById('legacyPrevBtn');
-        const legacyNextBtn = document.getElementById('legacyNextBtn');
-        
-        if (legacyPrevBtn) legacyPrevBtn.disabled = currentShowcaseIndex === 0;
-        if (legacyNextBtn) legacyNextBtn.disabled = currentShowcaseIndex === filteredItems.length - 1;
-    } else {
-        const currentIndexSpan = document.getElementById('currentIndex');
-        const totalItemsSpan = document.getElementById('totalItems');
-        
-        if (currentIndexSpan) currentIndexSpan.textContent = '0';
-        if (totalItemsSpan) totalItemsSpan.textContent = '0';
-        
-        const legacyPrevBtn = document.getElementById('legacyPrevBtn');
-        const legacyNextBtn = document.getElementById('legacyNextBtn');
-        
-        if (legacyPrevBtn) legacyPrevBtn.disabled = true;
-        if (legacyNextBtn) legacyNextBtn.disabled = true;
-    }
-}
-
-function showPreviousShowcase() {
-    if (currentShowcaseIndex > 0) {
-        currentShowcaseIndex--;
-        updateShowcaseDisplay();
-    }
-}
-
-function showNextShowcase() {
-    if (currentShowcaseIndex < filteredItems.length - 1) {
-        currentShowcaseIndex++;
-        updateShowcaseDisplay();
-    }
-}
-
-function handleLegacySearch(query) {
-    if (query === '') {
-        filteredItems = Array.from(showcaseItems);
-        currentShowcaseIndex = 0;
-        updateShowcaseDisplay();
-        return;
-    }
-    
-    filteredItems = Array.from(showcaseItems).filter(item => {
-        const titleEl = item.querySelector('h3');
-        const taEl = item.querySelector('textarea');
-        const title = titleEl ? titleEl.textContent.toLowerCase() : '';
-        const content = taEl ? taEl.value.toLowerCase() : '';
-        return title.includes(query) || content.includes(query);
-    });
-    
-    currentShowcaseIndex = 0;
-    updateShowcaseDisplay();
-}
-
-function getLegacyAutocompleteData() {
-    return legacyAutocompleteData;
-}
-
-async function loadLegacyShowcaseFiles() {
+async function loadShowcaseFiles() {
     try {
+        const showcaseGrid = document.getElementById('showcaseGrid') || document.querySelector('.showcase-container');
+        // Load the actual showcase data from your JSON
         const response = await fetch('data/showcase/Showcase.json');
         if (response.ok) {
             const showcaseData = await response.json();
+            // Update existing showcase items with real data
             const textareas = document.querySelectorAll('.showcase-item textarea');
             const titles = document.querySelectorAll('.showcase-item h3');
-            
             showcaseData.forEach((item, index) => {
                 if (textareas[index]) {
                     textareas[index].value = item.content || 'No content available';
@@ -649,12 +309,13 @@ async function loadLegacyShowcaseFiles() {
             });
 
             // Initialize autocomplete data with loaded content
-            legacyAutocompleteData = Array.from(showcaseItems).map(item => {
+            autocompleteData = Array.from(showcaseItems).map(item => {
                 const title = item.querySelector('h3').textContent;
                 const content = item.querySelector('textarea').value;
                 return { title: title, keywords: extractKeywords(title + ' ' + content) };
             });
 
+            // Adjust textarea heights for the currently visible/active showcase item(s)
             try {
                 showcaseItems.forEach(item => {
                     if (item.classList.contains('active')) {
@@ -666,20 +327,13 @@ async function loadLegacyShowcaseFiles() {
                 console.warn('Error adjusting textarea heights after loading showcase files', err);
             }
 
-            console.log('Legacy showcase files loaded successfully');
+            console.log('Showcase files loaded successfully');
+        } else {
+            console.log('Could not load showcase data, using existing content');
         }
     } catch (error) {
-        console.error('Error loading legacy showcase files:', error);
+        console.error('Error loading showcase files:', error);
     }
-}
-
-function extractKeywords(text) {
-    const words = text.toLowerCase()
-        .replace(/[^\w\s-]/g, ' ')
-        .split(/\s+/)
-        .filter(word => word.length > 2)
-        .slice(0, 20);
-    return [...new Set(words)];
 }
 
 // -------------------------
@@ -910,16 +564,10 @@ function closeModals() {
 }
 
 function copyToClipboard(textareaId) {
-    // Legacy function for backwards compatibility
     const textarea = document.getElementById(textareaId);
     if (textarea) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(textarea.value);
-        } else {
-            textarea.select();
-            document.execCommand('copy');
-        }
-        
+        textarea.select();
+        document.execCommand('copy');
         const copyBtn = textarea.parentElement.querySelector('.copy-btn');
         if (copyBtn) {
             const originalText = copyBtn.textContent;
@@ -931,16 +579,19 @@ function copyToClipboard(textareaId) {
     }
 }
 
-// Auto-resize helper used only for legacy showcase textareas
+// Auto-resize helper used only for showcase textareas
 function adjustTextareaHeight(el) {
     if (!el) return;
     try {
+        // reset then set to scrollHeight
         el.style.height = 'auto';
+        // Use scrollHeight (safe when element is visible). When called only for visible item(s) this works reliably.
         const needed = el.scrollHeight;
         if (needed && needed > 0) {
             el.style.height = needed + 'px';
         }
     } catch (err) {
+        // Defensive: don't allow textarea adjustments to break the rest of the script
         console.warn('adjustTextareaHeight error', err);
     }
 }
