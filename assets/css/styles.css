@@ -420,11 +420,11 @@ body {
     margin: 0;
 }
 
-/* Enhanced textarea styling for carousel */
+/* Enhanced textarea styling for carousel with zoom out */
 .carousel-item textarea {
-    width: 100%;
+    width: 117.65%;
     min-height: 200px;
-    font-size: 14px;
+    font-size: 0.75rem;
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
     resize: none;
     overflow: hidden;
@@ -432,10 +432,12 @@ body {
     border: 2px solid #30363d;
     border-radius: 8px;
     box-sizing: border-box;
-    line-height: 1.5;
+    line-height: 1.4;
     background: #0d1117;
     color: #e6edf3;
     transition: border-color 0.3s ease;
+    transform: scale(0.85);
+    transform-origin: top left;
 }
 
 .carousel-item textarea:focus {
@@ -622,8 +624,10 @@ body {
     }
     
     .carousel-item textarea {
-        font-size: 13px;
+        font-size: 0.7rem;
         min-height: 150px;
+        transform: scale(0.8);
+        width: 125%;
     }
     
     .carousel-header {
