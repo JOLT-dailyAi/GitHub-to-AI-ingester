@@ -86,7 +86,7 @@
         </aside>
     </div>
 
-    <!-- Showcase Section -->
+    <!-- Showcase Section with Carousel -->
     <section class="showcase">
         <h2>Showcase</h2>
         <div class="search-container">
@@ -96,46 +96,22 @@
             </div>
         </div>
         
-        <!-- Navigation Controls -->
-        <div class="showcase-navigation">
-            <button class="nav-btn" id="prevBtn">
-                <span class="nav-arrow">←</span>
-                <span class="nav-text">Previous</span>
-            </button>
-            
-            <div class="showcase-counter">
-                <span id="currentIndex">1</span> / <span id="totalItems">0</span>
+        <!-- Carousel Container -->
+        <div class="carousel-container">
+            <div class="carousel-header">
+                <div class="showcase-counter">
+                    <span id="currentIndex">1</span> / <span id="totalItems">0</span>
+                </div>
             </div>
             
-            <button class="nav-btn" id="nextBtn">
-                <span class="nav-text">Next</span>
-                <span class="nav-arrow">→</span>
-            </button>
-        </div>
-        
-        <div class="showcase-container">
-            <div class="showcase-item active" id="showcase-item-0">
-                <div class="showcase-header">
-                    <h3>Loading...</h3>
-                    <button class="copy-btn" onclick="copyToClipboard('showcase1')">📋</button>
+            <div class="carousel">
+                <div class="carousel-track" id="carouselTrack">
+                    <!-- Slides will be dynamically generated here -->
                 </div>
-                <textarea id="showcase1" readonly>Loading showcase content...</textarea>
-            </div>
-            
-            <div class="showcase-item" id="showcase-item-1">
-                <div class="showcase-header">
-                    <h3>Loading...</h3>
-                    <button class="copy-btn" onclick="copyToClipboard('showcase2')">📋</button>
+                <div class="controls">
+                    <button class="nav-btn prev" id="prevBtn">‹</button>
+                    <button class="nav-btn next" id="nextBtn">›</button>
                 </div>
-                <textarea id="showcase2" readonly>Loading showcase content...</textarea>
-            </div>
-            
-            <div class="showcase-item" id="showcase-item-2">
-                <div class="showcase-header">
-                    <h3>Loading...</h3>
-                    <button class="copy-btn" onclick="copyToClipboard('showcase3')">📋</button>
-                </div>
-                <textarea id="showcase3" readonly>Loading showcase content...</textarea>
             </div>
         </div>
     </section>
@@ -163,4 +139,3 @@
     <script src="assets/js/main.js"></script>
 </body>
 </html>
-
