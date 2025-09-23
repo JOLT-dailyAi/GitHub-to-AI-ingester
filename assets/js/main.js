@@ -98,15 +98,11 @@ function initializeShowcase() {
     filteredItems = Array.from(showcaseItems);
 
     // Attach input listeners for textareas inside showcase items.
-    // We DO NOT measure/set height here for hidden items to avoid layout issues.
     showcaseItems.forEach(item => {
         const textareas = item.querySelectorAll('textarea');
         textareas.forEach(el => {
-            // Defensive: only attach if element exists
             if (!el) return;
-            // Attach input handler that adjusts height when user types
             el.addEventListener('input', () => {
-                // Adjust on input (element is visible while typing)
                 try { adjustTextareaHeight(el); } catch (err) { /* swallow */ }
             }, false);
         });
@@ -116,28 +112,36 @@ function initializeShowcase() {
 }
 
 function updateShowcaseDisplay() {
-    // Hide all items
+    // Hide all items and reset their heights
     showcaseItems.forEach(item => {
         item.classList.remove('active');
+        item.style.height = 'auto';
     });
+    
+    // Reset container height
+    const showcaseContainer = document.querySelector('.showcase-container');
+    if (showcaseContainer) {
+        showcaseContainer.style.height = 'auto';
+    }
     
     // Show current item if exists
     if (filteredItems.length > 0) {
         filteredItems[currentShowcaseIndex].classList.add('active');
 
-        // AFTER making active, adjust the textarea heights inside the now-visible item
-        try {
-            const activeItem = filteredItems[currentShowcaseIndex];
-            if (activeItem) {
-                const tas = activeItem.querySelectorAll('textarea');
-                tas.forEach(el => {
-                    // Only adjust when visible (we just added .active)
-                    adjustTextareaHeight(el);
-                });
+        // AFTER making active, adjust the textarea heights and container heights
+        setTimeout(() => {
+            try {
+                const activeItem = filteredItems[currentShowcaseIndex];
+                if (activeItem) {
+                    const textarea = activeItem.querySelector('textarea');
+                    if (textarea) {
+                        adjustTextareaHeight(textarea);
+                    }
+                }
+            } catch (err) {
+                console.warn('Error adjusting heights for active showcase item', err);
             }
-        } catch (err) {
-            console.warn('Error adjusting textarea height for active showcase item', err);
-        }
+        }, 50);
 
         if (currentIndexSpan) currentIndexSpan.textContent = currentShowcaseIndex + 1;
         if (totalItemsSpan) totalItemsSpan.textContent = filteredItems.length;
@@ -179,7 +183,7 @@ function handleSearchInput() {
         updateAutocomplete([]);
         return;
     }
-    // Filter showcase items (original search functionality)
+    
     filteredItems = Array.from(showcaseItems).filter(item => {
         const titleEl = item.querySelector('h3');
         const taEl = item.querySelector('textarea');
@@ -189,7 +193,7 @@ function handleSearchInput() {
     });
     currentShowcaseIndex = 0;
     updateShowcaseDisplay();
-    // Update autocomplete suggestions
+    
     const suggestions = generateAutocompleteSuggestions(query);
     updateAutocomplete(suggestions);
 }
@@ -197,14 +201,13 @@ function handleSearchInput() {
 function generateAutocompleteSuggestions(query) {
     if (query.length < 2) return [];
     const suggestions = new Set();
-    // Add matching keywords from all items
+    
     autocompleteData.forEach(item => {
         item.keywords.forEach(keyword => {
             if (keyword.includes(query) && keyword !== query) {
                 suggestions.add(keyword);
             }
         });
-        // Add title if it matches
         if (item.title.toLowerCase().includes(query)) {
             suggestions.add(item.title);
         }
@@ -249,6 +252,7 @@ function handleSearchKeydown(e) {
     if (!autocompleteDropdown) return;
     const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
     let highlighted = autocompleteDropdown.querySelector('.autocomplete-item.highlighted');
+    
     if (e.key === 'ArrowDown') {
         e.preventDefault();
         if (!highlighted) {
@@ -287,16 +291,14 @@ function extractKeywords(text) {
 }
 
 // -------------------------
-// Showcase Files Loading (your original working function)
+// Showcase Files Loading
 // -------------------------
 async function loadShowcaseFiles() {
     try {
-        const showcaseGrid = document.getElementById('showcaseGrid') || document.querySelector('.showcase-container');
-        // Load the actual showcase data from your JSON
         const response = await fetch('data/showcase/Showcase.json');
         if (response.ok) {
             const showcaseData = await response.json();
-            // Update existing showcase items with real data
+            
             const textareas = document.querySelectorAll('.showcase-item textarea');
             const titles = document.querySelectorAll('.showcase-item h3');
             showcaseData.forEach((item, index) => {
@@ -308,24 +310,28 @@ async function loadShowcaseFiles() {
                 }
             });
 
-            // Initialize autocomplete data with loaded content
+            // Initialize autocomplete data
             autocompleteData = Array.from(showcaseItems).map(item => {
                 const title = item.querySelector('h3').textContent;
                 const content = item.querySelector('textarea').value;
                 return { title: title, keywords: extractKeywords(title + ' ' + content) };
             });
 
-            // Adjust textarea heights for the currently visible/active showcase item(s)
-            try {
-                showcaseItems.forEach(item => {
-                    if (item.classList.contains('active')) {
-                        const tas = item.querySelectorAll('textarea');
-                        tas.forEach(el => adjustTextareaHeight(el));
-                    }
-                });
-            } catch (err) {
-                console.warn('Error adjusting textarea heights after loading showcase files', err);
-            }
+            // Adjust heights for active item
+            setTimeout(() => {
+                try {
+                    showcaseItems.forEach(item => {
+                        if (item.classList.contains('active')) {
+                            const textarea = item.querySelector('textarea');
+                            if (textarea) {
+                                adjustTextareaHeight(textarea);
+                            }
+                        }
+                    });
+                } catch (err) {
+                    console.warn('Error adjusting heights after loading showcase files', err);
+                }
+            }, 100);
 
             console.log('Showcase files loaded successfully');
         } else {
@@ -345,19 +351,20 @@ async function validateLicenseKey() {
         updateLicenseInfo('', '');
         return;
     }
-    // Check for free trial key
+    
     if (licenseKey === generateFreeLicenseKey()) {
         updateLicenseInfo('Free trial license - 1 analysis available', 'valid');
         cacheLicenseKey(licenseKey);
         checkFormValidity();
         return;
     }
-    // Basic format validation
+    
     if (!isValidLicenseFormat(licenseKey)) {
         updateLicenseInfo('Invalid license key format', 'invalid');
         checkFormValidity();
         return;
     }
+    
     updateLicenseInfo('Validating license key...', '');
     try {
         const response = await fetch(CONFIG.LICENSE_VALIDATION_ENDPOINT, {
@@ -579,20 +586,52 @@ function copyToClipboard(textareaId) {
     }
 }
 
-// Auto-resize helper used only for showcase textareas
+// -------------------------
+// Dynamic Height Functions
+// -------------------------
 function adjustTextareaHeight(el) {
     if (!el) return;
     try {
-        // reset then set to scrollHeight
+        // Reset textarea height to get accurate scrollHeight
         el.style.height = 'auto';
-        // Use scrollHeight (safe when element is visible). When called only for visible item(s) this works reliably.
+        
+        // Get the actual content height needed
         const needed = el.scrollHeight;
         if (needed && needed > 0) {
             el.style.height = needed + 'px';
+            
+            // Also adjust the container heights dynamically
+            adjustContainerHeight(el, needed);
         }
     } catch (err) {
-        // Defensive: don't allow textarea adjustments to break the rest of the script
         console.warn('adjustTextareaHeight error', err);
+    }
+}
+
+function adjustContainerHeight(textarea, textareaHeight) {
+    try {
+        const showcaseItem = textarea.closest('.showcase-item');
+        const showcaseContainer = document.querySelector('.showcase-container');
+        
+        if (showcaseItem && showcaseItem.classList.contains('active')) {
+            // Calculate total height needed:
+            // Header (60px) + textarea height + padding (20px top + 20px bottom from padding: 1rem)
+            const headerHeight = 60;
+            const paddingHeight = 40; // 20px top + 20px bottom
+            const totalHeight = headerHeight + textareaHeight + paddingHeight;
+            
+            // Set the active showcase item height
+            showcaseItem.style.height = totalHeight + 'px';
+            
+            // Set the showcase container height to match
+            if (showcaseContainer) {
+                showcaseContainer.style.height = totalHeight + 'px';
+            }
+            
+            console.log(`Dynamic heights set - Textarea: ${textareaHeight}px, Container: ${totalHeight}px`);
+        }
+    } catch (err) {
+        console.warn('Error adjusting container heights:', err);
     }
 }
 
