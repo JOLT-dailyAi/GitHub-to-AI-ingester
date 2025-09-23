@@ -417,13 +417,14 @@ body {
     text-align: center;
 }
 
-/* Showcase Container */
+/* Updated Showcase Container - Remove fixed constraints */
 .showcase-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 2rem;
     position: relative;
     overflow: hidden;
+    height: auto; /* Changed from no height constraint */
 }
 
 .showcase-item {
@@ -434,14 +435,15 @@ body {
     display: none;
     width: 100%;
     max-width: 1200px;
-    min-height: 400px; /* Minimum height */
     margin: 0 auto;
-    /* Remove fixed height to allow dynamic sizing */
+    /* Remove min-height constraint - let it be dynamic */
+    height: auto;
 }
 
 .showcase-item.active {
     display: block;
     animation: fadeIn 0.3s ease-in-out;
+    /* Dynamic height will be set by JavaScript */
 }
 
 @keyframes fadeIn {
