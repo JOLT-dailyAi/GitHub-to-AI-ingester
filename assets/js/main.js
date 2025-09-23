@@ -588,7 +588,8 @@ function adjustTextareaHeight(el) {
         el.style.height = 'auto';
         const needed = el.scrollHeight;
         if (needed && needed > 0) {
-            el.style.height = needed + 'px';
+            // Account for the 0.85 scale factor
+            el.style.height = (needed * 0.85) + 'px';
         }
     } catch (err) {
         console.warn('adjustTextareaHeight error', err);
