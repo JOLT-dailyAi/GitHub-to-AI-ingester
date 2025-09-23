@@ -111,8 +111,9 @@ function initializeShowcase() {
     updateShowcaseDisplay();
 }
 
+// Update the updateShowcaseDisplay function to use the new container adjustment
 function updateShowcaseDisplay() {
-    // Hide all items - don't mess with heights here
+    // Hide all items
     showcaseItems.forEach(item => {
         item.classList.remove('active');
     });
@@ -121,14 +122,18 @@ function updateShowcaseDisplay() {
     if (filteredItems.length > 0) {
         filteredItems[currentShowcaseIndex].classList.add('active');
 
-        // AFTER making active, adjust only the textarea height
+        // After making active, adjust heights
         setTimeout(() => {
             try {
                 const activeItem = filteredItems[currentShowcaseIndex];
                 if (activeItem) {
                     const textarea = activeItem.querySelector('textarea');
                     if (textarea) {
+                        // First adjust textarea content height
                         adjustTextareaHeight(textarea);
+                        
+                        // Then adjust container to match the scaled textarea
+                        adjustContainerToTextarea(activeItem);
                     }
                 }
             } catch (err) {
@@ -139,7 +144,6 @@ function updateShowcaseDisplay() {
         if (currentIndexSpan) currentIndexSpan.textContent = currentShowcaseIndex + 1;
         if (totalItemsSpan) totalItemsSpan.textContent = filteredItems.length;
         
-        // Update navigation buttons
         if (prevBtn) prevBtn.disabled = currentShowcaseIndex === 0;
         if (nextBtn) nextBtn.disabled = currentShowcaseIndex === filteredItems.length - 1;
     } else {
@@ -148,7 +152,6 @@ function updateShowcaseDisplay() {
         if (prevBtn) prevBtn.disabled = true;
         if (nextBtn) nextBtn.disabled = true;
     }
-}
 
 function showPreviousShowcase() {
     if (currentShowcaseIndex > 0) {
@@ -588,11 +591,36 @@ function adjustTextareaHeight(el) {
         el.style.height = 'auto';
         const needed = el.scrollHeight;
         if (needed && needed > 0) {
-            // Account for the 0.85 scale factor
-            el.style.height = (needed * 0.85) + 'px';
+            el.style.height = needed + 'px';
         }
     } catch (err) {
         console.warn('adjustTextareaHeight error', err);
+    }
+}
+
+/ NEW: Add function to adjust container height to match scaled textarea
+function adjustContainerToTextarea(showcaseItem) {
+    if (!showcaseItem) return;
+    
+    try {
+        const textarea = showcaseItem.querySelector('textarea');
+        const header = showcaseItem.querySelector('.showcase-header');
+        
+        if (textarea && header) {
+            // Get the actual height of the textarea
+            const textareaHeight = textarea.offsetHeight;
+            const headerHeight = header.offsetHeight || 60; // fallback to CSS value
+            
+            // Account for the 0.85 scale - the visual height is smaller
+            const scaledTextareaHeight = textareaHeight * 0.85;
+            
+            // Set the container height to header + scaled textarea height + padding
+            const totalHeight = headerHeight + scaledTextareaHeight + 2; // 2px for borders
+            
+            showcaseItem.style.height = totalHeight + 'px';
+        }
+    } catch (err) {
+        console.warn('Error adjusting container height', err);
     }
 }
 
