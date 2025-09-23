@@ -1,10 +1,7 @@
 // Configuration
 const CONFIG = {
-  // Your n8n form trigger URL - will be masked via Cloudflare
   N8N_FORM_URL: 'https://api.yourdomain.com/form/45f473b3-3bb4-49f0-b2f0-b63ec6ea343a',
-  // GitHub API endpoint for validation
   GITHUB_API_BASE: 'https://api.github.com/repos/',
-  // License validation endpoint (your backend)
   LICENSE_VALIDATION_ENDPOINT: 'https://api.yourdomain.com/webhook/validate-license'
 };
 
@@ -25,8 +22,12 @@ const closeBtns = document.querySelectorAll('.close');
 // Showcase elements
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
+const prevBtnBottom = document.getElementById('prevBtnBottom');
+const nextBtnBottom = document.getElementById('nextBtnBottom');
 const currentIndexSpan = document.getElementById('currentIndex');
 const totalItemsSpan = document.getElementById('totalItems');
+const currentIndexBottomSpan = document.getElementById('currentIndexBottom');
+const totalItemsBottomSpan = document.getElementById('totalItemsBottom');
 const showcaseSearch = document.getElementById('showcaseSearch');
 const autocompleteDropdown = document.getElementById('autocompleteDropdown');
 
@@ -77,6 +78,10 @@ function initializeEventListeners() {
     if (prevBtn && nextBtn) {
         prevBtn.addEventListener('click', showPreviousShowcase);
         nextBtn.addEventListener('click', showNextShowcase);
+    }
+    if (prevBtnBottom && nextBtnBottom) {
+        prevBtnBottom.addEventListener('click', showPreviousShowcase);
+        nextBtnBottom.addEventListener('click', showNextShowcase);
     }
     
     // Showcase search with autocomplete
@@ -139,14 +144,22 @@ function updateShowcaseDisplay() {
 
         if (currentIndexSpan) currentIndexSpan.textContent = currentShowcaseIndex + 1;
         if (totalItemsSpan) totalItemsSpan.textContent = filteredItems.length;
+        if (currentIndexBottomSpan) currentIndexBottomSpan.textContent = currentShowcaseIndex + 1;
+        if (totalItemsBottomSpan) totalItemsBottomSpan.textContent = filteredItems.length;
         
         if (prevBtn) prevBtn.disabled = currentShowcaseIndex === 0;
         if (nextBtn) nextBtn.disabled = currentShowcaseIndex === filteredItems.length - 1;
+        if (prevBtnBottom) prevBtnBottom.disabled = currentShowcaseIndex === 0;
+        if (nextBtnBottom) nextBtnBottom.disabled = currentShowcaseIndex === filteredItems.length - 1;
     } else {
         if (currentIndexSpan) currentIndexSpan.textContent = '0';
         if (totalItemsSpan) totalItemsSpan.textContent = '0';
+        if (currentIndexBottomSpan) currentIndexBottomSpan.textContent = '0';
+        if (totalItemsBottomSpan) totalItemsBottomSpan.textContent = '0';
         if (prevBtn) prevBtn.disabled = true;
         if (nextBtn) nextBtn.disabled = true;
+        if (prevBtnBottom) prevBtnBottom.disabled = true;
+        if (nextBtnBottom) nextBtnBottom.disabled = true;
     }
 }
 
