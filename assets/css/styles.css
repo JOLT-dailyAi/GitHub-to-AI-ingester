@@ -62,37 +62,37 @@ body {
     margin-bottom: 1.5rem;
     font-size: 1.5rem;
     color: #f0f6fc;
-    text-align: center; /* Keep center for desktop */
+    text-align: center;
 }
 
 /* Switch to left alignment when button starts overlapping */
 @media (max-width: 600px) {
     .form-container h2 {
-        text-align: left; /* Switch to left when space gets tight */
-        margin-right: 140px; /* Give space for the button */
+        text-align: left;
+        margin-right: 140px;
     }
     
     #freeTrial {
-        font-size: 0;  /* Hide original text */
+        font-size: 0;
     }
     
     #freeTrial::before {
-        content: "Free Trial";  /* Show shorter text */
-        font-size: 0.85rem;     /* Restore font size */
+        content: "Free Trial";
+        font-size: 0.85rem;
     }
 }
 
 /* Further refinements for very small screens */
 @media (max-width: 480px) {
     .form-container h2 {
-        font-size: 1.3rem; /* Slightly smaller on mobile */
-        margin-right: 120px; /* Adjust space for smaller button */
+        font-size: 1.3rem;
+        margin-right: 120px;
     }
     
     .btn-secondary {
-        font-size: 0.85rem; /* Smaller button text */
-        padding: 0.7rem 1rem; /* Reduced padding */
-        min-width: 90px; /* Smaller minimum width */
+        font-size: 0.85rem;
+        padding: 0.7rem 1rem;
+        min-width: 90px;
     }
 }
 
