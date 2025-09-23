@@ -527,7 +527,7 @@ body {
     transform: scale(0.85);
     transform-origin: top left;
     width: 117.65%;
-    overflow-x: auto !important;
+    overflow-x: hidden !important;
     overflow-y: hidden !important;
     box-sizing: border-box;
     white-space: nowrap;
@@ -547,6 +547,7 @@ body {
         transform: scale(0.8);
         width: 125%;
         font-size: 0.7rem;
+        overflow-x: auto !important;
     }
 }
 
@@ -560,6 +561,7 @@ body {
         transform: scale(0.75);
         width: 133.33%;
         font-size: 0.65rem;
+        overflow-x: auto !important;
     }
 }
 
