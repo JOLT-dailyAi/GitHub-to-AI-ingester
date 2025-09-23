@@ -96,9 +96,9 @@
             </div>
         </div>
         
-        <!-- Navigation Controls -->
-        <div class="showcase-navigation">
-            <button class="nav-btn" id="prevBtn">
+        <!-- Top Navigation Controls -->
+        <div class="showcase-navigation" id="topNavigation">
+            <button class="nav-btn" id="prevBtn" disabled>
                 <span class="nav-arrow">←</span>
                 <span class="nav-text">Previous</span>
             </button>
@@ -107,7 +107,7 @@
                 <span id="currentIndex">1</span> / <span id="totalItems">0</span>
             </div>
             
-            <button class="nav-btn" id="nextBtn">
+            <button class="nav-btn" id="nextBtn" disabled>
                 <span class="nav-text">Next</span>
                 <span class="nav-arrow">→</span>
             </button>
@@ -138,6 +138,23 @@
                 <textarea id="showcase3" readonly>Loading showcase content...</textarea>
             </div>
         </div>
+        
+        <!-- Bottom Navigation Controls -->
+        <div class="showcase-navigation" id="bottomNavigation">
+            <button class="nav-btn" id="prevBtnBottom" disabled>
+                <span class="nav-arrow">←</span>
+                <span class="nav-text">Previous</span>
+            </button>
+            
+            <div class="showcase-counter">
+                <span id="currentIndexBottom">1</span> / <span id="totalItemsBottom">0</span>
+            </div>
+            
+            <button class="nav-btn" id="nextBtnBottom" disabled>
+                <span class="nav-text">Next</span>
+                <span class="nav-arrow">→</span>
+            </button>
+        </div>
     </section>
 
     <!-- Free Trial Modal -->
@@ -163,4 +180,3 @@
     <script src="assets/js/main.js"></script>
 </body>
 </html>
-
