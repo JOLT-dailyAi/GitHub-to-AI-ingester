@@ -57,11 +57,34 @@ body {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
+/* Keep centered by default (desktop/tablet) */
 .form-container h2 {
     margin-bottom: 1.5rem;
     font-size: 1.5rem;
     color: #f0f6fc;
-    text-align: center;
+    text-align: center; /* Keep center for desktop */
+}
+
+/* Switch to left alignment when button starts overlapping */
+@media (max-width: 600px) {
+    .form-container h2 {
+        text-align: left; /* Switch to left when space gets tight */
+        margin-right: 140px; /* Give space for the button */
+    }
+}
+
+/* Further refinements for very small screens */
+@media (max-width: 480px) {
+    .form-container h2 {
+        font-size: 1.3rem; /* Slightly smaller on mobile */
+        margin-right: 120px; /* Adjust space for smaller button */
+    }
+    
+    .btn-secondary {
+        font-size: 0.85rem; /* Smaller button text */
+        padding: 0.7rem 1rem; /* Reduced padding */
+        min-width: 90px; /* Smaller minimum width */
+    }
 }
 
 .processing-note {
