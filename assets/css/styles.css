@@ -536,6 +536,7 @@ body {
     overflow: hidden !important;
     box-sizing: border-box;
     /* Height will be controlled by JavaScript */
+    white-space: nowrap; /* ADD THIS LINE - prevents text wrapping */
 }
 
 .social-icon {
@@ -634,11 +635,11 @@ body {
     }
     
     .showcase-item textarea {
-        height: 300px;
+        min-height: 80px; /* Use min-height instead of fixed height */
         font-size: 0.7rem;
         transform: scale(0.8);
         width: 125%;
-        height: 375px;
+        white-space: nowrap; /* Prevent text wrapping */
     }
 }
 
@@ -667,7 +668,8 @@ body {
         font-size: 0.65rem;
         transform: scale(0.75);
         width: 133.33%;
-        height: 400px;
+        min-height: 80px; /* Use min-height instead of fixed height */
+        white-space: nowrap; /* Prevent text wrapping */
     }
 }
 
