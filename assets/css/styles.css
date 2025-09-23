@@ -641,6 +641,16 @@ body {
         width: 125%;
         white-space: nowrap; /* Prevent text wrapping */
     }
+    
+    /* Container height matching for mobile */
+    .showcase-container {
+        min-height: calc(80px * 0.8 + 60px);
+    }
+    
+    .showcase-item.active {
+        min-height: calc(80px * 0.8 + 60px);
+        height: fit-content;
+    }
 }
 
 @media (max-width: 480px) {
@@ -670,6 +680,16 @@ body {
         width: 133.33%;
         min-height: 80px; /* Use min-height instead of fixed height */
         white-space: nowrap; /* Prevent text wrapping */
+    }
+    
+    /* Container height matching for smaller mobile */
+    .showcase-container {
+        min-height: calc(80px * 0.75 + 60px);
+    }
+    
+    .showcase-item.active {
+        min-height: calc(80px * 0.75 + 60px);
+        height: fit-content;
     }
 }
 
