@@ -449,17 +449,15 @@ body {
     text-align: center;
 }
 
-/* Ensure the container can shrink to fit content */
+/* Showcase Container and Items */
 .showcase-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 1rem;
     position: relative;
-    overflow: visible; /* Changed from hidden to visible */
-    /* Let the container size naturally to its content */
+    overflow: visible;
 }
 
-/* Update the showcase-item to support dynamic height */
 .showcase-item {
     background-color: #161b22;
     border: 1px solid #30363d;
@@ -467,12 +465,9 @@ body {
     overflow: hidden;
     display: none;
     width: 100%;
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
-    /* Remove fixed min-height - let JavaScript control the height */
-    /* min-height: 400px; - REMOVED */
-    /* Height will be set dynamically by JavaScript */
-    transition: height 0.3s ease; /* Smooth height transitions */
+    transition: height 0.3s ease;
 }
 
 .showcase-item.active {
@@ -518,7 +513,6 @@ body {
     border-color: #1f6feb;
 }
 
-/* Keep textarea exactly as it is - don't change the scaling */
 .showcase-item textarea {
     width: 100%;
     min-height: 80px;
@@ -530,13 +524,42 @@ body {
     font-size: 0.75rem;
     line-height: 1.4;
     resize: none;
-    transform: scale(0.85); /* Keep the scale */
+    transform: scale(0.85);
     transform-origin: top left;
-    width: 117.65%; /* Keep the adjusted width */
+    width: 117.65%;
     overflow: hidden !important;
     box-sizing: border-box;
-    /* Height will be controlled by JavaScript */
-    white-space: nowrap; /* Prevent text wrapping */
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .showcase-container {
+        padding: 0 0.5rem;
+    }
+    
+    .showcase-item {
+        max-width: 100%;
+    }
+    
+    .showcase-item textarea {
+        white-space: pre-wrap;
+        transform: scale(0.8);
+        width: 125%;
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .showcase-container {
+        padding: 0 0.25rem;
+    }
+    
+    .showcase-item textarea {
+        white-space: pre-wrap;
+        transform: scale(0.75);
+        width: 133.33%;
+        font-size: 0.65rem;
+    }
 }
 
 .social-icon {
@@ -633,14 +656,6 @@ body {
     .search-wrapper {
         width: 280px;
     }
-    
-    .showcase-item textarea {
-        white-space: pre-wrap; /* Ensure wrapping on smaller screens */
-        height: 300px;
-        font-size: 0.7rem;
-        transform: scale(0.8);
-        width: 125%;
-    }
 }
 
 @media (max-width: 480px) {
@@ -662,14 +677,6 @@ body {
     
     .search-wrapper {
         width: 250px;
-    }
-    
-    .showcase-item textarea {
-        white-space: pre-wrap; /* Ensure wrapping on smaller screens */
-        font-size: 0.65rem;
-        transform: scale(0.75);
-        width: 133.33%;
-        height: 300px;
     }
 }
 
