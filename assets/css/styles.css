@@ -424,6 +424,7 @@ body {
     padding: 0 2rem;
     position: relative;
     overflow: hidden;
+    /* No height constraints - let it be natural */
 }
 
 .showcase-item {
@@ -435,16 +436,11 @@ body {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    /* Remove all height constraints */
-    height: fit-content;
-    min-height: unset;
-    /* Remove any padding that might create blank space */
-    padding: 0;
+    /* No height constraints at all */
 }
 
 .showcase-item.active {
-    display: flex;
-    flex-direction: column;
+    display: block;
     animation: fadeIn 0.3s ease-in-out;
 }
 
@@ -487,9 +483,8 @@ body {
 }
 
 .showcase-item textarea {
-    width: 100%;
+    width: 117.65%; /* Keep your zoom scaling */
     min-height: 80px;
-    /* Remove padding to eliminate extra space */
     padding: 1rem;
     background-color: #0d1117;
     color: #e6edf3;
@@ -500,12 +495,11 @@ body {
     resize: none;
     transform: scale(0.85);
     transform-origin: top left;
-    width: 117.65%;
     overflow: hidden !important;
     box-sizing: border-box;
-    /* Remove any margin that could create blank space */
     margin: 0;
-    flex: 1;
+    display: block;
+    /* The key: let the textarea determine the container height naturally */
 }
 
 .social-icon {
