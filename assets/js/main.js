@@ -592,46 +592,37 @@ function copyToClipboard(textareaId) {
 function adjustTextareaHeight(el) {
     if (!el) return;
     try {
-        // Reset textarea height to get accurate scrollHeight
         el.style.height = 'auto';
-        
-        // Get the actual content height needed
         const needed = el.scrollHeight;
         if (needed && needed > 0) {
             el.style.height = needed + 'px';
-            
-            // Also adjust the container heights dynamically
-            adjustContainerHeight(el, needed);
+            adjustContainerHeightNatural(el);
         }
     } catch (err) {
         console.warn('adjustTextareaHeight error', err);
     }
 }
 
-function adjustContainerHeight(textarea, textareaHeight) {
+function adjustContainerHeightNatural(textarea) {
     try {
         const showcaseItem = textarea.closest('.showcase-item');
         const showcaseContainer = document.querySelector('.showcase-container');
         
         if (showcaseItem && showcaseItem.classList.contains('active')) {
-            // Calculate total height needed:
-            // Header (60px) + textarea height + padding (20px top + 20px bottom from padding: 1rem)
-            const headerHeight = 60;
-            const paddingHeight = 40; // 20px top + 20px bottom
-            const totalHeight = headerHeight + textareaHeight + paddingHeight;
+            // Let it size naturally first
+            showcaseItem.style.height = 'fit-content';
             
-            // Set the active showcase item height
-            showcaseItem.style.height = totalHeight + 'px';
-            
-            // Set the showcase container height to match
-            if (showcaseContainer) {
-                showcaseContainer.style.height = totalHeight + 'px';
-            }
-            
-            console.log(`Dynamic heights set - Textarea: ${textareaHeight}px, Container: ${totalHeight}px`);
+            setTimeout(() => {
+                const naturalHeight = showcaseItem.offsetHeight;
+                showcaseItem.style.height = naturalHeight + 'px';
+                
+                if (showcaseContainer) {
+                    showcaseContainer.style.height = naturalHeight + 'px';
+                }
+            }, 10);
         }
     } catch (err) {
-        console.warn('Error adjusting container heights:', err);
+        console.warn('Error adjusting container heights naturally:', err);
     }
 }
 
