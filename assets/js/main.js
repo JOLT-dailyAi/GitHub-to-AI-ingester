@@ -112,17 +112,10 @@ function initializeShowcase() {
 }
 
 function updateShowcaseDisplay() {
-    // Hide all items and reset their heights
+    // Hide all items - don't mess with heights here
     showcaseItems.forEach(item => {
         item.classList.remove('active');
-        item.style.height = ''; // Remove any style height
     });
-    
-   // Reset container height
-    const showcaseContainer = document.querySelector('.showcase-container');
-    if (showcaseContainer) {
-        showcaseContainer.style.height = '';
-    }
     
     // Show current item if exists
     if (filteredItems.length > 0) {
@@ -538,7 +531,7 @@ function hideStatusMessage() {
 
 function setFormLoading(loading) {
     if (submitBtn) submitBtn.disabled = loading;
-    if (submitBtn) submitBtn.textContent = loading ? 'Submitting...' : 'Analyze Repository';
+    if (submitBtn) submitBtn.textContent = loading ? 'Submitting..' : 'Analyze Repository';
     if (analysisForm) analysisForm.classList.toggle('loading', loading);
 }
 
@@ -587,9 +580,8 @@ function copyToClipboard(textareaId) {
 }
 
 // -------------------------
-// Dynamic Height Functions
+// Simplified Height Function - Let CSS Handle Natural Sizing
 // -------------------------
-// Simplified approach - just remove the artificial height setting
 function adjustTextareaHeight(el) {
     if (!el) return;
     try {
@@ -598,23 +590,10 @@ function adjustTextareaHeight(el) {
         if (needed && needed > 0) {
             el.style.height = needed + 'px';
         }
-        
-        // Remove all artificial height constraints - let CSS handle it naturally
-        const showcaseItem = el.closest('.showcase-item');
-        const showcaseContainer = document.querySelector('.showcase-container');
-        
-        if (showcaseItem && showcaseItem.classList.contains('active')) {
-            // Remove the style height completely - let it be natural
-            showcaseItem.style.height = '';
-            if (showcaseContainer) {
-                showcaseContainer.style.height = '';
-            }
-        }
     } catch (err) {
         console.warn('adjustTextareaHeight error', err);
     }
 }
-
 
 // Debounce utility
 function debounce(func, wait) {
