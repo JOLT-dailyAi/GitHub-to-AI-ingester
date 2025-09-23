@@ -527,7 +527,8 @@ body {
     transform: scale(0.85);
     transform-origin: top left;
     width: 117.65%;
-    overflow: hidden !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
     box-sizing: border-box;
     white-space: nowrap;
 }
@@ -542,7 +543,7 @@ body {
     }
     
     .showcase-item textarea {
-        white-space: pre-wrap;
+        white-space: pre;
         transform: scale(0.8);
         width: 125%;
         font-size: 0.7rem;
@@ -555,7 +556,7 @@ body {
     }
     
     .showcase-item textarea {
-        white-space: pre-wrap;
+        white-space: pre;
         transform: scale(0.75);
         width: 133.33%;
         font-size: 0.65rem;
