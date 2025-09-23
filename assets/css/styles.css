@@ -449,17 +449,17 @@ body {
     text-align: center;
 }
 
-/* Showcase Container - DESKTOP BEHAVIOR */
+/* Ensure the container can shrink to fit content */
 .showcase-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 2rem;
     position: relative;
-    overflow: hidden;
-    /* Let container size naturally to content - no height constraints */
+    overflow: visible; /* Changed from hidden to visible */
+    /* Let the container size naturally to its content */
 }
 
-/* Showcase Item - DESKTOP BEHAVIOR */
+/* Update the showcase-item to support dynamic height */
 .showcase-item {
     background-color: #161b22;
     border: 1px solid #30363d;
@@ -468,10 +468,11 @@ body {
     display: none;
     width: 100%;
     max-width: 1200px;
-    min-height: 400px; /* Desktop baseline minimum */
     margin: 0 auto;
-    /* Height controlled dynamically by JavaScript */
-    transition: height 0.3s ease;
+    /* Remove fixed min-height - let JavaScript control the height */
+    /* min-height: 400px; - REMOVED */
+    /* Height will be set dynamically by JavaScript */
+    transition: height 0.3s ease; /* Smooth height transitions */
 }
 
 .showcase-item.active {
@@ -491,7 +492,7 @@ body {
     padding: 1rem;
     background-color: #21262d;
     border-bottom: 1px solid #30363d;
-    height: 60px; /* Fixed header height */
+    height: 60px;
     flex-shrink: 0;
 }
 
@@ -517,10 +518,10 @@ body {
     border-color: #1f6feb;
 }
 
-/* Showcase Textarea - DESKTOP BEHAVIOR */
+/* Keep textarea exactly as it is - don't change the scaling */
 .showcase-item textarea {
     width: 100%;
-    min-height: 80px; /* Desktop baseline */
+    min-height: 80px;
     padding: 1rem;
     background-color: #0d1117;
     color: #e6edf3;
@@ -529,13 +530,12 @@ body {
     font-size: 0.75rem;
     line-height: 1.4;
     resize: none;
-    transform: scale(0.85); /* Desktop scale */
+    transform: scale(0.85); /* Keep the scale */
     transform-origin: top left;
-    width: 117.65%; /* Desktop adjusted width */
+    width: 117.65%; /* Keep the adjusted width */
     overflow: hidden !important;
     box-sizing: border-box;
-    white-space: nowrap; /* Prevent text wrapping */
-    /* Height controlled by JavaScript adjustTextareaHeight() */
+    /* Height will be controlled by JavaScript */
 }
 
 .social-icon {
@@ -606,7 +606,6 @@ body {
     }
 }
 
-/* MOBILE 768px - FORCE EXACT CONTAINER MATCHING */
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
@@ -634,47 +633,15 @@ body {
         width: 280px;
     }
     
-    /* FORCE EXACT CONTAINER HEIGHTS - NO BLANK SPACE */
-    .showcase-container {
-        height: auto !important;
-        min-height: auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-        overflow: visible !important;
-    }
-    
-    .showcase-item {
-        height: auto !important;
-        min-height: auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
-    
-    .showcase-item.active {
-        display: flex !important;
-        flex-direction: column !important;
-        height: auto !important;
-        min-height: auto !important;
-    }
-    
-    .showcase-header {
-        flex-shrink: 0 !important;
-        height: 60px !important;
-    }
-    
     .showcase-item textarea {
-        min-height: 80px !important;
-        height: auto !important;
+        height: 300px;
         font-size: 0.7rem;
         transform: scale(0.8);
         width: 125%;
-        white-space: nowrap;
-        flex-grow: 0 !important;
-        flex-shrink: 0 !important;
+        height: 375px;
     }
 }
 
-/* MOBILE 480px - FORCE EXACT CONTAINER MATCHING */
 @media (max-width: 480px) {
     .header {
         padding: 1rem 0.5rem;
@@ -696,43 +663,11 @@ body {
         width: 250px;
     }
     
-    /* FORCE EXACT CONTAINER HEIGHTS - NO BLANK SPACE */
-    .showcase-container {
-        height: auto !important;
-        min-height: auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-        overflow: visible !important;
-    }
-    
-    .showcase-item {
-        height: auto !important;
-        min-height: auto !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
-    
-    .showcase-item.active {
-        display: flex !important;
-        flex-direction: column !important;
-        height: auto !important;
-        min-height: auto !important;
-    }
-    
-    .showcase-header {
-        flex-shrink: 0 !important;
-        height: 60px !important;
-    }
-    
     .showcase-item textarea {
-        min-height: 80px !important;
-        height: auto !important;
         font-size: 0.65rem;
         transform: scale(0.75);
         width: 133.33%;
-        white-space: nowrap;
-        flex-grow: 0 !important;
-        flex-shrink: 0 !important;
+        height: 400px;
     }
 }
 
