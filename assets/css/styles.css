@@ -527,10 +527,6 @@ body {
     transition: all 0.2s ease;
 }
 
-.copy-btn-text {
-        display: none;                  /* Hide text, keep arrows only */
-    }
-
 .copy-btn:hover {
     background-color: #30363d;
     border-color: #1f6feb;
