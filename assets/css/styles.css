@@ -449,17 +449,17 @@ body {
     text-align: center;
 }
 
-/* Ensure the container can shrink to fit content */
+/* Showcase Container - DESKTOP BEHAVIOR */
 .showcase-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 2rem;
     position: relative;
-    overflow: visible; /* Changed from hidden to visible */
-    /* Let the container size naturally to its content */
+    overflow: hidden;
+    /* Let container size naturally to content - no height constraints */
 }
 
-/* Update the showcase-item to support dynamic height */
+/* Showcase Item - DESKTOP BEHAVIOR */
 .showcase-item {
     background-color: #161b22;
     border: 1px solid #30363d;
@@ -468,11 +468,10 @@ body {
     display: none;
     width: 100%;
     max-width: 1200px;
+    min-height: 400px; /* Desktop baseline minimum */
     margin: 0 auto;
-    /* Remove fixed min-height - let JavaScript control the height */
-    /* min-height: 400px; - REMOVED */
-    /* Height will be set dynamically by JavaScript */
-    transition: height 0.3s ease; /* Smooth height transitions */
+    /* Height controlled dynamically by JavaScript */
+    transition: height 0.3s ease;
 }
 
 .showcase-item.active {
@@ -492,7 +491,7 @@ body {
     padding: 1rem;
     background-color: #21262d;
     border-bottom: 1px solid #30363d;
-    height: 60px;
+    height: 60px; /* Fixed header height */
     flex-shrink: 0;
 }
 
@@ -518,10 +517,10 @@ body {
     border-color: #1f6feb;
 }
 
-/* Keep textarea exactly as it is - don't change the scaling */
+/* Showcase Textarea - DESKTOP BEHAVIOR */
 .showcase-item textarea {
     width: 100%;
-    min-height: 80px;
+    min-height: 80px; /* Desktop baseline */
     padding: 1rem;
     background-color: #0d1117;
     color: #e6edf3;
@@ -530,13 +529,13 @@ body {
     font-size: 0.75rem;
     line-height: 1.4;
     resize: none;
-    transform: scale(0.85); /* Keep the scale */
+    transform: scale(0.85); /* Desktop scale */
     transform-origin: top left;
-    width: 117.65%; /* Keep the adjusted width */
+    width: 117.65%; /* Desktop adjusted width */
     overflow: hidden !important;
     box-sizing: border-box;
-    /* Height will be controlled by JavaScript */
-    white-space: nowrap; /* ADD THIS LINE - prevents text wrapping */
+    white-space: nowrap; /* Prevent text wrapping */
+    /* Height controlled by JavaScript adjustTextareaHeight() */
 }
 
 .social-icon {
@@ -607,6 +606,7 @@ body {
     }
 }
 
+/* MOBILE 768px - FIXED TO MATCH DESKTOP BEHAVIOR */
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
@@ -634,25 +634,30 @@ body {
         width: 280px;
     }
     
+    /* TEXTAREA - Same as desktop but scaled */
     .showcase-item textarea {
-        min-height: 80px; /* Use min-height instead of fixed height */
+        min-height: 80px; /* Same baseline as desktop */
         font-size: 0.7rem;
-        transform: scale(0.8);
-        width: 125%;
+        transform: scale(0.8); /* Mobile scale */
+        width: 125%; /* Mobile adjusted width */
         white-space: nowrap; /* Prevent text wrapping */
+        /* Height controlled by JavaScript - NO fixed heights */
     }
     
-    /* Container height matching for mobile */
+    /* CONTAINER - Same behavior as desktop */
     .showcase-container {
-        min-height: calc(80px * 0.8 + 60px);
+        overflow: hidden; /* Same as desktop */
+        /* No height constraints - let content determine size */
     }
     
-    .showcase-item.active {
-        min-height: calc(80px * 0.8 + 60px);
-        height: fit-content;
+    /* ITEM - Scaled desktop minimum */
+    .showcase-item {
+        min-height: calc(400px * 0.8); /* 320px - proportional to scale */
+        /* Height controlled by JavaScript - NO fixed heights */
     }
 }
 
+/* MOBILE 480px - FIXED TO MATCH DESKTOP BEHAVIOR */
 @media (max-width: 480px) {
     .header {
         padding: 1rem 0.5rem;
@@ -674,22 +679,26 @@ body {
         width: 250px;
     }
     
+    /* TEXTAREA - Same as desktop but scaled */
     .showcase-item textarea {
+        min-height: 80px; /* Same baseline as desktop */
         font-size: 0.65rem;
-        transform: scale(0.75);
-        width: 133.33%;
-        min-height: 80px; /* Use min-height instead of fixed height */
+        transform: scale(0.75); /* Smaller mobile scale */
+        width: 133.33%; /* Smaller mobile adjusted width */
         white-space: nowrap; /* Prevent text wrapping */
+        /* Height controlled by JavaScript - NO fixed heights */
     }
     
-    /* Container height matching for smaller mobile */
+    /* CONTAINER - Same behavior as desktop */
     .showcase-container {
-        min-height: calc(80px * 0.75 + 60px);
+        overflow: hidden; /* Same as desktop */
+        /* No height constraints - let content determine size */
     }
     
-    .showcase-item.active {
-        min-height: calc(80px * 0.75 + 60px);
-        height: fit-content;
+    /* ITEM - Scaled desktop minimum */
+    .showcase-item {
+        min-height: calc(400px * 0.75); /* 300px - proportional to scale */
+        /* Height controlled by JavaScript - NO fixed heights */
     }
 }
 
