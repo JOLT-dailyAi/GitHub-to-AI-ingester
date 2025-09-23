@@ -111,7 +111,6 @@ function initializeShowcase() {
     updateShowcaseDisplay();
 }
 
-// Update the updateShowcaseDisplay function to use the new container adjustment
 function updateShowcaseDisplay() {
     // Hide all items
     showcaseItems.forEach(item => {
@@ -122,17 +121,14 @@ function updateShowcaseDisplay() {
     if (filteredItems.length > 0) {
         filteredItems[currentShowcaseIndex].classList.add('active');
 
-        // After making active, adjust heights
+        // Adjust heights after a slight delay to ensure DOM updates
         setTimeout(() => {
             try {
                 const activeItem = filteredItems[currentShowcaseIndex];
                 if (activeItem) {
                     const textarea = activeItem.querySelector('textarea');
                     if (textarea) {
-                        // First adjust textarea content height
                         adjustTextareaHeight(textarea);
-                        
-                        // Then adjust container to match the scaled textarea
                         adjustContainerToTextarea(activeItem);
                     }
                 }
@@ -152,7 +148,7 @@ function updateShowcaseDisplay() {
         if (prevBtn) prevBtn.disabled = true;
         if (nextBtn) nextBtn.disabled = true;
     }
-} 
+}
 
 function showPreviousShowcase() {
     if (currentShowcaseIndex > 0) {
@@ -322,6 +318,7 @@ async function loadShowcaseFiles() {
                             const textarea = item.querySelector('textarea');
                             if (textarea) {
                                 adjustTextareaHeight(textarea);
+                                adjustContainerToTextarea(item);
                             }
                         }
                     });
@@ -583,24 +580,19 @@ function copyToClipboard(textareaId) {
     }
 }
 
-// -------------------------
-// Simplified Height Function - Let CSS Handle Natural Sizing
-// -------------------------
-// Simplified Height Function - Let CSS Handle Natural Sizing
 function adjustTextareaHeight(el) {
     if (!el) return;
     try {
         el.style.height = 'auto';
         const needed = el.scrollHeight;
         if (needed && needed > 0) {
-            el.style.height = needed + 'px';
+            el.style.height = Math.max(needed, 80) + 'px';
         }
     } catch (err) {
         console.warn('adjustTextareaHeight error', err);
     }
 }
 
-// NEW: Add function to adjust container height to match scaled textarea
 function adjustContainerToTextarea(showcaseItem) {
     if (!showcaseItem) return;
     
@@ -609,16 +601,18 @@ function adjustContainerToTextarea(showcaseItem) {
         const header = showcaseItem.querySelector('.showcase-header');
         
         if (textarea && header) {
-            // Get the actual height of the textarea
-            const textareaHeight = textarea.offsetHeight;
-            const headerHeight = header.offsetHeight || 60; // fallback to CSS value
+            textarea.style.height = 'auto';
+            let textareaHeight = textarea.scrollHeight;
+            textareaHeight = Math.max(textareaHeight, 80);
+            textarea.style.height = textareaHeight + 'px';
             
-            // Account for the 0.85 scale - the visual height is smaller
-            const scaledTextareaHeight = textareaHeight * 0.85;
+            let scaleFactor = 0.85;
+            if (window.innerWidth <= 768) scaleFactor = 0.8;
+            if (window.innerWidth <= 480) scaleFactor = 0.75;
             
-            // Set the container height to header + scaled textarea height + padding
-            const totalHeight = headerHeight + scaledTextareaHeight + 2; // 2px for borders
-            
+            const scaledTextareaHeight = textareaHeight * scaleFactor;
+            const headerHeight = header.offsetHeight || 60;
+            const totalHeight = headerHeight + scaledTextareaHeight + 2;
             showcaseItem.style.height = totalHeight + 'px';
         }
     } catch (err) {
