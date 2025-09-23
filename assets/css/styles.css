@@ -424,7 +424,6 @@ body {
     padding: 0 2rem;
     position: relative;
     overflow: hidden;
-    height: auto; /* Changed from no height constraint */
 }
 
 .showcase-item {
@@ -436,14 +435,17 @@ body {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    /* Remove min-height constraint - let it be dynamic */
-    height: auto;
+    /* Remove all height constraints */
+    height: fit-content;
+    min-height: unset;
+    /* Remove any padding that might create blank space */
+    padding: 0;
 }
 
 .showcase-item.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
     animation: fadeIn 0.3s ease-in-out;
-    /* Dynamic height will be set by JavaScript */
 }
 
 @keyframes fadeIn {
@@ -458,7 +460,7 @@ body {
     padding: 1rem;
     background-color: #21262d;
     border-bottom: 1px solid #30363d;
-    height: 60px; /* Fixed header height */
+    height: 60px;
     flex-shrink: 0;
 }
 
@@ -486,7 +488,8 @@ body {
 
 .showcase-item textarea {
     width: 100%;
-    min-height: 80px; /* Minimal baseline height - FIXED */
+    min-height: 80px;
+    /* Remove padding to eliminate extra space */
     padding: 1rem;
     background-color: #0d1117;
     color: #e6edf3;
@@ -494,13 +497,15 @@ body {
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
     font-size: 0.75rem;
     line-height: 1.4;
-    resize: none; /* Disable manual resize */
+    resize: none;
     transform: scale(0.85);
     transform-origin: top left;
     width: 117.65%;
-    overflow: hidden !important; /* Force no scrollbar */
+    overflow: hidden !important;
     box-sizing: border-box;
-    /* Height controlled by JavaScript adjustTextareaHeight() */
+    /* Remove any margin that could create blank space */
+    margin: 0;
+    flex: 1;
 }
 
 .social-icon {
