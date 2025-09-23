@@ -606,7 +606,7 @@ body {
     }
 }
 
-/* MOBILE 768px - FIXED TO MATCH DESKTOP BEHAVIOR */
+/* MOBILE 768px - FORCE EXACT CONTAINER MATCHING */
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
@@ -634,30 +634,47 @@ body {
         width: 280px;
     }
     
-    /* TEXTAREA - Same as desktop but scaled */
-    .showcase-item textarea {
-        min-height: 80px; /* Same baseline as desktop */
-        font-size: 0.7rem;
-        transform: scale(0.8); /* Mobile scale */
-        width: 125%; /* Mobile adjusted width */
-        white-space: nowrap; /* Prevent text wrapping */
-        /* Height controlled by JavaScript - NO fixed heights */
-    }
-    
-    /* CONTAINER - Same behavior as desktop */
+    /* FORCE EXACT CONTAINER HEIGHTS - NO BLANK SPACE */
     .showcase-container {
-        overflow: hidden; /* Same as desktop */
-        /* No height constraints - let content determine size */
+        height: auto !important;
+        min-height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: visible !important;
     }
     
-    /* ITEM - Scaled desktop minimum */
     .showcase-item {
-        min-height: calc(400px * 0.8); /* 320px - proportional to scale */
-        /* Height controlled by JavaScript - NO fixed heights */
+        height: auto !important;
+        min-height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .showcase-item.active {
+        display: flex !important;
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: auto !important;
+    }
+    
+    .showcase-header {
+        flex-shrink: 0 !important;
+        height: 60px !important;
+    }
+    
+    .showcase-item textarea {
+        min-height: 80px !important;
+        height: auto !important;
+        font-size: 0.7rem;
+        transform: scale(0.8);
+        width: 125%;
+        white-space: nowrap;
+        flex-grow: 0 !important;
+        flex-shrink: 0 !important;
     }
 }
 
-/* MOBILE 480px - FIXED TO MATCH DESKTOP BEHAVIOR */
+/* MOBILE 480px - FORCE EXACT CONTAINER MATCHING */
 @media (max-width: 480px) {
     .header {
         padding: 1rem 0.5rem;
@@ -679,26 +696,43 @@ body {
         width: 250px;
     }
     
-    /* TEXTAREA - Same as desktop but scaled */
-    .showcase-item textarea {
-        min-height: 80px; /* Same baseline as desktop */
-        font-size: 0.65rem;
-        transform: scale(0.75); /* Smaller mobile scale */
-        width: 133.33%; /* Smaller mobile adjusted width */
-        white-space: nowrap; /* Prevent text wrapping */
-        /* Height controlled by JavaScript - NO fixed heights */
-    }
-    
-    /* CONTAINER - Same behavior as desktop */
+    /* FORCE EXACT CONTAINER HEIGHTS - NO BLANK SPACE */
     .showcase-container {
-        overflow: hidden; /* Same as desktop */
-        /* No height constraints - let content determine size */
+        height: auto !important;
+        min-height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: visible !important;
     }
     
-    /* ITEM - Scaled desktop minimum */
     .showcase-item {
-        min-height: calc(400px * 0.75); /* 300px - proportional to scale */
-        /* Height controlled by JavaScript - NO fixed heights */
+        height: auto !important;
+        min-height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .showcase-item.active {
+        display: flex !important;
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: auto !important;
+    }
+    
+    .showcase-header {
+        flex-shrink: 0 !important;
+        height: 60px !important;
+    }
+    
+    .showcase-item textarea {
+        min-height: 80px !important;
+        height: auto !important;
+        font-size: 0.65rem;
+        transform: scale(0.75);
+        width: 133.33%;
+        white-space: nowrap;
+        flex-grow: 0 !important;
+        flex-shrink: 0 !important;
     }
 }
 
