@@ -32,6 +32,7 @@ const autocompleteDropdown = document.getElementById('autocompleteDropdown');
 
 // Showcase state
 let currentShowcaseIndex = 0;
+let showcaseItems = [];
 let filteredItems = [];
 let autocompleteData = [];
 
