@@ -152,6 +152,7 @@ function updateShowcaseDisplay() {
         if (prevBtn) prevBtn.disabled = true;
         if (nextBtn) nextBtn.disabled = true;
     }
+} 
 
 function showPreviousShowcase() {
     if (currentShowcaseIndex > 0) {
@@ -585,6 +586,7 @@ function copyToClipboard(textareaId) {
 // -------------------------
 // Simplified Height Function - Let CSS Handle Natural Sizing
 // -------------------------
+// Simplified Height Function - Let CSS Handle Natural Sizing
 function adjustTextareaHeight(el) {
     if (!el) return;
     try {
@@ -598,7 +600,7 @@ function adjustTextareaHeight(el) {
     }
 }
 
-/ NEW: Add function to adjust container height to match scaled textarea
+// NEW: Add function to adjust container height to match scaled textarea
 function adjustContainerToTextarea(showcaseItem) {
     if (!showcaseItem) return;
     
