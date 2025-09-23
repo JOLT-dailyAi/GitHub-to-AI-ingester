@@ -71,6 +71,15 @@ body {
         text-align: left; /* Switch to left when space gets tight */
         margin-right: 140px; /* Give space for the button */
     }
+    
+    #freeTrial {
+        font-size: 0;  /* Hide original text */
+    }
+    
+    #freeTrial::before {
+        content: "Free Trial";  /* Show shorter text */
+        font-size: 0.85rem;     /* Restore font size */
+    }
 }
 
 /* Further refinements for very small screens */
