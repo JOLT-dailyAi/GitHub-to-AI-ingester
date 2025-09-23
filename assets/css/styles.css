@@ -530,7 +530,7 @@ body {
     overflow-x: hidden !important;
     overflow-y: hidden !important;
     box-sizing: border-box;
-    white-space: nowrap;
+    white-space: pre;
 }
 
 @media (max-width: 768px) {
