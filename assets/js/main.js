@@ -115,20 +115,20 @@ function updateShowcaseDisplay() {
     // Hide all items and reset their heights
     showcaseItems.forEach(item => {
         item.classList.remove('active');
-        item.style.height = 'auto';
+        item.style.height = ''; // Remove any style height
     });
     
-    // Reset container height
+   // Reset container height
     const showcaseContainer = document.querySelector('.showcase-container');
     if (showcaseContainer) {
-        showcaseContainer.style.height = 'auto';
+        showcaseContainer.style.height = '';
     }
     
     // Show current item if exists
     if (filteredItems.length > 0) {
         filteredItems[currentShowcaseIndex].classList.add('active');
 
-        // AFTER making active, adjust the textarea heights and container heights
+        // AFTER making active, adjust only the textarea height
         setTimeout(() => {
             try {
                 const activeItem = filteredItems[currentShowcaseIndex];
@@ -589,6 +589,7 @@ function copyToClipboard(textareaId) {
 // -------------------------
 // Dynamic Height Functions
 // -------------------------
+// Simplified approach - just remove the artificial height setting
 function adjustTextareaHeight(el) {
     if (!el) return;
     try {
@@ -596,35 +597,24 @@ function adjustTextareaHeight(el) {
         const needed = el.scrollHeight;
         if (needed && needed > 0) {
             el.style.height = needed + 'px';
-            adjustContainerHeightNatural(el);
+        }
+        
+        // Remove all artificial height constraints - let CSS handle it naturally
+        const showcaseItem = el.closest('.showcase-item');
+        const showcaseContainer = document.querySelector('.showcase-container');
+        
+        if (showcaseItem && showcaseItem.classList.contains('active')) {
+            // Remove the style height completely - let it be natural
+            showcaseItem.style.height = '';
+            if (showcaseContainer) {
+                showcaseContainer.style.height = '';
+            }
         }
     } catch (err) {
         console.warn('adjustTextareaHeight error', err);
     }
 }
 
-function adjustContainerHeightNatural(textarea) {
-    try {
-        const showcaseItem = textarea.closest('.showcase-item');
-        const showcaseContainer = document.querySelector('.showcase-container');
-        
-        if (showcaseItem && showcaseItem.classList.contains('active')) {
-            // Let it size naturally first
-            showcaseItem.style.height = 'fit-content';
-            
-            setTimeout(() => {
-                const naturalHeight = showcaseItem.offsetHeight;
-                showcaseItem.style.height = naturalHeight + 'px';
-                
-                if (showcaseContainer) {
-                    showcaseContainer.style.height = naturalHeight + 'px';
-                }
-            }, 10);
-        }
-    } catch (err) {
-        console.warn('Error adjusting container heights naturally:', err);
-    }
-}
 
 // Debounce utility
 function debounce(func, wait) {
