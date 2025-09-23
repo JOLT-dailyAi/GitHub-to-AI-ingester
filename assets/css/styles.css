@@ -536,7 +536,7 @@ body {
     overflow: hidden !important;
     box-sizing: border-box;
     /* Height will be controlled by JavaScript */
-        white-space: nowrap; /* Prevent text wrapping */
+    white-space: nowrap; /* Prevent text wrapping */
 }
 
 .social-icon {
@@ -635,11 +635,11 @@ body {
     }
     
     .showcase-item textarea {
+        white-space: pre-wrap; /* Ensure wrapping on smaller screens */
         height: 300px;
         font-size: 0.7rem;
         transform: scale(0.8);
         width: 125%;
-        white-space: nowrap; /* Prevent text wrapping */
     }
 }
 
@@ -665,11 +665,11 @@ body {
     }
     
     .showcase-item textarea {
+        white-space: pre-wrap; /* Ensure wrapping on smaller screens */
         font-size: 0.65rem;
         transform: scale(0.75);
         width: 133.33%;
         height: 300px;
-        white-space: nowrap; /* Prevent text wrapping */
     }
 }
 
