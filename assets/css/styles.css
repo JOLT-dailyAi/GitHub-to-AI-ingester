@@ -417,16 +417,17 @@ body {
     text-align: center;
 }
 
-/* Updated Showcase Container - Remove fixed constraints */
+/* Ensure the container can shrink to fit content */
 .showcase-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 2rem;
     position: relative;
-    overflow: hidden;
-    /* No height constraints - let it be natural */
+    overflow: visible; /* Changed from hidden to visible */
+    /* Let the container size naturally to its content */
 }
 
+/* Update the showcase-item to support dynamic height */
 .showcase-item {
     background-color: #161b22;
     border: 1px solid #30363d;
@@ -436,7 +437,10 @@ body {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    /* No height constraints at all */
+    /* Remove fixed min-height - let JavaScript control the height */
+    /* min-height: 400px; - REMOVED */
+    /* Height will be set dynamically by JavaScript */
+    transition: height 0.3s ease; /* Smooth height transitions */
 }
 
 .showcase-item.active {
@@ -482,8 +486,9 @@ body {
     border-color: #1f6feb;
 }
 
+/* Keep textarea exactly as it is - don't change the scaling */
 .showcase-item textarea {
-    width: 117.65%; /* Keep your zoom scaling */
+    width: 100%;
     min-height: 80px;
     padding: 1rem;
     background-color: #0d1117;
@@ -493,13 +498,12 @@ body {
     font-size: 0.75rem;
     line-height: 1.4;
     resize: none;
-    transform: scale(0.85);
+    transform: scale(0.85); /* Keep the scale */
     transform-origin: top left;
+    width: 117.65%; /* Keep the adjusted width */
     overflow: hidden !important;
     box-sizing: border-box;
-    margin: 0;
-    display: block;
-    /* The key: let the textarea determine the container height naturally */
+    /* Height will be controlled by JavaScript */
 }
 
 .social-icon {
