@@ -4,8 +4,9 @@ class FreeTrialManager {
             SHOWCASE_JSON_URL: 'https://raw.githubusercontent.com/JOLT-dailyAi/GitHub-to-AI-ingester/refs/heads/main/data/showcase/Showcase.json',
             VPN_DETECTION_TIMEOUT: 3000,
             KNOWN_VPN_ASNS: [
-                'AS13335', 'AS16509', 'AS8075', 'AS15169',
-                'AS396982', 'AS63023', 'AS397444', 'AS54600'
+                'AS13335', 'AS16509', 'AS8075', 'AS15169', // Cloudflare, Amazon, Microsoft, Google
+                'AS396982', 'AS63023', 'AS397444', 'AS54600', // VPN providers
+                'AS20473', 'AS26496', 'AS16276', 'AS24940' // Additional VPN ASNs (Choopa, GoDaddy, OVH, Hetzner)
             ],
             DISPOSABLE_EMAIL_DOMAINS: [
                 '10minutemail.com', 'tempmail.org', 'guerrillamail.com', 'mailinator.com',
@@ -56,7 +57,6 @@ class FreeTrialManager {
         const freeTrialBtn = document.getElementById('freeTrial');
         if (!freeTrialBtn) return;
 
-        // Reset VPN state for fresh check
         this.state.vpnDetected = false;
 
         freeTrialBtn.textContent = 'Checking connection...';
@@ -64,7 +64,6 @@ class FreeTrialManager {
         freeTrialBtn.classList.add('btn-loading');
 
         try {
-            // Clear cache to prevent stale VPN results
             if ('caches' in window) {
                 await caches.delete('freetrial-cache');
             }
@@ -118,7 +117,7 @@ class FreeTrialManager {
 
     handleVPNDetected(freeTrialBtn) {
         this.state.vpnDetected = true;
-        freeTrialBtn.textContent = 'VPN Detected - Please disable VPN';
+        freeTrialBtn.textContent = 'Please Disable VPN';
         freeTrialBtn.classList.remove('btn-loading');
         freeTrialBtn.classList.add('btn-blocked');
         freeTrialBtn.disabled = true;
@@ -144,14 +143,22 @@ class FreeTrialManager {
                 ip: ipVPN.status === 'fulfilled' ? ipVPN.value : false
             };
 
-            const isVPN = results.webrtc || results.timezone || results.ip;
-            console.log('VPN detection results:', results);
+            console.log('VPN detection results:', {
+                webrtc: results.webrtc,
+                timezone: results.timezone,
+                ip: results.ip,
+                details: {
+                    webrtc: webrtcVPN.reason || 'N/A',
+                    timezone: timezoneVPN.reason || 'N/A',
+                    ip: ipVPN.reason || 'N/A'
+                }
+            });
 
-            return isVPN;
+            return results.webrtc || results.timezone || results.ip;
         } catch (error) {
             console.error('VPN detection error:', error);
-            this.showNotification('VPN detection failed. Please disable VPN and try again.', 'error', 5000);
-            return true;
+            this.showNotification('VPN detection failed. Assuming no VPN.', 'warning', 5000);
+            return false; // Allow trial on error
         }
     }
 
@@ -160,7 +167,10 @@ class FreeTrialManager {
             try {
                 return await fn();
             } catch (error) {
-                if (i === retries) throw error;
+                if (i === retries) {
+                    console.warn(`Retry ${i+1} failed:`, error);
+                    throw error;
+                }
                 await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
             }
         }
@@ -169,6 +179,7 @@ class FreeTrialManager {
     detectVPNWebRTC() {
         return new Promise((resolve) => {
             if (!window.RTCPeerConnection) {
+                console.log('WebRTC disabled or unavailable');
                 resolve(false);
                 return;
             }
@@ -192,12 +203,19 @@ class FreeTrialManager {
             };
 
             pc.createDataChannel('test');
-            pc.createOffer().then(offer => pc.setLocalDescription(offer)).catch(() => resolve(false));
+            pc.createOffer().then(offer => pc.setLocalDescription(offer)).catch(() => {
+                console.log('WebRTC offer creation failed');
+                resolve(false);
+            });
 
             setTimeout(() => {
                 pc.close();
+                if (publicIPs.length === 0 && localIPs.length === 0) {
+                    console.log('No IPs detected by WebRTC');
+                    resolve(false);
+                    return;
+                }
                 const uniquePublicIPs = [...new Set(publicIPs)];
-                // Stricter check: VPN likely if multiple public IPs or public IP without local IP
                 const suspiciousVPN = uniquePublicIPs.length > 1 || 
                                     (uniquePublicIPs.length === 1 && localIPs.length === 0);
                 resolve(suspiciousVPN);
@@ -212,12 +230,16 @@ class FreeTrialManager {
                 signal: AbortSignal.timeout(5000)
             });
 
-            if (!response.ok) return false;
+            if (!response.ok) {
+                console.warn('Timezone API failed:', response.status);
+                return false;
+            }
 
             const location = await response.json();
-            const ipTimezone = location.timezone;
-
-            return userTimezone !== ipTimezone;
+            const ipTimezone = location.timezone || userTimezone;
+            const isMismatch = userTimezone !== ipTimezone;
+            console.log('Timezone check:', { userTimezone, ipTimezone, isMismatch });
+            return isMismatch;
         } catch (error) {
             console.error('Timezone VPN detection error:', error);
             return false;
@@ -230,19 +252,23 @@ class FreeTrialManager {
                 signal: AbortSignal.timeout(5000)
             });
 
-            if (!response.ok) return false;
+            if (!response.ok) {
+                console.warn('IP API failed:', response.status);
+                return false;
+            }
 
             const data = await response.json();
-
+            const org = data.org ? data.org.toLowerCase() : '';
             const vpnIndicators = [
-                data.org && data.org.toLowerCase().includes('vpn'),
-                data.org && data.org.toLowerCase().includes('proxy'),
-                data.org && data.org.toLowerCase().includes('hosting'),
-                data.org && data.org.toLowerCase().includes('datacenter'),
+                org.includes('vpn'),
+                org.includes('proxy'),
+                org.includes('hosting'),
+                org.includes('datacenter'),
                 data.asn && this.config.KNOWN_VPN_ASNS.includes(data.asn),
                 data.country_code && data.country_code !== this.getExpectedCountryFromTimezone()
             ];
 
+            console.log('IP check:', { org, asn: data.asn, country: data.country_code, vpnIndicators });
             return vpnIndicators.some(indicator => indicator === true);
         } catch (error) {
             console.error('Known IP VPN detection error:', error);
@@ -786,9 +812,18 @@ class FreeTrialManager {
 
     getExpectedCountryFromTimezone() {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        if (timezone.includes('America')) return 'US';
-        if (timezone.includes('Europe')) return 'EU';
-        if (timezone.includes('Asia/Kolkata')) return 'IN';
+        const timezoneMap = {
+            'America': 'US',
+            'Europe': 'EU',
+            'Asia/Kolkata': 'IN',
+            'Asia': 'AS',
+            'Australia': 'AU',
+            'Africa': 'AF',
+            'Pacific': 'PA'
+        };
+        for (const [key, value] of Object.entries(timezoneMap)) {
+            if (timezone.includes(key)) return value;
+        }
         return 'Unknown';
     }
 
@@ -813,7 +848,7 @@ class FreeTrialManager {
         notification.textContent = message;
         notification.className = `free-trial-notification ${type} show`;
         setTimeout(() => {
-            notification.classList.remove('show');
+            notification.className = `free-trial-notification ${type}`;
         }, duration);
     }
 
