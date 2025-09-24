@@ -1,53 +1,54 @@
-// CORS-free VPN Detection with fallback methods
+// Enhanced VPN Detection with proper fallback methods and better accuracy
 class ImprovedVPNDetection {
     constructor() {
         this.config = {
-            // More specific VPN ASNs (removed major cloud providers)
-            KNOWN_VPN_ASNS: [
-                'AS396982', 'AS63023', 'AS397444', 'AS54600', // Specific VPN providers
-                'AS174', 'AS3356', 'AS1299' // Known VPN transit providers
-            ],
-            // Reduced timeout for faster user experience
-            VPN_DETECTION_TIMEOUT: 2000,
-            // Confidence scoring system
-            VPN_CONFIDENCE_THRESHOLD: 60 // Out of 100
+            VPN_DETECTION_TIMEOUT: 3000,
+            VPN_CONFIDENCE_THRESHOLD: 70, // Increased threshold for better accuracy
+            MAX_RETRIES: 2
         };
         
         this.detectionResults = {
-            webrtc: { detected: false, confidence: 0, reason: '' },
-            dns: { detected: false, confidence: 0, reason: '' },
-            behavioral: { detected: false, confidence: 0, reason: '' }
+            webrtc: { detected: false, confidence: 0, reason: '', details: {} },
+            timing: { detected: false, confidence: 0, reason: '', details: {} },
+            behavioral: { detected: false, confidence: 0, reason: '', details: {} },
+            network: { detected: false, confidence: 0, reason: '', details: {} }
         };
     }
 
     async detectVPN() {
         try {
-            // Run detections in parallel - removed API-dependent methods
-            const [webrtcResult, dnsResult, behavioralResult] = await Promise.allSettled([
-                this.detectVPNWebRTCImproved(),
-                this.detectVPNDNSBehavior(),
-                this.detectVPNBehavioral()
-            ]);
+            console.log('🔍 Starting VPN detection...');
+            
+            // Run detections in parallel with proper error handling
+            const detectionPromises = [
+                this.detectVPNWebRTC(),
+                this.detectVPNTiming(),
+                this.detectVPNBehavioral(),
+                this.detectVPNNetwork()
+            ];
 
-            // Process results with confidence scoring
-            this.processDetectionResult(webrtcResult, 'webrtc');
-            this.processDetectionResult(dnsResult, 'dns');
-            this.processDetectionResult(behavioralResult, 'behavioral');
+            const results = await Promise.allSettled(detectionPromises);
+            
+            // Process results
+            this.processDetectionResult(results[0], 'webrtc');
+            this.processDetectionResult(results[1], 'timing');
+            this.processDetectionResult(results[2], 'behavioral');
+            this.processDetectionResult(results[3], 'network');
 
             // Calculate overall confidence
             const totalConfidence = this.calculateOverallConfidence();
             
             console.log('VPN Detection Results:', {
                 confidence: totalConfidence,
+                threshold: this.config.VPN_CONFIDENCE_THRESHOLD,
                 details: this.detectionResults,
-                threshold: this.config.VPN_CONFIDENCE_THRESHOLD
+                isVPN: totalConfidence >= this.config.VPN_CONFIDENCE_THRESHOLD
             });
 
             return totalConfidence >= this.config.VPN_CONFIDENCE_THRESHOLD;
         } catch (error) {
             console.error('VPN detection error:', error);
-            // Fail open - don't block users on detection errors
-            return false;
+            return false; // Fail open
         }
     }
 
@@ -55,24 +56,41 @@ class ImprovedVPNDetection {
         if (result.status === 'fulfilled' && result.value) {
             this.detectionResults[method] = result.value;
         } else {
-            this.detectionResults[method] = { detected: false, confidence: 0, reason: 'detection_failed' };
+            this.detectionResults[method] = { 
+                detected: false, 
+                confidence: 0, 
+                reason: 'detection_failed',
+                error: result.reason?.message || 'unknown_error'
+            };
         }
     }
 
     calculateOverallConfidence() {
-        const weights = { webrtc: 0.5, dns: 0.3, behavioral: 0.2 };
+        // Improved weighting system
+        const weights = { 
+            webrtc: 0.4,    // Most reliable when it works
+            timing: 0.3,    // Good secondary indicator  
+            behavioral: 0.2, // Less reliable but useful
+            network: 0.1    // Supplementary
+        };
+        
         let totalConfidence = 0;
+        let totalWeight = 0;
 
         Object.keys(this.detectionResults).forEach(method => {
-            if (this.detectionResults[method].detected) {
-                totalConfidence += this.detectionResults[method].confidence * weights[method];
+            const result = this.detectionResults[method];
+            if (result.confidence > 0) {
+                totalConfidence += result.confidence * weights[method];
+                totalWeight += weights[method];
             }
         });
 
-        return Math.round(totalConfidence);
+        // Normalize based on actual contributing weights
+        return totalWeight > 0 ? Math.round(totalConfidence / totalWeight * 100) / 100 : 0;
     }
 
-    detectVPNWebRTCImproved() {
+    // Enhanced WebRTC detection with better analysis
+    detectVPNWebRTC() {
         return new Promise((resolve) => {
             if (!window.RTCPeerConnection) {
                 resolve({ detected: false, confidence: 0, reason: 'webrtc_unavailable' });
@@ -82,18 +100,25 @@ class ImprovedVPNDetection {
             const pc = new RTCPeerConnection({
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun.services.mozilla.com' }
                 ]
             });
 
             let localIPs = new Set();
             let publicIPs = new Set();
+            let candidateTypes = new Set();
             let candidateCount = 0;
+            let timeoutReached = false;
 
             pc.onicecandidate = (event) => {
-                if (event.candidate) {
+                if (event.candidate && !timeoutReached) {
                     candidateCount++;
-                    const ip = event.candidate.candidate.split(' ')[4];
+                    const parts = event.candidate.candidate.split(' ');
+                    const ip = parts[4];
+                    const type = parts[7]; // candidate type
+                    
+                    candidateTypes.add(type);
                     
                     if (this.isPrivateIP(ip)) {
                         localIPs.add(ip);
@@ -103,270 +128,441 @@ class ImprovedVPNDetection {
                 }
             };
 
+            pc.onicegatheringstatechange = () => {
+                if (pc.iceGatheringState === 'complete' && !timeoutReached) {
+                    this.analyzeWebRTCResults(resolve, {
+                        localIPs, publicIPs, candidateTypes, candidateCount
+                    });
+                    pc.close();
+                }
+            };
+
+            // Create data channel and offer
             pc.createDataChannel('test');
             pc.createOffer()
                 .then(offer => pc.setLocalDescription(offer))
-                .catch(() => resolve({ detected: false, confidence: 0, reason: 'offer_failed' }));
+                .catch(() => {
+                    resolve({ detected: false, confidence: 0, reason: 'offer_failed' });
+                    pc.close();
+                });
 
+            // Timeout fallback
             setTimeout(() => {
-                pc.close();
-                
-                // More sophisticated analysis
-                const publicIPCount = publicIPs.size;
-                const localIPCount = localIPs.size;
-                
-                let confidence = 0;
-                let reason = '';
-                let detected = false;
-
-                if (candidateCount === 0) {
-                    // No candidates - might be blocked/VPN
-                    confidence = 40;
-                    reason = 'no_candidates';
-                    detected = true;
-                } else if (publicIPCount > 2) {
-                    // Multiple public IPs - high VPN probability
-                    confidence = 85;
-                    reason = 'multiple_public_ips';
-                    detected = true;
-                } else if (publicIPCount === 1 && localIPCount === 0) {
-                    // Only public IP, no local - moderate VPN probability
-                    confidence = 60;
-                    reason = 'no_local_ip';
-                    detected = true;
-                } else if (localIPCount > 3) {
-                    // Too many local IPs - might indicate VPN tunneling
-                    confidence = 50;
-                    reason = 'excessive_local_ips';
-                    detected = true;
+                if (!timeoutReached) {
+                    timeoutReached = true;
+                    this.analyzeWebRTCResults(resolve, {
+                        localIPs, publicIPs, candidateTypes, candidateCount
+                    });
+                    pc.close();
                 }
-
-                resolve({ detected, confidence, reason, details: { publicIPCount, localIPCount, candidateCount } });
             }, this.config.VPN_DETECTION_TIMEOUT);
         });
     }
 
-    // DNS-based detection (CORS-free)
-    async detectVPNDNSBehavior() {
+    analyzeWebRTCResults(resolve, { localIPs, publicIPs, candidateTypes, candidateCount }) {
+        const publicIPCount = publicIPs.size;
+        const localIPCount = localIPs.size;
+        const hasRelay = candidateTypes.has('relay');
+        const hasHost = candidateTypes.has('host');
+        
+        let confidence = 0;
+        let reason = '';
+        let detected = false;
+
+        // More sophisticated analysis
+        if (candidateCount === 0) {
+            confidence = 30;
+            reason = 'no_ice_candidates';
+            detected = true;
+        } else if (!hasHost && hasRelay) {
+            confidence = 80;
+            reason = 'relay_only_candidates';
+            detected = true;
+        } else if (publicIPCount > 2) {
+            confidence = 75;
+            reason = 'multiple_public_ips';
+            detected = true;
+        } else if (publicIPCount === 1 && localIPCount === 0) {
+            confidence = 55;
+            reason = 'public_ip_no_local';
+            detected = true;
+        } else if (localIPCount === 0 && candidateCount > 0) {
+            confidence = 45;
+            reason = 'no_local_network';
+            detected = true;
+        } else if (this.hasVPNIPPattern([...publicIPs, ...localIPs])) {
+            confidence = 60;
+            reason = 'vpn_ip_pattern';
+            detected = true;
+        }
+
+        resolve({
+            detected,
+            confidence,
+            reason,
+            details: {
+                publicIPCount,
+                localIPCount,
+                candidateCount,
+                candidateTypes: [...candidateTypes],
+                hasRelay,
+                hasHost
+            }
+        });
+    }
+
+    // New timing-based detection method
+    async detectVPNTiming() {
         try {
-            const dnsTests = [
-                this.testDNSResolution('google.com'),
-                this.testDNSResolution('cloudflare.com'),
-                this.testDNSResolution('1.1.1.1')
+            const testDomains = [
+                'google.com',
+                'cloudflare.com', 
+                'amazon.com',
+                'microsoft.com'
             ];
 
-            const results = await Promise.allSettled(dnsTests);
-            const failedCount = results.filter(r => r.status === 'rejected').length;
+            const timingResults = await Promise.all(
+                testDomains.map(domain => this.measureConnectionTime(domain))
+            );
+
+            const validResults = timingResults.filter(r => r.success);
             
+            if (validResults.length < 2) {
+                return { detected: false, confidence: 0, reason: 'insufficient_timing_data' };
+            }
+
+            const times = validResults.map(r => r.time);
+            const avgTime = times.reduce((a, b) => a + b) / times.length;
+            const maxTime = Math.max(...times);
+            const variance = this.calculateVariance(times);
+
             let confidence = 0;
             let detected = false;
-            
-            if (failedCount >= 2) {
-                confidence = 40;
-                detected = true;
-            } else if (failedCount === 1) {
-                confidence = 20;
-                detected = true;
+            let reason = '';
+
+            // High average latency suggests VPN
+            if (avgTime > 200) {
+                confidence += 40;
+                reason += 'high_latency,';
             }
+
+            // High variance suggests routing through different servers
+            if (variance > 5000) {
+                confidence += 30;
+                reason += 'high_variance,';
+            }
+
+            // Very high max time
+            if (maxTime > 500) {
+                confidence += 20;
+                reason += 'extreme_latency,';
+            }
+
+            detected = confidence >= 30;
 
             return {
                 detected,
                 confidence,
-                reason: `dns_failures_${failedCount}`,
-                details: { failedCount, totalTests: dnsTests.length }
+                reason: reason.slice(0, -1) || 'timing_normal',
+                details: {
+                    avgTime: Math.round(avgTime),
+                    maxTime,
+                    variance: Math.round(variance),
+                    testCount: validResults.length
+                }
             };
         } catch (error) {
-            return { detected: false, confidence: 0, reason: 'dns_test_failed' };
+            return { detected: false, confidence: 0, reason: 'timing_test_failed' };
         }
     }
 
-    async testDNSResolution(domain) {
-        return new Promise((resolve, reject) => {
-            const start = performance.now();
-            fetch(`https://${domain}/favicon.ico`, { 
-                method: 'HEAD', 
+    async measureConnectionTime(domain) {
+        const start = performance.now();
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            await fetch(`https://${domain}/favicon.ico`, {
+                method: 'HEAD',
                 mode: 'no-cors',
-                signal: AbortSignal.timeout(3000)
-            })
-            .then(() => {
-                const duration = performance.now() - start;
-                resolve(duration);
-            })
-            .catch(reject);
-        });
+                cache: 'no-cache',
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            const time = performance.now() - start;
+            return { success: true, time, domain };
+        } catch (error) {
+            return { success: false, error: error.message, domain };
+        }
     }
 
-    // Behavioral detection (user agent, screen, etc.)
+    // Enhanced behavioral detection
     detectVPNBehavioral() {
         try {
             let confidence = 0;
             let indicators = [];
             
-            // Check for common VPN user agent patterns
+            // Check user agent
             const ua = navigator.userAgent.toLowerCase();
-            if (ua.includes('vpn') || ua.includes('proxy') || ua.includes('tor')) {
-                confidence += 60;
+            const suspiciousUA = ['vpn', 'proxy', 'tor', 'tunnel'].some(term => ua.includes(term));
+            if (suspiciousUA) {
+                confidence += 50;
                 indicators.push('suspicious_user_agent');
             }
 
-            // Check screen resolution patterns common with VPNs/VMs
-            const screenRatio = screen.width / screen.height;
-            if (screenRatio === 1.25 || screenRatio === 1.6) { // Common VM ratios
-                confidence += 20;
-                indicators.push('vm_screen_ratio');
-            }
+            // Check for headless indicators
+            const headlessIndicators = [
+                navigator.webdriver,
+                window.phantom,
+                window._phantom,
+                window.callPhantom,
+                window._selenium,
+                document.documentElement.getAttribute('webdriver'),
+                navigator.plugins.length === 0 && !this.isMobile()
+            ];
 
-            // Check for headless browser indicators
-            if (navigator.webdriver || window.phantom || window._phantom) {
-                confidence += 40;
+            if (headlessIndicators.some(indicator => indicator)) {
+                confidence += 35;
                 indicators.push('headless_browser');
             }
 
-            // Check timezone vs language mismatch
-            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const language = navigator.language;
-            if (this.isTimezoneLangMismatch(timezone, language)) {
-                confidence += 25;
-                indicators.push('timezone_lang_mismatch');
+            // Check timezone/language mismatch (improved)
+            const timezoneMismatch = this.checkTimezoneMismatch();
+            if (timezoneMismatch.suspicious) {
+                confidence += timezoneMismatch.confidence;
+                indicators.push('timezone_mismatch');
             }
 
-            const detected = confidence >= 30;
-            
+            // Check for VPN-typical screen resolutions
+            const screenSuspicious = this.checkSuspiciousScreen();
+            if (screenSuspicious) {
+                confidence += 15;
+                indicators.push('suspicious_screen');
+            }
+
+            // Check connection properties
+            const connectionSuspicious = this.checkConnectionProperties();
+            if (connectionSuspicious.suspicious) {
+                confidence += connectionSuspicious.confidence;
+                indicators.push('suspicious_connection');
+            }
+
+            const detected = confidence >= 25;
+
             return Promise.resolve({
                 detected,
-                confidence: Math.min(confidence, 80),
-                reason: indicators.join(',') || 'clean_behavioral',
-                details: { indicators, timezone, language }
+                confidence: Math.min(confidence, 85),
+                reason: indicators.join(',') || 'behavioral_normal',
+                details: { 
+                    indicators, 
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    language: navigator.language,
+                    screenRes: `${screen.width}x${screen.height}`,
+                    pluginCount: navigator.plugins.length
+                }
             });
         } catch (error) {
-            return Promise.resolve({ detected: false, confidence: 0, reason: 'behavioral_test_failed' });
+            return Promise.resolve({ 
+                detected: false, 
+                confidence: 0, 
+                reason: 'behavioral_test_failed',
+                error: error.message 
+            });
         }
     }
 
-    isTimezoneLangMismatch(timezone, language) {
-        // Basic timezone/language correlation check
-        const tzLangMap = {
-            'en': ['America/', 'Europe/London'],
-            'es': ['America/Mexico', 'Europe/Madrid'],
-            'fr': ['Europe/Paris', 'America/Montreal'],
-            'de': ['Europe/Berlin', 'Europe/Zurich'],
-            'ja': ['Asia/Tokyo'],
-            'zh': ['Asia/Shanghai', 'Asia/Hong_Kong'],
-            'ru': ['Europe/Moscow', 'Asia/Yekaterinburg']
-        };
+    // Simple network fingerprinting
+    async detectVPNNetwork() {
+        try {
+            let confidence = 0;
+            let indicators = [];
 
-        const baseLang = language.split('-')[0];
-        const expectedTzs = tzLangMap[baseLang];
+            // Test DNS resolution patterns
+            const dnsTest = await this.testDNSPatterns();
+            if (dnsTest.suspicious) {
+                confidence += dnsTest.confidence;
+                indicators.push('dns_pattern');
+            }
+
+            // Check if multiple requests show different apparent locations
+            // (This is a simplified version - real implementation would need more sophisticated testing)
+            const consistencyTest = await this.testLocationConsistency();
+            if (!consistencyTest.consistent) {
+                confidence += 25;
+                indicators.push('location_inconsistent');
+            }
+
+            return {
+                detected: confidence >= 20,
+                confidence,
+                reason: indicators.join(',') || 'network_normal',
+                details: { indicators, dnsTest, consistencyTest }
+            };
+        } catch (error) {
+            return { 
+                detected: false, 
+                confidence: 0, 
+                reason: 'network_test_failed' 
+            };
+        }
+    }
+
+    // Helper methods
+    hasVPNIPPattern(ips) {
+        const vpnPatterns = [
+            /^10\.8\./,     // Common OpenVPN range
+            /^10\.0\.0\./,  // Common VPN range
+            /^172\.16\./,   // Private range often used by VPNs
+            /^192\.168\.1[0-9][0-9]\./  // Unusual private ranges
+        ];
         
-        if (!expectedTzs) return false;
-        return !expectedTzs.some(tz => timezone.includes(tz));
+        return ips.some(ip => vpnPatterns.some(pattern => pattern.test(ip)));
+    }
+
+    checkTimezoneMismatch() {
+        try {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const language = navigator.language.split('-')[0];
+            
+            // Common timezone/language pairs
+            const commonPairs = {
+                'en': ['America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'Europe/London'],
+                'es': ['Europe/Madrid', 'America/Mexico_City', 'America/Argentina/Buenos_Aires'],
+                'fr': ['Europe/Paris', 'America/Montreal'],
+                'de': ['Europe/Berlin'],
+                'it': ['Europe/Rome'],
+                'pt': ['Europe/Lisbon', 'America/Sao_Paulo'],
+                'ru': ['Europe/Moscow'],
+                'ja': ['Asia/Tokyo'],
+                'ko': ['Asia/Seoul'],
+                'zh': ['Asia/Shanghai', 'Asia/Hong_Kong']
+            };
+
+            const expectedTimezones = commonPairs[language] || [];
+            const matches = expectedTimezones.some(tz => timezone.includes(tz));
+            
+            if (!matches && expectedTimezones.length > 0) {
+                return { suspicious: true, confidence: 30 };
+            }
+
+            return { suspicious: false, confidence: 0 };
+        } catch (error) {
+            return { suspicious: false, confidence: 0 };
+        }
+    }
+
+    checkSuspiciousScreen() {
+        const width = screen.width;
+        const height = screen.height;
+        const ratio = width / height;
+        
+        // Common VPN/VM screen resolutions
+        const suspiciousResolutions = [
+            { w: 800, h: 600 }, { w: 1024, h: 768 }, { w: 1280, h: 1024 }
+        ];
+        
+        return suspiciousResolutions.some(res => 
+            Math.abs(width - res.w) < 10 && Math.abs(height - res.h) < 10
+        ) || ratio === 1.25 || ratio === 1.6; // Common VM ratios
+    }
+
+    checkConnectionProperties() {
+        try {
+            // Check for connection API
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            
+            if (connection) {
+                // Suspicious connection types or unrealistic speeds
+                const suspiciousTypes = ['bluetooth', 'cellular', 'none'];
+                const type = connection.effectiveType || connection.type;
+                
+                if (suspiciousTypes.includes(type) && connection.downlink > 10) {
+                    return { suspicious: true, confidence: 20 };
+                }
+            }
+            
+            return { suspicious: false, confidence: 0 };
+        } catch (error) {
+            return { suspicious: false, confidence: 0 };
+        }
+    }
+
+    async testDNSPatterns() {
+        try {
+            // Test if DNS resolution times are unusually high or inconsistent
+            const dnsTests = ['8.8.8.8', '1.1.1.1', 'dns.google'].map(async (host) => {
+                const start = performance.now();
+                try {
+                    await fetch(`https://${host === '8.8.8.8' ? 'dns.google' : host === '1.1.1.1' ? 'cloudflare-dns.com' : host}/favicon.ico`, {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        signal: AbortSignal.timeout(3000)
+                    });
+                    return performance.now() - start;
+                } catch {
+                    return null;
+                }
+            });
+
+            const results = (await Promise.all(dnsTests)).filter(r => r !== null);
+            
+            if (results.length < 2) {
+                return { suspicious: false, confidence: 0 };
+            }
+
+            const avgTime = results.reduce((a, b) => a + b) / results.length;
+            
+            return {
+                suspicious: avgTime > 150,
+                confidence: avgTime > 150 ? Math.min(Math.floor(avgTime / 10), 30) : 0
+            };
+        } catch (error) {
+            return { suspicious: false, confidence: 0 };
+        }
+    }
+
+    async testLocationConsistency() {
+        // Simplified test - in real implementation you'd test multiple endpoints
+        // that might show different geographic responses
+        try {
+            const tests = [
+                fetch('https://httpbin.org/ip', { signal: AbortSignal.timeout(3000) }),
+                fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(3000) })
+            ];
+            
+            const results = await Promise.allSettled(tests);
+            const successful = results.filter(r => r.status === 'fulfilled').length;
+            
+            // If multiple IP services are blocked, might indicate VPN
+            return { consistent: successful >= 1 };
+        } catch (error) {
+            return { consistent: true };
+        }
+    }
+
+    calculateVariance(numbers) {
+        const mean = numbers.reduce((a, b) => a + b) / numbers.length;
+        const squareDiffs = numbers.map(value => Math.pow(value - mean, 2));
+        return squareDiffs.reduce((a, b) => a + b) / squareDiffs.length;
+    }
+
+    isMobile() {
+        return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
     isPrivateIP(ip) {
+        if (!ip) return false;
         return /^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|127\.|169\.254\.|::1|fc00:|fe80:)/i.test(ip);
     }
 
     isValidPublicIP(ip) {
-        const ipv4Regex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
+        if (!ip) return false;
+        const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
         const ipv6Regex = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
         return (ipv4Regex.test(ip) || ipv6Regex.test(ip)) && !this.isPrivateIP(ip);
     }
 }
 
-// Improved Cookie Detection (unchanged, working correctly)
-class ImprovedCookieManager {
-    static areCookiesEnabled() {
-        try {
-            // Test multiple cookie scenarios
-            const testValue = 'test_' + Date.now();
-            
-            // Test basic cookie
-            document.cookie = `cookietest=${testValue}; SameSite=Strict; path=/`;
-            const basicTest = document.cookie.indexOf(`cookietest=${testValue}`) !== -1;
-            
-            // Clean up test cookie
-            document.cookie = 'cookietest=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-            
-            // Test localStorage as additional check
-            let localStorageTest = false;
-            try {
-                localStorage.setItem('lsTest', testValue);
-                localStorageTest = localStorage.getItem('lsTest') === testValue;
-                localStorage.removeItem('lsTest');
-            } catch (e) {
-                localStorageTest = false;
-            }
-            
-            return {
-                cookies: basicTest,
-                localStorage: localStorageTest,
-                overall: basicTest || localStorageTest,
-                details: { basicTest, localStorageTest }
-            };
-        } catch (error) {
-            console.error('Cookie detection error:', error);
-            return { cookies: false, localStorage: false, overall: false, error: error.message };
-        }
-    }
-
-    static showCookieEnableInstructions() {
-        const modal = this.createInstructionModal();
-        modal.style.display = 'block';
-    }
-
-    static createInstructionModal() {
-        let modal = document.getElementById('cookieInstructionsModal');
-        if (modal) return modal;
-
-        const modalHTML = `
-            <div id="cookieInstructionsModal" class="modal">
-                <div class="modal-content">
-                    <span class="close" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
-                    <h2>Enable Cookies Required</h2>
-                    <p>To use the free trial, please enable cookies in your browser:</p>
-                    
-                    <div class="cookie-instructions">
-                        <div class="browser-instruction">
-                            <h4>Chrome:</h4>
-                            <ol>
-                                <li>Click the three dots menu → Settings</li>
-                                <li>Go to Privacy and security → Cookies</li>
-                                <li>Select "Allow all cookies" or add this site to exceptions</li>
-                            </ol>
-                        </div>
-                        
-                        <div class="browser-instruction">
-                            <h4>Firefox:</h4>
-                            <ol>
-                                <li>Click the menu button → Settings</li>
-                                <li>Go to Privacy & Security</li>
-                                <li>Under Cookies, select "Standard" or add exception</li>
-                            </ol>
-                        </div>
-                        
-                        <div class="browser-instruction">
-                            <h4>Safari:</h4>
-                            <ol>
-                                <li>Safari menu → Preferences</li>
-                                <li>Privacy tab</li>
-                                <li>Uncheck "Block all cookies"</li>
-                            </ol>
-                        </div>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button onclick="location.reload()" class="btn-primary">I've Enabled Cookies - Retry</button>
-                        <button onclick="this.parentElement.parentElement.parentElement.style.display='none'" class="btn-secondary">Cancel</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        return document.getElementById('cookieInstructionsModal');
-    }
-}
-
 // Export for use
 window.ImprovedVPNDetection = ImprovedVPNDetection;
-window.ImprovedCookieManager = ImprovedCookieManager;
