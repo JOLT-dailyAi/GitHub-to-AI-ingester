@@ -518,13 +518,7 @@ class SensitiveVPNDetection {
     }
 }
 
-// Replace with more sensitive version
-window.ImprovedVPNDetection = SensitiveVPNDetection;
-
-// Replace the previous version
-window.ImprovedVPNDetection = AccurateVPNDetection;
-
-// Complete ImprovedCookieManager class - add this to your improved-vpn-detection.js file
+// Complete ImprovedCookieManager class
 class ImprovedCookieManager {
     static areCookiesEnabled() {
         try {
@@ -662,6 +656,6 @@ class ImprovedCookieManager {
     }
 }
 
-// Export for use
+// Export both classes properly
+window.ImprovedVPNDetection = SensitiveVPNDetection;
 window.ImprovedCookieManager = ImprovedCookieManager;
-
