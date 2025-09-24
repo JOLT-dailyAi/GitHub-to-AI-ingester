@@ -34,7 +34,7 @@ body {
     font-weight: 400;
 }
 
-/* Main Container */
+/* Main Container - Equal Heights */
 .container {
     display: grid;
     grid-template-columns: 250px 1fr 250px;
@@ -42,96 +42,113 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
-    position: relative;
+    align-items: start;
 }
 
-/* Desktop View: Equal Heights */
-@media (min-width: 1024px) {
-    .container {
-        grid-template-columns: 250px 1fr 250px;
-        grid-template-rows: auto auto; /* main-form on top, others below */
-        align-items: stretch;
-    }
-
-    .main-form {
-        grid-column: 1 / -1; /* Span full width */
-        grid-row: 1 / 2;
-    }
-
-    .sidebar-left {
-        grid-column: 1 / 2;
-        grid-row: 2 / 3;
-    }
-
-    .form-container {
-        grid-column: 2 / 3;
-        grid-row: 2 / 3;
-    }
-
-    .sidebar-right {
-        grid-column: 3 / 4;
-        grid-row: 2 / 3;
-    }
-
-    .main-form,
-    .form-container,
-    .sidebar-left,
-    .sidebar-right {
-        min-height: var(--main-height, 500px); /* Fallback height */
-    }
+/* Equal Height Container */
+.container-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 600px; /* Ensure minimum height */
 }
 
 /* Main Form Section */
 .main-form {
     background-color: #0d1117;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
-/* Form Container */
 .form-container {
     background-color: #161b22;
     border: 1px solid #30363d;
     border-radius: 12px;
     padding: 2rem;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 600px; /* Match sidebar height */
 }
 
-/* Keep centered by default (desktop/tablet) */
-.form-container h2 {
+/* Form Header with better mobile handling */
+.form-header {
+    position: relative;
     margin-bottom: 1.5rem;
+}
+
+.form-container h2 {
     font-size: 1.5rem;
     color: #f0f6fc;
     text-align: center;
-    z-index: 10;
+    margin: 0;
 }
 
-/* Switch to left alignment when button starts overlapping */
+/* Free Trial Button Responsive Text */
+#freeTrial {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* VPN Detection - Shortened text to prevent overlap */
+.btn-blocked {
+    background-color: #da3633 !important;
+    color: #ffffff !important;
+    border-color: #da3633 !important;
+    cursor: not-allowed !important;
+}
+
+.btn-loading {
+    background-color: #7d8590 !important;
+    color: #ffffff !important;
+    cursor: not-allowed !important;
+}
+
+/* Mobile responsive text for free trial button */
 @media (max-width: 600px) {
     .form-container h2 {
         text-align: left;
-        margin-right: 140px;
+        margin-right: 130px; /* Space for button */
     }
     
     #freeTrial {
-        font-size: 0;
+        font-size: 0;  /* Hide original text */
+        min-width: 100px;
     }
     
     #freeTrial::before {
         content: "Free Trial";
         font-size: 0.85rem;
     }
+    
+    /* Shorter VPN message for mobile */
+    .btn-blocked::before {
+        content: "Disable VPN" !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .btn-blocked {
+        font-size: 0 !important; /* Hide original text */
+    }
 }
 
-/* Further refinements for very small screens */
 @media (max-width: 480px) {
     .form-container h2 {
         font-size: 1.3rem;
-        margin-right: 120px;
+        margin-right: 110px;
     }
     
-    .btn-secondary {
-        font-size: 0.85rem;
-        padding: 0.7rem 1rem;
-        min-width: 90px;
+    #freeTrial::before {
+        content: "Trial";
+        font-size: 0.8rem;
+    }
+    
+    .btn-blocked::before {
+        content: "No VPN" !important;
+        font-size: 0.75rem !important;
     }
 }
 
@@ -144,12 +161,27 @@ body {
     font-weight: bold;
 }
 
-/* Sidebars */
+/* Sidebars - Equal Heights */
 .sidebar-left, .sidebar-right {
     background-color: #161b22;
     border: 1px solid #30363d;
     border-radius: 12px;
     padding: 1.5rem;
+    min-height: 600px; /* Match form container height */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make review section flexible to fill remaining space */
+.review-section {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.reviews {
+    flex: 1;
+    margin-top: 1.5rem;
 }
 
 /* Pricing Cards */
@@ -211,10 +243,6 @@ body {
     font-family: inherit;
 }
 
-.reviews {
-    margin-top: 1.5rem;
-}
-
 .reviews h4 {
     margin-bottom: 1rem;
     color: #f0f6fc;
@@ -240,6 +268,7 @@ body {
     font-size: 0.75rem;
 }
 
+/* Form Elements */
 .form-group {
     margin-bottom: 1.5rem;
 }
@@ -273,6 +302,15 @@ body {
     border-color: #da3633;
 }
 
+/* Form Help Text */
+.form-help {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    color: #7d8590;
+    font-style: italic;
+}
+
 /* Validation Messages */
 .license-info, .url-validation, .email-validation {
     margin-top: 0.5rem;
@@ -286,46 +324,6 @@ body {
 
 .license-info.invalid, .url-validation.invalid, .email-validation.invalid {
     color: #f85149;
-}
-
-/* Notifications */
-.free-trial-notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    left: auto;
-    transform: none;
-    padding: 1rem 1.5rem;
-    border-radius: 6px;
-    z-index: 1100;
-    display: none;
-    max-width: 400px;
-    width: 90%;
-    text-align: center;
-    font-size: 0.9rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.free-trial-notification.show {
-    display: block;
-}
-
-.free-trial-notification.info {
-    background-color: rgba(31, 111, 235, 0.15);
-    color: #1f6feb;
-    border: 1px solid rgba(31, 111, 235, 0.4);
-}
-
-.free-trial-notification.error {
-    background-color: rgba(248, 81, 73, 0.15);
-    color: #f85149;
-    border: 1px solid rgba(248, 81, 73, 0.4);
-}
-
-.free-trial-notification.warning {
-    background-color: rgba(255, 149, 0, 0.15);
-    color: #ff9500;
-    border: 1px solid rgba(255, 149, 0, 0.4);
 }
 
 /* Buttons */
@@ -364,7 +362,7 @@ body {
     border: 1px solid #30363d;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(.btn-blocked):not(.btn-loading) {
     background-color: #30363d;
     border-color: #1f6feb;
     transform: translateY(-2px);
@@ -407,6 +405,51 @@ body {
     color: #f85149;
     border: 1px solid rgba(248, 81, 73, 0.4);
     display: block;
+}
+
+/* Free Trial Notifications */
+.free-trial-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    z-index: 9999;
+    max-width: 300px;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+}
+
+.free-trial-notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.free-trial-notification.info {
+    background-color: rgba(31, 111, 235, 0.15);
+    color: #58a6ff;
+    border: 1px solid rgba(31, 111, 235, 0.4);
+}
+
+.free-trial-notification.success {
+    background-color: rgba(63, 185, 80, 0.15);
+    color: #3fb950;
+    border: 1px solid rgba(63, 185, 80, 0.4);
+}
+
+.free-trial-notification.warning {
+    background-color: rgba(255, 191, 0, 0.15);
+    color: #ffbf00;
+    border: 1px solid rgba(255, 191, 0, 0.4);
+}
+
+.free-trial-notification.error {
+    background-color: rgba(248, 81, 73, 0.15);
+    color: #f85149;
+    border: 1px solid rgba(248, 81, 73, 0.4);
 }
 
 /* Showcase Section */
@@ -476,19 +519,18 @@ body {
 /* Showcase Navigation */
 .showcase-navigation {
     display: flex;
-    flex-direction: row !important;
     justify-content: center;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    padding: 0.5rem;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
 }
 
 .nav-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1.5rem;
     background-color: #21262d;
     border: 1px solid #30363d;
     border-radius: 8px;
@@ -497,7 +539,7 @@ body {
     transition: all 0.2s ease;
     font-size: 0.9rem;
     font-weight: 500;
-    min-width: 90px;
+    min-width: 120px;
 }
 
 .nav-btn:hover:not(:disabled) {
@@ -518,41 +560,23 @@ body {
 }
 
 .showcase-counter {
-    padding: 0.5rem 0.75rem;
+    padding: 0.75rem 1rem;
     background-color: #161b22;
     border: 1px solid #30363d;
     border-radius: 6px;
     color: #f0f6fc;
     font-weight: 500;
-    min-width: 60px;
+    min-width: 80px;
     text-align: center;
 }
 
-@media (max-width: 768px) {
-    .showcase-navigation {
-        flex-direction: row !important;
-        gap: 0.75rem;
-        padding: 0.25rem;
-    }
-    
-    .nav-btn {
-        min-width: 80px;
-        padding: 0.4rem 0.8rem;
-        justify-content: center;
-    }
-    
-    .nav-text {
-        display: none;
-    }
-}
-
-/* Showcase Container and Items */
+/* Showcase Container */
 .showcase-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0 2rem;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
 }
 
 .showcase-item {
@@ -562,9 +586,9 @@ body {
     overflow: hidden;
     display: none;
     width: 100%;
-    max-width: 100%;
+    max-width: 1200px;
+    min-height: 400px;
     margin: 0 auto;
-    transition: height 0.3s ease;
 }
 
 .showcase-item.active {
@@ -624,49 +648,8 @@ body {
     transform: scale(0.85);
     transform-origin: top left;
     width: 117.65%;
-    overflow-x: hidden !important;
-    overflow-y: hidden !important;
+    overflow: hidden !important;
     box-sizing: border-box;
-    white-space: pre;
-}
-
-@media (max-width: 768px) {
-    .showcase-container {
-        padding: 0 0.5rem;
-    }
-    
-    .showcase-item {
-        max-width: 100%;
-    }
-    
-    .showcase-item textarea {
-        white-space: pre;
-        transform: scale(0.8);
-        width: 125%;
-        font-size: 0.7rem;
-        overflow-x: auto !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .showcase-container {
-        padding: 0 0.25rem;
-    }
-    
-    .showcase-item textarea {
-        white-space: pre;
-        transform: scale(0.75);
-        width: 133.33%;
-        font-size: 0.65rem;
-        overflow-x: auto !important;
-    }
-}
-
-.social-icon {
-    width: 70px;
-    height: 70px;
-    object-fit: contain;
-    vertical-align: middle;
 }
 
 /* Modals */
@@ -718,19 +701,74 @@ body {
     color: #7d8590;
 }
 
+/* Cookie Consent Modal Specific Styles */
+.cookie-consent-details {
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.cookie-consent-details h4 {
+    color: #f0f6fc;
+    margin-bottom: 0.5rem;
+}
+
+.cookie-consent-details ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.cookie-consent-details li {
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+/* Trial Key Display Modal */
+.success-message {
+    color: #3fb950;
+    font-weight: 500;
+}
+
+.key-display-container {
+    display: flex;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.key-display-container input {
+    flex: 1;
+    padding: 0.75rem;
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    color: #e6edf3;
+    font-family: monospace;
+}
+
+.key-note {
+    font-size: 0.875rem;
+    color: #7d8590;
+    font-style: italic;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .container {
         grid-template-columns: 1fr;
-        grid-template-rows: auto;
+        gap: 1.5rem;
     }
     
-    .main-form,
-    .sidebar-left,
-    .sidebar-right,
-    .form-container {
-        grid-column: 1 / -1;
-        grid-row: auto;
+    .sidebar-left, .sidebar-right, .form-container {
+        min-height: auto; /* Remove fixed height on mobile */
     }
     
     .showcase-container {
@@ -751,8 +789,24 @@ body {
         padding: 1rem;
     }
     
+    .showcase-navigation {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .nav-btn {
+        min-width: 200px;
+        justify-content: center;
+    }
+    
     .search-wrapper {
         width: 280px;
+    }
+    
+    .showcase-item textarea {
+        font-size: 0.7rem;
+        transform: scale(0.8);
+        width: 125%;
     }
 }
 
@@ -775,6 +829,18 @@ body {
     
     .search-wrapper {
         width: 250px;
+    }
+    
+    .showcase-item textarea {
+        font-size: 0.65rem;
+        transform: scale(0.75);
+        width: 133.33%;
+    }
+    
+    .free-trial-notification {
+        right: 10px;
+        left: 10px;
+        max-width: none;
     }
 }
 
