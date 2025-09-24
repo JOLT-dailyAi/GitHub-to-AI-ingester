@@ -4,8 +4,8 @@ class FreeTrialManager {
             SHOWCASE_JSON_URL: 'https://raw.githubusercontent.com/JOLT-dailyAi/GitHub-to-AI-ingester/refs/heads/main/data/showcase/Showcase.json',
             VPN_DETECTION_TIMEOUT: 3000,
             KNOWN_VPN_ASNS: [
-                'AS13335', 'AS16509', 'AS8075', 'AS15169', // Major cloud/VPN providers
-                'AS396982', 'AS63023', 'AS397444', 'AS54600' // Known VPN ASNs
+                'AS13335', 'AS16509', 'AS8075', 'AS15169',
+                'AS396982', 'AS63023', 'AS397444', 'AS54600'
             ],
             DISPOSABLE_EMAIL_DOMAINS: [
                 '10minutemail.com', 'tempmail.org', 'guerrillamail.com', 'mailinator.com',
@@ -25,34 +25,26 @@ class FreeTrialManager {
         this.initializeEventListeners();
     }
 
-    // ===============================================================================================
-    // INITIALIZATION & EVENT LISTENERS
-    // ===============================================================================================
-
     initializeEventListeners() {
-        // Free trial button click
         const freeTrialBtn = document.getElementById('freeTrial');
         if (freeTrialBtn) {
             freeTrialBtn.addEventListener('click', (e) => {
-                e.preventDefault(); // Prevent main.js conflict
+                e.preventDefault();
                 this.handleFreeTrialButtonClick();
             });
         }
 
-        // Free trial form submission
         const freeTrialForm = document.getElementById('freeTrialForm');
         if (freeTrialForm) {
             freeTrialForm.addEventListener('submit', (e) => this.handleFreeTrialFormSubmission(e));
         }
 
-        // Email input validation
         const trialEmailInput = document.getElementById('trialEmail');
         if (trialEmailInput) {
             trialEmailInput.addEventListener('input', this.debounce(() => this.validateTrialEmail(), 500));
             trialEmailInput.addEventListener('blur', () => this.validateTrialEmail());
         }
 
-        // Modal close events
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 e.target.style.display = 'none';
@@ -60,39 +52,39 @@ class FreeTrialManager {
         });
     }
 
-    // ===============================================================================================
-    // FREE TRIAL BUTTON HANDLER
-    // ===============================================================================================
-
     async handleFreeTrialButtonClick() {
         const freeTrialBtn = document.getElementById('freeTrial');
         if (!freeTrialBtn) return;
+
+        // Reset VPN state for fresh check
+        this.state.vpnDetected = false;
 
         freeTrialBtn.textContent = 'Checking connection...';
         freeTrialBtn.disabled = true;
         freeTrialBtn.classList.add('btn-loading');
 
         try {
-            // Step 1: Check if cookies are enabled
+            // Clear cache to prevent stale VPN results
+            if ('caches' in window) {
+                await caches.delete('freetrial-cache');
+            }
+
             if (!this.areCookiesEnabled()) {
                 this.showNotification('Cookies are required to use the free trial. Please enable cookies.', 'error', 5000);
                 this.resetFreeTrialButton(freeTrialBtn);
                 return;
             }
 
-            // Step 2: VPN Detection
             const isVPN = await this.detectVPN();
             if (isVPN) {
                 this.handleVPNDetected(freeTrialBtn);
                 return;
             }
 
-            // Step 3: Check cookie consent
             if (this.getCookie('freeTrialConsent') === 'true' || localStorage.getItem('freeTrialConsent') === 'true') {
                 this.state.cookieConsentGiven = true;
             }
 
-            // Step 4: Check if trial already used
             const emailInput = document.getElementById('trialEmail');
             const email = emailInput ? emailInput.value.trim() : '';
             if (email) {
@@ -104,7 +96,6 @@ class FreeTrialManager {
                 }
             }
 
-            // Step 5: Show cookie consent modal if not consented
             if (!this.state.cookieConsentGiven) {
                 this.showCookieConsentModal();
             } else {
@@ -134,39 +125,44 @@ class FreeTrialManager {
 
         this.showNotification('VPN/Proxy detected. Please disable VPN to use free trial.', 'warning', 5000);
 
-        // Reset button after 30 seconds
         setTimeout(() => {
             this.resetFreeTrialButton(freeTrialBtn);
         }, 30000);
     }
 
-    // ===============================================================================================
-    // VPN DETECTION SYSTEM
-    // ===============================================================================================
-
     async detectVPN() {
         try {
             const [webrtcVPN, timezoneVPN, ipVPN] = await Promise.allSettled([
                 this.detectVPNWebRTC(),
-                this.detectVPNTimezone(),
-                this.detectVPNKnownIPs()
+                this.retryFetch(() => this.detectVPNTimezone(), 2, 1000),
+                this.retryFetch(() => this.detectVPNKnownIPs(), 2, 1000)
             ]);
 
-            const isVPN = (
-                (webrtcVPN.status === 'fulfilled' && webrtcVPN.value) ||
-                (timezoneVPN.status === 'fulfilled' && timezoneVPN.value) ||
-                (ipVPN.status === 'fulfilled' && ipVPN.value)
-            );
+            const results = {
+                webrtc: webrtcVPN.status === 'fulfilled' ? webrtcVPN.value : false,
+                timezone: timezoneVPN.status === 'fulfilled' ? timezoneVPN.value : false,
+                ip: ipVPN.status === 'fulfilled' ? ipVPN.value : false
+            };
 
-            if (isVPN) {
-                console.log('VPN detected:', { webrtc: webrtcVPN.value, timezone: timezoneVPN.value, ip: ipVPN.value });
-            }
+            const isVPN = results.webrtc || results.timezone || results.ip;
+            console.log('VPN detection results:', results);
 
             return isVPN;
         } catch (error) {
             console.error('VPN detection error:', error);
             this.showNotification('VPN detection failed. Please disable VPN and try again.', 'error', 5000);
-            return true; // Fail closed to prevent abuse
+            return true;
+        }
+    }
+
+    async retryFetch(fn, retries = 2, delay = 1000) {
+        for (let i = 0; i <= retries; i++) {
+            try {
+                return await fn();
+            } catch (error) {
+                if (i === retries) throw error;
+                await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+            }
         }
     }
 
@@ -201,8 +197,9 @@ class FreeTrialManager {
             setTimeout(() => {
                 pc.close();
                 const uniquePublicIPs = [...new Set(publicIPs)];
+                // Stricter check: VPN likely if multiple public IPs or public IP without local IP
                 const suspiciousVPN = uniquePublicIPs.length > 1 || 
-                                    (uniquePublicIPs.length > 0 && localIPs.length === 0);
+                                    (uniquePublicIPs.length === 1 && localIPs.length === 0);
                 resolve(suspiciousVPN);
             }, this.config.VPN_DETECTION_TIMEOUT);
         });
@@ -252,10 +249,6 @@ class FreeTrialManager {
             return false;
         }
     }
-
-    // ===============================================================================================
-    // COOKIE CONSENT SYSTEM
-    // ===============================================================================================
 
     areCookiesEnabled() {
         try {
@@ -370,10 +363,6 @@ class FreeTrialManager {
         }
     }
 
-    // ===============================================================================================
-    // EMAIL VALIDATION SYSTEM
-    // ===============================================================================================
-
     async validateTrialEmail() {
         const emailInput = document.getElementById('trialEmail');
         const validationMsg = document.getElementById('emailValidationMsg') || this.createEmailValidationElement();
@@ -466,10 +455,6 @@ class FreeTrialManager {
         return Math.abs(hash).toString(16).substring(0, 8);
     }
 
-    // ===============================================================================================
-    // REPOSITORY DUPLICATE CHECKING
-    // ===============================================================================================
-
     async checkRepositoryDuplicate(repoUrl) {
         try {
             const repoName = this.extractRepositoryName(repoUrl);
@@ -523,10 +508,6 @@ class FreeTrialManager {
         }
     }
 
-    // ===============================================================================================
-    // MONTHLY KEY GENERATION
-    // ===============================================================================================
-
     async generateMonthlyFreeTrialKey(email) {
         const normalizedEmail = this.normalizeEmail(email);
         const emailHash = await this.hashEmail(normalizedEmail);
@@ -535,10 +516,6 @@ class FreeTrialManager {
         const year = now.getFullYear();
         return `FreeTrial-${month}${year}-${emailHash}`;
     }
-
-    // ===============================================================================================
-    // MULTI-STORAGE PERSISTENCE SYSTEM
-    // ===============================================================================================
 
     async setFreeTrialUsedFlag(emailHash) {
         const flag = `freetrial_used_${emailHash}`;
@@ -659,10 +636,6 @@ class FreeTrialManager {
             return false;
         }
     }
-
-    // ===============================================================================================
-    // FREE TRIAL FORM SUBMISSION
-    // ===============================================================================================
 
     async handleFreeTrialFormSubmission(event) {
         event.preventDefault();
@@ -806,10 +779,6 @@ class FreeTrialManager {
         }
     }
 
-    // ===============================================================================================
-    // UTILITY FUNCTIONS
-    // ===============================================================================================
-
     getEndOfCurrentMonth() {
         const now = new Date();
         return new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
@@ -882,5 +851,4 @@ class FreeTrialManager {
     }
 }
 
-// Instantiate FreeTrialManager
 const freeTrialManager = new FreeTrialManager();
