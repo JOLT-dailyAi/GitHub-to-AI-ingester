@@ -1,32 +1,35 @@
-// More Accurate VPN Detection with reduced false positives
-class AccurateVPNDetection {
+// More Sensitive VPN Detection - Better at catching modern VPNs
+class SensitiveVPNDetection {
     constructor() {
         this.config = {
             TIMEOUT: 5000,
-            CONFIDENCE_THRESHOLD: 75 // Higher threshold to reduce false positives
+            CONFIDENCE_THRESHOLD: 40 // Lower threshold for better detection
         };
     }
 
     async detectVPN() {
-        console.log('🔍 Starting accurate VPN detection...');
+        console.log('🔍 Starting sensitive VPN detection...');
         
         const results = await Promise.allSettled([
             this.testWebRTC(),
-            this.testConsistentLatency(),
-            this.testSpecificIndicators()
+            this.testMultipleLatency(), 
+            this.testBrowserFingerprint(),
+            this.testNetworkBehavior()
         ]);
 
         const webrtc = results[0].status === 'fulfilled' ? results[0].value : { score: 0 };
         const latency = results[1].status === 'fulfilled' ? results[1].value : { score: 0 };
-        const specific = results[2].status === 'fulfilled' ? results[2].value : { score: 0 };
+        const fingerprint = results[2].status === 'fulfilled' ? results[2].value : { score: 0 };
+        const network = results[3].status === 'fulfilled' ? results[3].value : { score: 0 };
 
-        const totalScore = webrtc.score + latency.score + specific.score;
+        const totalScore = webrtc.score + latency.score + fingerprint.score + network.score;
         const isVPN = totalScore >= this.config.CONFIDENCE_THRESHOLD;
 
-        console.log('Accurate VPN Detection Results:', {
+        console.log('Sensitive VPN Detection Results:', {
             webrtc: webrtc,
             latency: latency,
-            specific: specific,
+            fingerprint: fingerprint,
+            network: network,
             totalScore: totalScore,
             threshold: this.config.CONFIDENCE_THRESHOLD,
             isVPN: isVPN
@@ -38,78 +41,94 @@ class AccurateVPNDetection {
     testWebRTC() {
         return new Promise((resolve) => {
             if (!window.RTCPeerConnection) {
-                // WebRTC not available - suspicious but not definitive
-                resolve({ score: 15, reason: 'webrtc_unavailable' });
+                resolve({ score: 20, reason: 'webrtc_blocked' });
                 return;
             }
 
             const pc = new RTCPeerConnection({
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun.services.mozilla.com' }
                 ]
             });
 
             let candidateCount = 0;
             let hasLocalIP = false;
             let publicIPs = new Set();
-            let relayCount = 0;
-            let hostCount = 0;
+            let candidateTypes = new Set();
+            let ipPatterns = new Set();
 
             const timeout = setTimeout(() => {
                 pc.close();
                 
                 let score = 0;
-                let reason = '';
+                let reasons = [];
 
-                // More sophisticated analysis
+                // High-confidence indicators
                 if (candidateCount === 0) {
-                    score = 25; // Reduced from 40
-                    reason = 'no_ice_candidates';
-                } else if (relayCount > 0 && hostCount === 0) {
-                    // Only relay candidates, no host - strong VPN indicator
-                    score = 50;
-                    reason = 'relay_only';
-                } else if (publicIPs.size > 2) {
-                    // Multiple different public IPs - very suspicious
-                    score = 45;
-                    reason = 'multiple_public_ips';
-                } else if (!hasLocalIP && publicIPs.size > 0) {
-                    // Public IP but no local - moderate suspicion
-                    score = 20; // Reduced from 35
-                    reason = 'no_local_ip';
-                } else {
-                    score = 0;
-                    reason = 'normal_webrtc';
+                    score += 25;
+                    reasons.push('no_candidates');
+                }
+
+                if (!hasLocalIP && candidateCount > 0) {
+                    score += 20;
+                    reasons.push('no_local_ip');
+                }
+
+                if (candidateTypes.has('relay') && !candidateTypes.has('host')) {
+                    score += 30;
+                    reasons.push('relay_only');
+                }
+
+                if (publicIPs.size > 1) {
+                    score += 25;
+                    reasons.push('multiple_public_ips');
+                }
+
+                // Check for unusual IP patterns
+                const allIPs = Array.from(publicIPs);
+                if (this.hasVPNIPPattern(allIPs)) {
+                    score += 15;
+                    reasons.push('vpn_ip_pattern');
+                }
+
+                // Very few candidates might indicate filtering
+                if (candidateCount > 0 && candidateCount < 3) {
+                    score += 10;
+                    reasons.push('few_candidates');
                 }
 
                 resolve({ 
                     score, 
-                    reason,
+                    reason: reasons.join(',') || 'normal_webrtc',
                     details: { 
                         candidateCount, 
                         hasLocalIP, 
                         publicIPCount: publicIPs.size,
-                        relayCount,
-                        hostCount
+                        candidateTypes: Array.from(candidateTypes),
+                        publicIPs: Array.from(publicIPs)
                     }
                 });
-            }, 4000); // Increased timeout
+            }, 4000);
 
             pc.onicecandidate = (event) => {
                 if (event.candidate) {
                     candidateCount++;
                     const parts = event.candidate.candidate.split(' ');
                     const ip = parts[4];
-                    const type = parts[7]; // candidate type
+                    const type = parts[7];
                     
-                    if (type === 'relay') relayCount++;
-                    if (type === 'host') hostCount++;
+                    candidateTypes.add(type);
                     
                     if (this.isPrivateIP(ip)) {
                         hasLocalIP = true;
+                        ipPatterns.add('private');
                     } else if (this.isValidPublicIP(ip)) {
                         publicIPs.add(ip);
+                        ipPatterns.add('public');
+                    } else {
+                        ipPatterns.add('other');
                     }
                 }
             };
@@ -120,65 +139,73 @@ class AccurateVPNDetection {
                 .catch(() => {
                     clearTimeout(timeout);
                     pc.close();
-                    resolve({ score: 10, reason: 'webrtc_error' });
+                    resolve({ score: 15, reason: 'webrtc_error' });
                 });
         });
     }
 
-    async testConsistentLatency() {
+    async testMultipleLatency() {
         try {
-            // Test multiple rounds to check for consistency
-            const rounds = 2;
-            const allLatencies = [];
+            const testRounds = 3;
+            const allResults = [];
             
-            for (let round = 0; round < rounds; round++) {
-                const roundLatencies = await this.measureLatencyRound();
-                allLatencies.push(...roundLatencies);
+            for (let round = 0; round < testRounds; round++) {
+                const roundResult = await this.measureLatencyRound(round);
+                allResults.push(roundResult);
                 
-                // Small delay between rounds
-                if (round < rounds - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                if (round < testRounds - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
                 }
             }
 
+            // Analyze patterns across rounds
+            const allLatencies = allResults.flat();
             const validLatencies = allLatencies.filter(l => l > 0 && l < 10000);
             
-            if (validLatencies.length < 3) {
-                return { score: 15, reason: 'insufficient_latency_data' };
+            if (validLatencies.length < 4) {
+                return { score: 10, reason: 'insufficient_data' };
             }
 
             const avgLatency = validLatencies.reduce((a, b) => a + b) / validLatencies.length;
-            const maxLatency = Math.max(...validLatencies);
             const variance = this.calculateVariance(validLatencies);
-            
-            let score = 0;
-            let reason = '';
+            const maxLatency = Math.max(...validLatencies);
+            const minLatency = Math.min(...validLatencies);
+            const range = maxLatency - minLatency;
 
-            // Adjusted thresholds for global users
-            if (avgLatency > 2000) { // Very high average
-                score = 25;
-                reason = 'very_high_latency';
-            } else if (variance > 100000) { // Very inconsistent
-                score = 20;
-                reason = 'inconsistent_latency';
-            } else if (maxLatency > 5000) { // Some very slow responses
-                score = 15;
-                reason = 'some_slow_responses';
-            } else if (avgLatency > 1000) { // High but reasonable for some locations
-                score = 5; // Very low score
-                reason = 'moderate_latency';
-            } else {
-                score = 0;
-                reason = 'normal_latency';
+            let score = 0;
+            let reasons = [];
+
+            // High variance suggests routing through different servers
+            if (variance > 50000) {
+                score += 15;
+                reasons.push('high_variance');
+            }
+
+            // Very high average latency
+            if (avgLatency > 1500) {
+                score += 12;
+                reasons.push('high_avg_latency');
+            }
+
+            // Large range in response times
+            if (range > 2000) {
+                score += 10;
+                reasons.push('inconsistent_timing');
+            }
+
+            // Some very slow responses
+            if (maxLatency > 4000) {
+                score += 8;
+                reasons.push('slow_responses');
             }
 
             return { 
                 score, 
-                reason,
+                reason: reasons.join(',') || 'normal_latency',
                 details: { 
-                    avgLatency: Math.round(avgLatency), 
-                    maxLatency: Math.round(maxLatency),
+                    avgLatency: Math.round(avgLatency),
                     variance: Math.round(variance),
+                    range: Math.round(range),
                     sampleCount: validLatencies.length
                 }
             };
@@ -187,110 +214,296 @@ class AccurateVPNDetection {
         }
     }
 
-    async measureLatencyRound() {
+    async measureLatencyRound(round) {
         const testSites = [
             'https://www.google.com/favicon.ico',
+            'https://www.github.com/favicon.ico',
             'https://www.cloudflare.com/favicon.ico',
             'https://www.microsoft.com/favicon.ico'
         ];
 
         const latencies = [];
         
-        for (const site of testSites) {
+        // Test different sites each round for variety
+        const sitesToTest = testSites.slice(0, 3);
+        
+        for (const site of sitesToTest) {
             const start = performance.now();
             try {
                 await fetch(site, {
                     method: 'HEAD',
                     mode: 'no-cors',
                     cache: 'no-cache',
-                    signal: AbortSignal.timeout(5000)
+                    signal: AbortSignal.timeout(4000)
                 });
                 const latency = performance.now() - start;
                 latencies.push(latency);
             } catch (error) {
-                // Don't penalize failed requests as much
-                latencies.push(3000); // Moderate penalty instead of 5000
+                latencies.push(2000); // Moderate penalty
             }
         }
 
         return latencies;
     }
 
-    testSpecificIndicators() {
+    testBrowserFingerprint() {
         try {
             let score = 0;
             let indicators = [];
 
-            // 1. Very specific VPN indicators in user agent
-            const ua = navigator.userAgent.toLowerCase();
-            const vpnKeywords = ['vpn', 'proxy', 'tor', 'tunnel', 'anonymizer'];
-            if (vpnKeywords.some(keyword => ua.includes(keyword))) {
-                score += 40; // High confidence for explicit VPN in UA
-                indicators.push('vpn_in_useragent');
+            // 1. User Agent Analysis
+            const ua = navigator.userAgent;
+            const uaLower = ua.toLowerCase();
+            
+            // VPN-specific keywords
+            const vpnKeywords = ['vpn', 'proxy', 'tor', 'tunnel', 'private', 'secure'];
+            if (vpnKeywords.some(keyword => uaLower.includes(keyword))) {
+                score += 25;
+                indicators.push('vpn_keyword');
             }
 
-            // 2. Headless browser indicators (more specific)
-            const headlessIndicators = [
-                navigator.webdriver === true,
-                window.phantom !== undefined,
-                window._phantom !== undefined,
-                document.documentElement.getAttribute('webdriver') !== null
-            ];
-
-            if (headlessIndicators.some(indicator => indicator)) {
-                score += 30;
-                indicators.push('headless_browser');
+            // Opera GX specific checks
+            if (uaLower.includes('oprgx')) {
+                score += 5; // Opera GX has built-in VPN
+                indicators.push('opera_gx');
             }
 
-            // 3. Plugin count (less aggressive)
-            if (navigator.plugins.length === 0 && 
-                !/Mobile|Android|iPhone|iPad/.test(navigator.userAgent) &&
-                !/Chrome/.test(navigator.userAgent)) { // Chrome can have 0 plugins normally
-                score += 15; // Reduced from 25
+            // 2. WebRTC leaks (additional check)
+            if (typeof RTCPeerConnection === 'undefined' || 
+                typeof webkitRTCPeerConnection === 'undefined') {
+                score += 10;
+                indicators.push('webrtc_disabled');
+            }
+
+            // 3. Plugin analysis
+            const pluginCount = navigator.plugins.length;
+            if (pluginCount === 0 && !this.isMobile()) {
+                score += 12;
                 indicators.push('no_plugins');
             }
 
-            // 4. Removed timezone checking as it was causing false positives
-
-            // 5. Very specific screen resolution patterns (VMs)
-            const width = screen.width;
-            const height = screen.height;
-            const commonVMResolutions = [
-                [800, 600], [1024, 768], [1152, 864], [1280, 960]
-            ];
-            
-            if (commonVMResolutions.some(([w, h]) => 
-                Math.abs(width - w) < 5 && Math.abs(height - h) < 5)) {
-                score += 20;
-                indicators.push('vm_resolution');
+            // 4. Screen resolution patterns
+            const screen_score = this.analyzeScreenResolution();
+            score += screen_score.score;
+            if (screen_score.suspicious) {
+                indicators.push('suspicious_screen');
             }
 
-            // 6. Check for specific VPN-related properties
-            if (window.chrome && window.chrome.webstore === undefined && 
-                navigator.userAgent.includes('Chrome')) {
-                score += 10;
-                indicators.push('modified_chrome');
+            // 5. Connection API
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (connection) {
+                // Unusual connection types
+                if (connection.effectiveType === 'slow-2g' && connection.downlink > 5) {
+                    score += 8;
+                    indicators.push('connection_mismatch');
+                }
+            }
+
+            // 6. Language/locale checks (less aggressive)
+            const languages = navigator.languages || [navigator.language];
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            
+            // Only flag very obvious mismatches
+            if (this.isObviousLocaleMismatch(languages, timezone)) {
+                score += 8;
+                indicators.push('locale_mismatch');
             }
 
             return { 
                 score, 
-                reason: indicators.join(',') || 'normal_indicators',
+                reason: indicators.join(',') || 'normal_fingerprint',
                 details: { 
-                    indicators, 
-                    pluginCount: navigator.plugins.length,
-                    screenRes: `${width}x${height}`,
-                    userAgent: navigator.userAgent.substring(0, 100) + '...'
+                    indicators,
+                    pluginCount,
+                    ua_snippet: ua.substring(0, 50) + '...',
+                    languages: languages.slice(0, 3),
+                    timezone
                 }
             };
         } catch (error) {
-            return { score: 0, reason: 'indicator_test_failed' };
+            return { score: 0, reason: 'fingerprint_test_failed' };
         }
+    }
+
+    async testNetworkBehavior() {
+        try {
+            let score = 0;
+            let indicators = [];
+
+            // Test DNS behavior
+            const dnsTest = await this.testDNSBehavior();
+            score += dnsTest.score;
+            if (dnsTest.suspicious) {
+                indicators.push('dns_anomaly');
+            }
+
+            // Test request patterns
+            const requestTest = await this.testRequestPatterns();
+            score += requestTest.score;
+            if (requestTest.suspicious) {
+                indicators.push('request_pattern');
+            }
+
+            return {
+                score,
+                reason: indicators.join(',') || 'normal_network',
+                details: { indicators, dnsTest, requestTest }
+            };
+        } catch (error) {
+            return { score: 0, reason: 'network_test_failed' };
+        }
+    }
+
+    async testDNSBehavior() {
+        try {
+            const dnsTests = [
+                { host: 'dns.google', url: 'https://dns.google/favicon.ico' },
+                { host: '1.1.1.1', url: 'https://1.1.1.1/favicon.ico' },
+                { host: 'cloudflare', url: 'https://www.cloudflare.com/favicon.ico' }
+            ];
+
+            let failCount = 0;
+            let slowCount = 0;
+
+            for (const test of dnsTests) {
+                const start = performance.now();
+                try {
+                    await fetch(test.url, {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        signal: AbortSignal.timeout(3000)
+                    });
+                    const time = performance.now() - start;
+                    if (time > 2000) slowCount++;
+                } catch (error) {
+                    failCount++;
+                }
+            }
+
+            let score = 0;
+            if (failCount >= 2) {
+                score = 10;
+            } else if (failCount === 1 && slowCount >= 1) {
+                score = 5;
+            }
+
+            return {
+                score,
+                suspicious: score > 0,
+                details: { failCount, slowCount }
+            };
+        } catch (error) {
+            return { score: 0, suspicious: false };
+        }
+    }
+
+    async testRequestPatterns() {
+        try {
+            // Test if requests consistently show patterns of proxying
+            const testUrls = [
+                'https://httpbin.org/ip',
+                'https://api.ipify.org?format=json',
+                'https://icanhazip.com'
+            ];
+
+            let successCount = 0;
+            let responses = [];
+
+            for (const url of testUrls) {
+                try {
+                    const response = await fetch(url, {
+                        signal: AbortSignal.timeout(3000)
+                    });
+                    if (response.ok) {
+                        successCount++;
+                        const text = await response.text();
+                        responses.push(text);
+                    }
+                } catch (error) {
+                    // Request blocked/failed
+                }
+            }
+
+            let score = 0;
+            // If most IP detection services are blocked, might indicate VPN
+            if (successCount === 0) {
+                score = 8;
+            } else if (successCount === 1) {
+                score = 3;
+            }
+
+            return {
+                score,
+                suspicious: score > 0,
+                details: { successCount, totalTests: testUrls.length }
+            };
+        } catch (error) {
+            return { score: 0, suspicious: false };
+        }
+    }
+
+    analyzeScreenResolution() {
+        const width = screen.width;
+        const height = screen.height;
+        const ratio = width / height;
+
+        // Common VPN/VM resolutions
+        const suspiciousResolutions = [
+            [800, 600], [1024, 768], [1152, 864], [1280, 960], [1280, 1024]
+        ];
+
+        const exactMatch = suspiciousResolutions.some(([w, h]) => 
+            Math.abs(width - w) < 5 && Math.abs(height - h) < 5
+        );
+
+        const suspiciousRatios = [1.25, 1.333, 1.6];
+        const ratioMatch = suspiciousRatios.some(r => Math.abs(ratio - r) < 0.01);
+
+        let score = 0;
+        if (exactMatch) score = 10;
+        else if (ratioMatch) score = 5;
+
+        return {
+            score,
+            suspicious: score > 0,
+            details: { width, height, ratio }
+        };
+    }
+
+    isObviousLocaleMismatch(languages, timezone) {
+        // Only flag very obvious mismatches to avoid false positives
+        const primaryLang = (languages[0] || '').split('-')[0].toLowerCase();
+        
+        const obviousMismatches = {
+            'ja': !timezone.includes('Asia/Tokyo'),
+            'ko': !timezone.includes('Asia/Seoul'),
+            'zh': !timezone.includes('Asia/Shanghai') && !timezone.includes('Asia/Hong_Kong'),
+            'ru': !timezone.includes('Europe/Moscow') && !timezone.includes('Asia/'),
+            'fr': !timezone.includes('Europe/Paris') && !timezone.includes('America/Montreal') && !timezone.includes('Africa/')
+        };
+
+        return obviousMismatches[primaryLang] || false;
+    }
+
+    hasVPNIPPattern(ips) {
+        const vpnPatterns = [
+            /^10\.8\./,          // OpenVPN default
+            /^10\.0\.0\./,       // Common VPN range
+            /^172\.16\./,        // Private range used by some VPNs
+            /^198\.18\./,        // RFC 2544 range sometimes used
+        ];
+        
+        return ips.some(ip => vpnPatterns.some(pattern => pattern.test(ip)));
     }
 
     calculateVariance(numbers) {
         const mean = numbers.reduce((a, b) => a + b) / numbers.length;
         const squareDiffs = numbers.map(value => Math.pow(value - mean, 2));
         return squareDiffs.reduce((a, b) => a + b) / squareDiffs.length;
+    }
+
+    isMobile() {
+        return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
     isPrivateIP(ip) {
@@ -304,6 +517,9 @@ class AccurateVPNDetection {
         return ipv4Regex.test(ip) && !this.isPrivateIP(ip);
     }
 }
+
+// Replace with more sensitive version
+window.ImprovedVPNDetection = SensitiveVPNDetection;
 
 // Replace the previous version
 window.ImprovedVPNDetection = AccurateVPNDetection;
