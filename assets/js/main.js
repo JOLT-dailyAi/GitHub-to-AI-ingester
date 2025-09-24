@@ -479,12 +479,8 @@ async function handleFormSubmission(e) {
 // -------------------------
 function handleFreeTrialSubmission(e) {
     e.preventDefault();
-    const freeKey = generateFreeLicenseKey();
-    licenseKeyInput.value = freeKey;
-    licenseKeyInput.disabled = true;
-    alert(`Free trial activated! License key: ${freeKey}`);
-    closeModals();
-    validateLicenseKey();
+    // Let FreeTrialManager handle this
+    console.log('Free trial submission handled by FreeTrialManager');
 }
 
 // -------------------------
