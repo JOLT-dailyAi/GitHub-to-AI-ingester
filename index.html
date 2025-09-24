@@ -9,7 +9,7 @@
 <body>
     <!-- Header Section -->
     <header class="header">
-        <h1>GitHub to AI ingester</h1>
+        <h1>GitHub to AI Ingester</h1>
         <p class="subtitle">Public Repository Analysis for Claude, GPT-4 & All AI Models</p>
     </header>
 
@@ -50,6 +50,11 @@
                         <label for="repoUrl">GitHub Repository URL</label>
                         <input type="url" id="repoUrl" name="repoUrl" placeholder="https://github.com/username/repository" required>
                         <div class="url-validation" id="urlValidation"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="discordId">Discord Username (Optional)</label>
+                        <input type="text" id="discordId" placeholder="Discord ID registered with Gumroad preferred, if different">
                     </div>
                     
                     <button type="submit" class="btn-primary btn-large" id="submitBtn" disabled>
@@ -158,10 +163,10 @@
     </section>
 
     <!-- Free Trial Modal -->
-    <div id="freeTrialModal" class="modal">
+    <div id="freeTrialModal" class="modal" role="dialog" aria-labelledby="freeTrialTitle">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Free Trial</h2>
+            <span class="close" aria-label="Close modal">&times;</span>
+            <h2 id="freeTrialTitle">Free Trial</h2>
             <p>Get one free repository analysis to test our service.</p>
             <form id="freeTrialForm">
                 <div class="form-group">
@@ -170,8 +175,9 @@
                     <div id="emailValidationMsg" class="email-validation"></div>
                 </div>
                 <div class="form-group">
-                    <label for="discordId">Discord Username (Optional)</label>
-                    <input type="text" id="discordId" placeholder="username#1234">
+                    <label for="repoUrl">GitHub Repository URL</label>
+                    <input type="url" id="repoUrl" name="repoUrl" placeholder="https://github.com/username/repository" required>
+                    <div class="url-validation" id="urlValidation"></div>
                 </div>
                 <button type="submit" class="btn-primary">Start Free Trial</button>
             </form>
