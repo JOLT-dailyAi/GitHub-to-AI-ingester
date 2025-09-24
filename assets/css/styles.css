@@ -42,40 +42,42 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
+    position: relative;
 }
 
 /* Desktop View: Equal Heights */
 @media (min-width: 1024px) {
     .container {
-        display: flex;
-        flex-wrap: wrap;
+        grid-template-columns: 250px 1fr 250px;
+        grid-template-rows: auto auto; /* main-form on top, others below */
         align-items: stretch;
-        position: relative;
+    }
+
+    .main-form {
+        grid-column: 1 / -1; /* Span full width */
+        grid-row: 1 / 2;
+    }
+
+    .sidebar-left {
+        grid-column: 1 / 2;
+        grid-row: 2 / 3;
+    }
+
+    .form-container {
+        grid-column: 2 / 3;
+        grid-row: 2 / 3;
+    }
+
+    .sidebar-right {
+        grid-column: 3 / 4;
+        grid-row: 2 / 3;
     }
 
     .main-form,
     .form-container,
     .sidebar-left,
     .sidebar-right {
-        flex: 1;
-        min-height: 500px; /* Fallback height */
-        height: 100%; /* Match tallest element */
-    }
-
-    .sidebar-left,
-    .sidebar-right {
-        flex: 0 0 250px;
-        max-width: 250px;
-    }
-
-    .form-container {
-        flex: 1;
-        max-width: calc(100% - 500px); /* Account for sidebars */
-    }
-
-    .main-form {
-        flex: 0 0 100%;
-        max-width: 100%;
+        min-height: var(--main-height, 500px); /* Fallback height */
     }
 }
 
@@ -289,14 +291,15 @@ body {
 /* Notifications */
 .free-trial-notification {
     position: fixed;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 20px;
+    right: 20px;
+    left: auto;
+    transform: none;
     padding: 1rem 1.5rem;
     border-radius: 6px;
     z-index: 1100;
     display: none;
-    max-width: 500px;
+    max-width: 400px;
     width: 90%;
     text-align: center;
     font-size: 0.9rem;
@@ -719,7 +722,15 @@ body {
 @media (max-width: 1200px) {
     .container {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
+        grid-template-rows: auto;
+    }
+    
+    .main-form,
+    .sidebar-left,
+    .sidebar-right,
+    .form-container {
+        grid-column: 1 / -1;
+        grid-row: auto;
     }
     
     .showcase-container {
