@@ -72,7 +72,8 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-height: 0; /* remove fixed 600px for equal height stretching */
+    min-height: auto;         /* remove fixed min-height */
+    max-height: 620px;        /* limit height */
 }
 
 /* Form Header with better mobile handling */
@@ -172,7 +173,8 @@ body {
     min-height: 0; /* Match form container height */
     display: flex;
     flex-direction: column;
-    flex: 1;             /* allow stretching to fill container */
+    height: 100%;
+    max-height: 620px;       /* limit height */
 }
 
 /* Make review section flexible to fill remaining space */
