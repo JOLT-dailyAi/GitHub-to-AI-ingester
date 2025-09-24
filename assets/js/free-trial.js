@@ -298,7 +298,7 @@ class FreeTrialManager {
     async handleFreeTrialFormSubmission(event) {
         event.preventDefault();
 
-        if (!this.state.cookieConsentGiven) {
+        if (!this.checkCookieConsent()) {
             this.showNotification('Cookie consent required for free trial', 'error', 5000);
             return;
         }
