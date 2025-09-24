@@ -43,7 +43,7 @@ body {
     margin: 0 auto;
     padding: 2rem;
     align-items: stretch; /* stretch instead of start */
-    min-height: 100vh;    /* fill viewport */
+    min-height: 620px;        /* limit height */
 }
 
 /* Equal Height Container */
