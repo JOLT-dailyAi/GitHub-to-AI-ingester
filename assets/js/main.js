@@ -17,6 +17,7 @@ const analysisForm = document.getElementById('analysisForm');
 
 // Modal elements
 const freeTrialModal = document.getElementById('freeTrialModal');
+const freeTrialBtn = document.getElementById('freeTrial');
 const closeBtns = document.querySelectorAll('.close');
 
 // Showcase elements
@@ -54,6 +55,10 @@ function initializeEventListeners() {
     if (analysisForm) analysisForm.addEventListener('submit', handleFormSubmission);
     
     // Modal controls
+    if (freeTrialBtn) {
+        freeTrialBtn.addEventListener('click', () => openModal(freeTrialModal));
+    }
+    
     closeBtns.forEach(btn => {
         btn.addEventListener('click', closeModals);
     });
@@ -546,6 +551,10 @@ function loadCachedLicenseKey() {
     } catch (e) {
         console.log('LocalStorage not available');
     }
+}
+
+function openModal(modal) {
+    if (modal) modal.style.display = 'block';
 }
 
 function closeModals() {
