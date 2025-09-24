@@ -218,7 +218,8 @@ class FreeTrialManager {
 
     handleCookieReject() {
         this.hideCookieModal();
-        this.showNotification('Free trial requires cookies. Use paid credits instead.', 'info', 5000);
+        this.showNotification('Free trial requires cookies. Click "Try once for free" again anytime to reconsider.', 'info', 7000);
+        // Don't set any permanent rejection flags - allow user to try again
     }
 
     hideCookieModal() {
