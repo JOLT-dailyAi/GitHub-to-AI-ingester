@@ -79,14 +79,34 @@ class FreeTrialManager {
 
             // Check if email already used trial
             const email = this.getCurrentEmailValue();
-            if (email && await this.hasEmailUsedTrial(email)) {
-                this.showNotification('Free trial already used this month for this email.', 'error', 5000);
-                this.resetButton(freeTrialBtn);
-                return;
+            console.log('Current email value:', email);
+            
+            if (email && email.length > 0) {
+                console.log('Checking if email has used trial...');
+                const hasUsedTrial = await this.hasEmailUsedTrial(email);
+                console.log('Email trial check result:', hasUsedTrial);
+                
+                if (hasUsedTrial) {
+                    this.showNotification('Free trial already used this month for this email.', 'error', 5000);
+                    this.resetButton(freeTrialBtn);
+                    return;
+                }
             }
 
+            // Check cookie consent
+            console.log('Checking cookie consent...');
+            const hasConsent = this.checkCookieConsent();
+            console.log('Cookie consent result:', hasConsent);
+            
             // Proceed to modal
-            this.checkCookieConsent() ? this.showFreeTrialModal() : this.showCookieConsentModal();
+            if (hasConsent) {
+                console.log('Showing free trial modal...');
+                this.showFreeTrialModal();
+            } else {
+                console.log('Showing cookie consent modal...');
+                this.showCookieConsentModal();
+            }
+            
             this.resetButton(freeTrialBtn);
 
         } catch (error) {
