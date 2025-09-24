@@ -57,43 +57,11 @@ body {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-/* Keep centered by default (desktop/tablet) */
 .form-container h2 {
     margin-bottom: 1.5rem;
     font-size: 1.5rem;
     color: #f0f6fc;
     text-align: center;
-}
-
-/* Switch to left alignment when button starts overlapping */
-@media (max-width: 600px) {
-    .form-container h2 {
-        text-align: left;
-        margin-right: 140px;
-    }
-    
-    #freeTrial {
-        font-size: 0;
-    }
-    
-    #freeTrial::before {
-        content: "Free Trial";
-        font-size: 0.85rem;
-    }
-}
-
-/* Further refinements for very small screens */
-@media (max-width: 480px) {
-    .form-container h2 {
-        font-size: 1.3rem;
-        margin-right: 120px;
-    }
-    
-    .btn-secondary {
-        font-size: 0.85rem;
-        padding: 0.7rem 1rem;
-        min-width: 90px;
-    }
 }
 
 .processing-note {
@@ -398,19 +366,19 @@ body {
 /* Showcase Navigation */
 .showcase-navigation {
     display: flex;
-    flex-direction: row !important; /* Force horizontal always */
+    flex-direction: row !important;
     justify-content: center;
     align-items: center;
-    gap: 1rem;                       /* Reduced from 2rem */
-    margin-bottom: 1rem;             /* Reduced from 2rem */
-    padding: 0.5rem;                 /* Reduced from 1rem */
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
 }
 
 .nav-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;            /* Reduced padding */
+    padding: 0.5rem 1rem;
     background-color: #21262d;
     border: 1px solid #30363d;
     border-radius: 8px;
@@ -419,7 +387,7 @@ body {
     transition: all 0.2s ease;
     font-size: 0.9rem;
     font-weight: 500;
-    min-width: 90px;                 /* Smaller minimum width */
+    min-width: 90px;
 }
 
 .nav-btn:hover:not(:disabled) {
@@ -440,31 +408,31 @@ body {
 }
 
 .showcase-counter {
-    padding: 0.5rem 0.75rem;         /* Reduced padding */
+    padding: 0.5rem 0.75rem;
     background-color: #161b22;
     border: 1px solid #30363d;
     border-radius: 6px;
     color: #f0f6fc;
     font-weight: 500;
-    min-width: 60px;                 /* Smaller width */
+    min-width: 60px;
     text-align: center;
 }
 
 @media (max-width: 768px) {
     .showcase-navigation {
-        flex-direction: row !important; /* Keep horizontal */
-        gap: 0.75rem;                   /* Even more compact on mobile */
+        flex-direction: row !important;
+        gap: 0.75rem;
         padding: 0.25rem;
     }
     
     .nav-btn {
-        min-width: 80px;                /* Smaller on mobile */
+        min-width: 80px;
         padding: 0.4rem 0.8rem;
         justify-content: center;
     }
     
     .nav-text {
-        display: none;                  /* Hide text, keep arrows only */
+        display: none;
     }
 }
 
