@@ -102,9 +102,9 @@
             </div>
         </div>
         
-        <!-- Navigation Controls (Desktop) -->
-        <div class="showcase-navigation">
-            <button class="nav-btn" id="prevBtn">
+        <!-- Top Navigation Controls -->
+        <div class="showcase-navigation" id="topNavigation">
+            <button class="nav-btn" id="prevBtn" disabled>
                 <span class="nav-arrow">←</span>
                 <span class="nav-text">Previous</span>
             </button>
@@ -113,7 +113,7 @@
                 <span id="currentIndex">1</span> / <span id="totalItems">0</span>
             </div>
             
-            <button class="nav-btn" id="nextBtn">
+            <button class="nav-btn" id="nextBtn" disabled>
                 <span class="nav-text">Next</span>
                 <span class="nav-arrow">→</span>
             </button>
@@ -144,10 +144,10 @@
                 <textarea id="showcase3" readonly>Loading showcase content...</textarea>
             </div>
         </div>
-
-        <!-- Mobile Navigation Controls (Bottom) -->
-        <div class="showcase-navigation-mobile">
-            <button class="nav-btn" id="prevBtnBottom">
+        
+        <!-- Bottom Navigation Controls -->
+        <div class="showcase-navigation" id="bottomNavigation">
+            <button class="nav-btn" id="prevBtnBottom" disabled>
                 <span class="nav-arrow">←</span>
                 <span class="nav-text">Previous</span>
             </button>
@@ -156,16 +156,14 @@
                 <span id="currentIndexBottom">1</span> / <span id="totalItemsBottom">0</span>
             </div>
             
-            <button class="nav-btn" id="nextBtnBottom">
+            <button class="nav-btn" id="nextBtnBottom" disabled>
                 <span class="nav-text">Next</span>
                 <span class="nav-arrow">→</span>
             </button>
         </div>
     </section>
 
-    <!-- HIDDEN MODALS - These should not be visible until activated -->
-    
-    <!-- Free Trial Modal -->
+    <!-- Free Trial Modal - Hidden by default -->
     <div id="freeTrialModal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -175,18 +173,12 @@
                 <div class="form-group">
                     <label for="trialEmail">Email Address</label>
                     <input type="email" id="trialEmail" required>
-                    <div class="email-validation" id="emailValidationMsg"></div>
                 </div>
-
                 <button type="submit" class="btn-primary">Start Free Trial</button>
             </form>
         </div>
     </div>
 
-    <!-- Free Trial Notification (Hidden by default) -->
-    <div id="freeTrialNotification" class="free-trial-notification" style="display: none;"></div>
-
     <script src="assets/js/main.js"></script>
-    <script src="assets/js/free-trial.js"></script>
 </body>
 </html>
