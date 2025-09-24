@@ -42,7 +42,8 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
-    align-items: start;
+    align-items: stretch; /* stretch instead of start */
+    min-height: 100vh;    /* fill viewport */
 }
 
 /* Equal Height Container */
@@ -59,6 +60,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
+    flex: 1; /* stretch to fill container height like sidebars */
 }
 
 .form-container {
@@ -70,7 +72,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-height: 600px; /* Match sidebar height */
+    min-height: 0; /* remove fixed 600px for equal height stretching */
 }
 
 /* Form Header with better mobile handling */
@@ -167,9 +169,10 @@ body {
     border: 1px solid #30363d;
     border-radius: 12px;
     padding: 1.5rem;
-    min-height: 600px; /* Match form container height */
+    min-height: 0; /* Match form container height */
     display: flex;
     flex-direction: column;
+    flex: 1;             /* allow stretching to fill container */
 }
 
 /* Make review section flexible to fill remaining space */
