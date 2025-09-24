@@ -608,6 +608,20 @@ body {
     color: #7d8590;
 }
 
+/* Desktop Fixed Heights */
+@media (min-width: 1201px) {
+    .container {
+        min-height: 620px;
+    }
+    
+    .sidebar-left, 
+    .sidebar-right, 
+    .form-container {
+        height: 620px;
+        overflow-y: auto;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .container {
