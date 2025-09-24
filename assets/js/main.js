@@ -1,11 +1,9 @@
 // Configuration
 const CONFIG = {
-  // Your n8n form trigger URL - will be masked via Cloudflare
-  N8N_FORM_URL: 'https://api.yourdomain.com/form/45f473b3-3bb4-49f0-b2f0-b63ec6ea343a',
-  // GitHub API endpoint for validation
-  GITHUB_API_BASE: 'https://api.github.com/repos/',
-  // License validation endpoint (your backend)
-  LICENSE_VALIDATION_ENDPOINT: 'https://api.yourdomain.com/webhook/validate-license'
+    N8N_FORM_URL: 'https://api.yourdomain.com/form/45f473b3-3bb4-49f0-b2f0-b63ec6ea343a',
+    GITHUB_API_BASE: 'https://api.github.com/repos/',
+    LICENSE_VALIDATION_ENDPOINT: 'https://api.yourdomain.com/webhook/validate-license',
+    SHOWCASE_JSON_URL: 'https://raw.githubusercontent.com/JOLT-dailyAi/GitHub-to-AI-ingester/refs/heads/main/data/showcase/Showcase.json'
 };
 
 // DOM Elements
@@ -19,14 +17,17 @@ const analysisForm = document.getElementById('analysisForm');
 
 // Modal elements
 const freeTrialModal = document.getElementById('freeTrialModal');
-const freeTrialBtn = document.getElementById('freeTrial');
 const closeBtns = document.querySelectorAll('.close');
 
 // Showcase elements
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
+const prevBtnBottom = document.getElementById('prevBtnBottom');
+const nextBtnBottom = document.getElementById('nextBtnBottom');
 const currentIndexSpan = document.getElementById('currentIndex');
 const totalItemsSpan = document.getElementById('totalItems');
+const currentIndexBottomSpan = document.getElementById('currentIndexBottom');
+const totalItemsBottomSpan = document.getElementById('totalItemsBottom');
 const showcaseSearch = document.getElementById('showcaseSearch');
 const autocompleteDropdown = document.getElementById('autocompleteDropdown');
 
@@ -53,10 +54,6 @@ function initializeEventListeners() {
     if (analysisForm) analysisForm.addEventListener('submit', handleFormSubmission);
     
     // Modal controls
-    if (freeTrialBtn) {
-        freeTrialBtn.addEventListener('click', () => openModal(freeTrialModal));
-    }
-    
     closeBtns.forEach(btn => {
         btn.addEventListener('click', closeModals);
     });
@@ -67,16 +64,14 @@ function initializeEventListeners() {
         }
     });
     
-    // Free trial form
-    const freeTrialForm = document.getElementById('freeTrialForm');
-    if (freeTrialForm) {
-        freeTrialForm.addEventListener('submit', handleFreeTrialSubmission);
-    }
-    
     // Showcase navigation
     if (prevBtn && nextBtn) {
         prevBtn.addEventListener('click', showPreviousShowcase);
         nextBtn.addEventListener('click', showNextShowcase);
+    }
+    if (prevBtnBottom && nextBtnBottom) {
+        prevBtnBottom.addEventListener('click', showPreviousShowcase);
+        nextBtnBottom.addEventListener('click', showNextShowcase);
     }
     
     // Showcase search with autocomplete
@@ -97,7 +92,7 @@ function initializeShowcase() {
     showcaseItems = document.querySelectorAll('.showcase-item');
     filteredItems = Array.from(showcaseItems);
 
-    // Attach input listeners for textareas inside showcase items.
+    // Attach input listeners for textareas inside showcase items
     showcaseItems.forEach(item => {
         const textareas = item.querySelectorAll('textarea');
         textareas.forEach(el => {
@@ -139,14 +134,22 @@ function updateShowcaseDisplay() {
 
         if (currentIndexSpan) currentIndexSpan.textContent = currentShowcaseIndex + 1;
         if (totalItemsSpan) totalItemsSpan.textContent = filteredItems.length;
+        if (currentIndexBottomSpan) currentIndexBottomSpan.textContent = currentShowcaseIndex + 1;
+        if (totalItemsBottomSpan) totalItemsBottomSpan.textContent = filteredItems.length;
         
         if (prevBtn) prevBtn.disabled = currentShowcaseIndex === 0;
         if (nextBtn) nextBtn.disabled = currentShowcaseIndex === filteredItems.length - 1;
+        if (prevBtnBottom) prevBtnBottom.disabled = currentShowcaseIndex === 0;
+        if (nextBtnBottom) nextBtnBottom.disabled = currentShowcaseIndex === filteredItems.length - 1;
     } else {
         if (currentIndexSpan) currentIndexSpan.textContent = '0';
         if (totalItemsSpan) totalItemsSpan.textContent = '0';
+        if (currentIndexBottomSpan) currentIndexBottomSpan.textContent = '0';
+        if (totalItemsBottomSpan) totalItemsBottomSpan.textContent = '0';
         if (prevBtn) prevBtn.disabled = true;
         if (nextBtn) nextBtn.disabled = true;
+        if (prevBtnBottom) prevBtnBottom.disabled = true;
+        if (nextBtnBottom) nextBtnBottom.disabled = true;
     }
 }
 
@@ -288,7 +291,7 @@ function extractKeywords(text) {
 // -------------------------
 async function loadShowcaseFiles() {
     try {
-        const response = await fetch('data/showcase/Showcase.json');
+        const response = await fetch(CONFIG.SHOWCASE_JSON_URL);
         if (response.ok) {
             const showcaseData = await response.json();
             
@@ -329,10 +332,11 @@ async function loadShowcaseFiles() {
 
             console.log('Showcase files loaded successfully');
         } else {
-            console.log('Could not load showcase data, using existing content');
+            showStatusMessage('Failed to load showcase data. Please try again later.', 'error');
         }
     } catch (error) {
         console.error('Error loading showcase files:', error);
+        showStatusMessage('Failed to load showcase data. Please try again later.', 'error');
     }
 }
 
@@ -346,7 +350,8 @@ async function validateLicenseKey() {
         return;
     }
     
-    if (licenseKey === generateFreeLicenseKey()) {
+    // Check for FreeTrialManager format
+    if (/^FreeTrial-[A-Z]{3}\d{4}-[0-9a-f]{8,16}$/i.test(licenseKey)) {
         updateLicenseInfo('Free trial license - 1 analysis available', 'valid');
         cacheLicenseKey(licenseKey);
         checkFormValidity();
@@ -429,6 +434,7 @@ async function handleFormSubmission(e) {
     e.preventDefault();
     const licenseKey = licenseKeyInput.value.trim();
     const repoUrl = repoUrlInput.value.trim();
+    const discordId = document.getElementById('discordId').value.trim();
     if (!licenseKey || !repoUrl) {
         showStatusMessage('Please fill in all required fields', 'error');
         return;
@@ -438,7 +444,12 @@ async function handleFormSubmission(e) {
         const response = await fetch(CONFIG.N8N_FORM_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ license_key: licenseKey, repository_url: repoUrl, timestamp: new Date().toISOString() })
+            body: JSON.stringify({ 
+                license_key: licenseKey, 
+                repository_url: repoUrl, 
+                discord_id: discordId,
+                timestamp: new Date().toISOString() 
+            })
         });
         if (response.ok) {
             showStatusMessage(
@@ -447,6 +458,7 @@ async function handleFormSubmission(e) {
             );
             setTimeout(() => {
                 repoUrlInput.value = '';
+                document.getElementById('discordId').value = '';
                 updateUrlValidation('', '');
                 hideStatusMessage();
             }, 5000);
@@ -462,28 +474,8 @@ async function handleFormSubmission(e) {
 }
 
 // -------------------------
-// Free Trial Handler
-// -------------------------
-function handleFreeTrialSubmission(e) {
-    e.preventDefault();
-    const freeKey = generateFreeLicenseKey();
-    licenseKeyInput.value = freeKey;
-    licenseKeyInput.disabled = true;
-    alert(`Free trial activated! License key: ${freeKey}`);
-    closeModals();
-    validateLicenseKey();
-}
-
-// -------------------------
 // Utility Functions
 // -------------------------
-function generateFreeLicenseKey() {
-    const today = new Date();
-    const day = today.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-    const year = today.getFullYear();
-    return `FREETRIAL${day}${year}`;
-}
-
 function isValidLicenseFormat(key) {
     return key.length >= 8 && /^[A-Z0-9-]+$/i.test(key);
 }
@@ -556,12 +548,10 @@ function loadCachedLicenseKey() {
     }
 }
 
-function openModal(modal) {
-    if (modal) modal.style.display = 'block';
-}
-
 function closeModals() {
-    if (freeTrialModal) freeTrialModal.style.display = 'none';
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.style.display = 'none';
+    });
 }
 
 function copyToClipboard(textareaId) {
