@@ -109,26 +109,9 @@ class FreeTrialManager {
 
     // VPN Detection Methods
     async detectVPN() {
-        try {
-            const [webrtcResult, timezoneResult, ipResult] = await Promise.allSettled([
-                this.detectVPNWebRTC(),
-                this.retryFetch(() => this.detectVPNTimezone(), 2, 1000),
-                this.retryFetch(() => this.detectVPNKnownIPs(), 2, 1000)
-            ]);
-
-            const results = {
-                webrtc: webrtcResult.status === 'fulfilled' ? webrtcResult.value : false,
-                timezone: timezoneResult.status === 'fulfilled' ? timezoneResult.value : false,
-                ip: ipResult.status === 'fulfilled' ? ipResult.value : false
-            };
-
-            console.log('VPN detection results:', results);
-            return results.webrtc || results.timezone || results.ip;
-        } catch (error) {
-            console.error('VPN detection error:', error);
-            return false;
-        }
-    }
+    const vpnDetector = new ImprovedVPNDetection();
+    return await vpnDetector.detectVPN();
+}
 
     async retryFetch(fn, retries = 2, delay = 1000) {
         for (let i = 0; i <= retries; i++) {
@@ -226,16 +209,13 @@ class FreeTrialManager {
 
     // Cookie and Consent Management
     areCookiesEnabled() {
-        try {
-            document.cookie = 'testcookie=test; SameSite=Strict';
-            const cookieEnabled = document.cookie.indexOf('testcookie') !== -1;
-            document.cookie = 'testcookie=; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
-            return cookieEnabled;
-        } catch (e) {
-            console.error('Cookie check error:', e);
-            return false;
-        }
+    const result = ImprovedCookieManager.areCookiesEnabled();
+    if (!result.overall) {
+        // Show instructions to user
+        ImprovedCookieManager.showCookieEnableInstructions();
     }
+    return result.overall;
+}
 
     checkCookieConsent() {
         return this.getCookie('freeTrialConsent') === 'true' || 
