@@ -46,14 +46,6 @@ body {
     min-height: 620px;        /* limit height */
 }
 
-/* Equal Height Container */
-.container-inner {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 600px; /* Ensure minimum height */
-}
-
 /* Main Form Section */
 .main-form {
     background-color: #0d1117;
@@ -76,7 +68,7 @@ body {
     max-height: 620px;        /* limit height */
 }
 
-/* Form Header with better mobile handling */
+/* Form Header */
 .form-header {
     position: relative;
     margin-bottom: 1.5rem;
@@ -87,72 +79,6 @@ body {
     color: #f0f6fc;
     text-align: center;
     margin: 0;
-}
-
-/* Free Trial Button Responsive Text */
-#freeTrial {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* VPN Detection - Shortened text to prevent overlap */
-.btn-blocked {
-    background-color: #da3633 !important;
-    color: #ffffff !important;
-    border-color: #da3633 !important;
-    cursor: not-allowed !important;
-}
-
-.btn-loading {
-    background-color: #7d8590 !important;
-    color: #ffffff !important;
-    cursor: not-allowed !important;
-}
-
-/* Mobile responsive text for free trial button */
-@media (max-width: 600px) {
-    .form-container h2 {
-        text-align: left;
-        margin-right: 130px; /* Space for button */
-    }
-    
-    #freeTrial {
-        font-size: 0;  /* Hide original text */
-        min-width: 100px;
-    }
-    
-    #freeTrial::before {
-        content: "Free Trial";
-        font-size: 0.85rem;
-    }
-    
-    /* Shorter VPN message for mobile */
-    .btn-blocked::before {
-        content: "Disable VPN" !important;
-        font-size: 0.8rem !important;
-    }
-    
-    .btn-blocked {
-        font-size: 0 !important; /* Hide original text */
-    }
-}
-
-@media (max-width: 480px) {
-    .form-container h2 {
-        font-size: 1.3rem;
-        margin-right: 110px;
-    }
-    
-    #freeTrial::before {
-        content: "Trial";
-        font-size: 0.8rem;
-    }
-    
-    .btn-blocked::before {
-        content: "No VPN" !important;
-        font-size: 0.75rem !important;
-    }
 }
 
 .processing-note {
@@ -412,51 +338,6 @@ body {
     display: block;
 }
 
-/* Free Trial Notifications */
-.free-trial-notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 1rem 1.5rem;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    z-index: 9999;
-    max-width: 300px;
-    opacity: 0;
-    transform: translateX(100%);
-    transition: all 0.3s ease;
-}
-
-.free-trial-notification.show {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-.free-trial-notification.info {
-    background-color: rgba(31, 111, 235, 0.15);
-    color: #58a6ff;
-    border: 1px solid rgba(31, 111, 235, 0.4);
-}
-
-.free-trial-notification.success {
-    background-color: rgba(63, 185, 80, 0.15);
-    color: #3fb950;
-    border: 1px solid rgba(63, 185, 80, 0.4);
-}
-
-.free-trial-notification.warning {
-    background-color: rgba(255, 191, 0, 0.15);
-    color: #ffbf00;
-    border: 1px solid rgba(255, 191, 0, 0.4);
-}
-
-.free-trial-notification.error {
-    background-color: rgba(248, 81, 73, 0.15);
-    color: #f85149;
-    border: 1px solid rgba(248, 81, 73, 0.4);
-}
-
 /* Showcase Section */
 .showcase {
     margin-top: 3rem;
@@ -528,6 +409,16 @@ body {
     align-items: center;
     gap: 2rem;
     margin-bottom: 2rem;
+    padding: 1rem;
+}
+
+/* Mobile Navigation Controls (Bottom) */
+.showcase-navigation-mobile {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    margin-top: 2rem;
     padding: 1rem;
 }
 
@@ -657,114 +548,6 @@ body {
     box-sizing: border-box;
 }
 
-/* Modals */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(4px);
-}
-
-.modal-content {
-    background-color: #161b22;
-    border: 1px solid #30363d;
-    margin: 5% auto;
-    padding: 2rem;
-    width: 90%;
-    max-width: 500px;
-    border-radius: 12px;
-    position: relative;
-}
-
-.close {
-    color: #7d8590;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    position: absolute;
-    right: 15px;
-    top: 10px;
-}
-
-.close:hover {
-    color: #e6edf3;
-}
-
-.modal h2 {
-    margin-bottom: 1rem;
-    color: #f0f6fc;
-}
-
-.modal p {
-    margin-bottom: 1.5rem;
-    color: #7d8590;
-}
-
-/* Cookie Consent Modal Specific Styles */
-.cookie-consent-details {
-    background-color: #0d1117;
-    border: 1px solid #30363d;
-    border-radius: 6px;
-    padding: 1rem;
-    margin: 1rem 0;
-}
-
-.cookie-consent-details h4 {
-    color: #f0f6fc;
-    margin-bottom: 0.5rem;
-}
-
-.cookie-consent-details ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-.cookie-consent-details li {
-    margin-bottom: 0.25rem;
-    font-size: 0.875rem;
-}
-
-.modal-buttons {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin-top: 1.5rem;
-}
-
-/* Trial Key Display Modal */
-.success-message {
-    color: #3fb950;
-    font-weight: 500;
-}
-
-.key-display-container {
-    display: flex;
-    gap: 0.5rem;
-    margin: 1rem 0;
-}
-
-.key-display-container input {
-    flex: 1;
-    padding: 0.75rem;
-    background-color: #0d1117;
-    border: 1px solid #30363d;
-    border-radius: 6px;
-    color: #e6edf3;
-    font-family: monospace;
-}
-
-.key-note {
-    font-size: 0.875rem;
-    color: #7d8590;
-    font-style: italic;
-}
-
 /* Responsive Design */
 @media (max-width: 1200px) {
     .container {
@@ -795,8 +578,11 @@ body {
     }
     
     .showcase-navigation {
-        flex-direction: column;
-        gap: 1rem;
+        display: none; /* Hide desktop navigation */
+    }
+    
+    .showcase-navigation-mobile {
+        display: flex; /* Show mobile navigation */
     }
     
     .nav-btn {
@@ -840,12 +626,6 @@ body {
         font-size: 0.65rem;
         transform: scale(0.75);
         width: 133.33%;
-    }
-    
-    .free-trial-notification {
-        right: 10px;
-        left: 10px;
-        max-width: none;
     }
 }
 
