@@ -236,18 +236,52 @@ body {
 }
 
 /* Validation Messages */
-.license-info, .url-validation {
+.license-info, .url-validation, .email-validation {
     margin-top: 0.5rem;
     font-size: 0.875rem;
     min-height: 1.2rem;
 }
 
-.license-info.valid, .url-validation.valid {
+.license-info.valid, .url-validation.valid, .email-validation.valid {
     color: #3fb950;
 }
 
-.license-info.invalid, .url-validation.invalid {
+.license-info.invalid, .url-validation.invalid, .email-validation.invalid {
     color: #f85149;
+}
+
+/* Notifications */
+.free-trial-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 1rem;
+    border-radius: 6px;
+    z-index: 1000;
+    display: none;
+    max-width: 300px;
+}
+
+.free-trial-notification.show {
+    display: block;
+}
+
+.free-trial-notification.info {
+    background-color: rgba(31, 111, 235, 0.15);
+    color: #1f6feb;
+    border: 1px solid rgba(31, 111, 235, 0.4);
+}
+
+.free-trial-notification.error {
+    background-color: rgba(248, 81, 73, 0.15);
+    color: #f85149;
+    border: 1px solid rgba(248, 81, 73, 0.4);
+}
+
+.free-trial-notification.warning {
+    background-color: rgba(255, 149, 0, 0.15);
+    color: #ff9500;
+    border: 1px solid rgba(255, 149, 0, 0.4);
 }
 
 /* Buttons */
@@ -398,28 +432,28 @@ body {
 /* Showcase Navigation */
 .showcase-navigation {
     display: flex;
-    flex-direction: row !important; /* Force horizontal always */
+    flex-direction: row !important;
     justify-content: center;
     align-items: center;
-    gap: 1rem;                       /* Reduced from 2rem */
-    margin-bottom: 1rem;             /* Reduced from 2rem */
-    padding: 0.5rem;                 /* Reduced from 1rem */
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
 }
 
 .nav-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;            /* Reduced padding */
+    padding: 0.5rem 1rem;
     background-color: #21262d;
     border: 1px solid #30363d;
     border-radius: 8px;
     color: #e6edf3;
-    cursor: pointer;
+    cursor:$ pointer;
     transition: all 0.2s ease;
     font-size: 0.9rem;
     font-weight: 500;
-    min-width: 90px;                 /* Smaller minimum width */
+    min-width: 90px;
 }
 
 .nav-btn:hover:not(:disabled) {
@@ -440,31 +474,31 @@ body {
 }
 
 .showcase-counter {
-    padding: 0.5rem 0.75rem;         /* Reduced padding */
+    padding: 0.5rem 0.75rem;
     background-color: #161b22;
     border: 1px solid #30363d;
     border-radius: 6px;
     color: #f0f6fc;
     font-weight: 500;
-    min-width: 60px;                 /* Smaller width */
+    min-width: 60px;
     text-align: center;
 }
 
 @media (max-width: 768px) {
     .showcase-navigation {
-        flex-direction: row !important; /* Keep horizontal */
-        gap: 0.75rem;                   /* Even more compact on mobile */
+        flex-direction: row !important;
+        gap: 0.75rem;
         padding: 0.25rem;
     }
     
     .nav-btn {
-        min-width: 80px;                /* Smaller on mobile */
+        min-width: 80px;
         padding: 0.4rem 0.8rem;
         justify-content: center;
     }
     
     .nav-text {
-        display: none;                  /* Hide text, keep arrows only */
+        display: none;
     }
 }
 
