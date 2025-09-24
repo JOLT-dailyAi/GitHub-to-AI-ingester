@@ -2,12 +2,6 @@ class FreeTrialManager {
     constructor() {
         this.config = {
             SHOWCASE_JSON_URL: 'https://raw.githubusercontent.com/JOLT-dailyAi/GitHub-to-AI-ingester/refs/heads/main/data/showcase/Showcase.json',
-            VPN_DETECTION_TIMEOUT: 3000,
-            KNOWN_VPN_ASNS: [
-                'AS13335', 'AS16509', 'AS8075', 'AS15169',
-                'AS396982', 'AS63023', 'AS397444', 'AS54600',
-                'AS20473', 'AS26496', 'AS16276', 'AS24940'
-            ],
             DISPOSABLE_EMAIL_DOMAINS: [
                 '10minutemail.com', 'tempmail.org', 'guerrillamail.com', 'mailinator.com',
                 'throwaway.email', 'temp-mail.org', 'getairmail.com', 'sharklasers.com',
@@ -22,6 +16,10 @@ class FreeTrialManager {
             repositoryChecked: false,
             hasUsedTrial: false
         };
+
+        // Initialize improved detectors
+        this.vpnDetector = new ImprovedVPNDetection();
+        this.cookieManager = ImprovedCookieManager;
 
         this.init();
     }
@@ -58,18 +56,28 @@ class FreeTrialManager {
         this.updateButtonState(freeTrialBtn, 'loading', 'Checking connection...');
 
         try {
-            if (!this.areCookiesEnabled()) {
-                this.showNotification('Cookies are required to use the free trial. Please enable cookies.', 'error', 5000);
+            // Check cookies with improved detection
+            const cookieCheck = this.cookieManager.areCookiesEnabled();
+            console.log('Cookie check result:', cookieCheck);
+            
+            if (!cookieCheck.overall) {
+                this.showNotification('Cookies required for free trial. Please enable cookies and try again.', 'error', 5000);
+                this.cookieManager.showCookieEnableInstructions();
                 this.resetButton(freeTrialBtn);
                 return;
             }
 
-            const isVPN = await this.detectVPN();
+            // Check VPN with improved detection
+            this.updateButtonState(freeTrialBtn, 'loading', 'Checking network...');
+            const isVPN = await this.vpnDetector.detectVPN();
+            console.log('VPN detection result:', isVPN);
+            
             if (isVPN) {
                 this.handleVPNDetected(freeTrialBtn);
                 return;
             }
 
+            // Check if email already used trial
             const email = this.getCurrentEmailValue();
             if (email && await this.hasEmailUsedTrial(email)) {
                 this.showNotification('Free trial already used this month for this email.', 'error', 5000);
@@ -77,16 +85,19 @@ class FreeTrialManager {
                 return;
             }
 
+            // Proceed to modal
             this.checkCookieConsent() ? this.showFreeTrialModal() : this.showCookieConsentModal();
             this.resetButton(freeTrialBtn);
+
         } catch (error) {
             console.error('Free trial initialization error:', error);
-            this.showNotification('An error occurred. Please try again.', 'error', 5000);
+            this.showNotification('Network check failed. Please check your connection and try again.', 'error', 5000);
             this.resetButton(freeTrialBtn);
         }
     }
 
     updateButtonState(button, state, text) {
+        if (!button) return;
         button.textContent = text;
         button.disabled = true;
         button.classList.remove('btn-loading', 'btn-blocked');
@@ -94,6 +105,7 @@ class FreeTrialManager {
     }
 
     resetButton(button) {
+        if (!button) return;
         button.textContent = 'Try once for free';
         button.disabled = false;
         button.classList.remove('btn-loading', 'btn-blocked');
@@ -101,122 +113,16 @@ class FreeTrialManager {
 
     handleVPNDetected(button) {
         this.state.vpnDetected = true;
-        this.updateButtonState(button, 'blocked', 'Please Disable VPN');
-        this.showNotification('VPN/Proxy detected. Please disable VPN to use free trial.', 'warning', 5000);
-
-        setTimeout(() => this.resetButton(button), 30000);
-    }
-
-    // VPN Detection Methods
-    async detectVPN() {
-    const vpnDetector = new ImprovedVPNDetection();
-    return await vpnDetector.detectVPN();
-}
-
-    async retryFetch(fn, retries = 2, delay = 1000) {
-        for (let i = 0; i <= retries; i++) {
-            try {
-                return await fn();
-            } catch (error) {
-                if (i === retries) throw error;
-                await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
-            }
-        }
-    }
-
-    detectVPNWebRTC() {
-        return new Promise((resolve) => {
-            if (!window.RTCPeerConnection) {
-                resolve(false);
-                return;
-            }
-
-            const pc = new RTCPeerConnection({
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-            });
-
-            let localIPs = [];
-            let publicIPs = [];
-
-            pc.onicecandidate = (event) => {
-                if (event.candidate) {
-                    const ip = event.candidate.candidate.split(' ')[4];
-                    if (this.isPrivateIP(ip)) {
-                        localIPs.push(ip);
-                    } else if (this.isValidPublicIP(ip)) {
-                        publicIPs.push(ip);
-                    }
-                }
-            };
-
-            pc.createDataChannel('test');
-            pc.createOffer()
-                .then(offer => pc.setLocalDescription(offer))
-                .catch(() => resolve(false));
-
-            setTimeout(() => {
-                pc.close();
-                const uniquePublicIPs = [...new Set(publicIPs)];
-                const suspiciousVPN = uniquePublicIPs.length > 1 || 
-                                    (uniquePublicIPs.length === 1 && localIPs.length === 0);
-                resolve(suspiciousVPN);
-            }, this.config.VPN_DETECTION_TIMEOUT);
-        });
-    }
-
-    async detectVPNTimezone() {
-        try {
-            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const response = await fetch('https://ipapi.co/json/', {
-                signal: AbortSignal.timeout(5000)
-            });
-
-            if (!response.ok) return false;
-
-            const location = await response.json();
-            const ipTimezone = location.timezone || userTimezone;
-            return userTimezone !== ipTimezone;
-        } catch (error) {
-            console.error('Timezone VPN detection error:', error);
-            return false;
-        }
-    }
-
-    async detectVPNKnownIPs() {
-        try {
-            const response = await fetch('https://ipapi.co/json/', {
-                signal: AbortSignal.timeout(5000)
-            });
-
-            if (!response.ok) return false;
-
-            const data = await response.json();
-            const org = data.org ? data.org.toLowerCase() : '';
-            const vpnIndicators = [
-                org.includes('vpn'),
-                org.includes('proxy'),
-                org.includes('hosting'),
-                org.includes('datacenter'),
-                data.asn && this.config.KNOWN_VPN_ASNS.includes(data.asn)
-            ];
-
-            return vpnIndicators.some(indicator => indicator === true);
-        } catch (error) {
-            console.error('Known IP VPN detection error:', error);
-            return false;
-        }
+        this.updateButtonState(button, 'blocked', 'VPN Detected - Please Disable');
+        this.showNotification('VPN/Proxy detected. Please disable VPN to access free trial.', 'warning', 7000);
+        
+        // Auto-reset button after 30 seconds
+        setTimeout(() => {
+            if (button) this.resetButton(button);
+        }, 30000);
     }
 
     // Cookie and Consent Management
-    areCookiesEnabled() {
-    const result = ImprovedCookieManager.areCookiesEnabled();
-    if (!result.overall) {
-        // Show instructions to user
-        ImprovedCookieManager.showCookieEnableInstructions();
-    }
-    return result.overall;
-}
-
     checkCookieConsent() {
         return this.getCookie('freeTrialConsent') === 'true' || 
                localStorage.getItem('freeTrialConsent') === 'true';
@@ -227,7 +133,8 @@ class FreeTrialManager {
         const modal = document.getElementById('cookieConsentModal');
         if (modal) {
             modal.style.display = 'block';
-            modal.querySelector('#acceptCookiesBtn').focus();
+            const acceptBtn = modal.querySelector('#acceptCookiesBtn');
+            if (acceptBtn) acceptBtn.focus();
         }
     }
 
@@ -264,6 +171,8 @@ class FreeTrialManager {
 
     bindCookieModalEvents() {
         const modal = document.getElementById('cookieConsentModal');
+        if (!modal) return;
+
         const closeBtn = modal.querySelector('.close');
         const acceptBtn = document.getElementById('acceptCookiesBtn');
         const rejectBtn = document.getElementById('rejectCookiesBtn');
@@ -276,7 +185,13 @@ class FreeTrialManager {
     handleCookieAccept() {
         this.state.cookieConsentGiven = true;
         this.setCookie('freeTrialConsent', 'true', this.getEndOfCurrentMonth());
-        localStorage.setItem('freeTrialConsent', 'true');
+        
+        try {
+            localStorage.setItem('freeTrialConsent', 'true');
+        } catch (e) {
+            console.warn('localStorage not available:', e);
+        }
+        
         this.hideCookieModal();
         this.showFreeTrialModal();
     }
@@ -336,8 +251,8 @@ class FreeTrialManager {
     }
 
     isDisposableEmail(email) {
-        const domain = email.split('@')[1].toLowerCase();
-        return this.config.DISPOSABLE_EMAIL_DOMAINS.includes(domain);
+        const domain = email.split('@')[1]?.toLowerCase();
+        return domain && this.config.DISPOSABLE_EMAIL_DOMAINS.includes(domain);
     }
 
     createEmailValidationElement() {
@@ -387,6 +302,7 @@ class FreeTrialManager {
         this.setSubmitButtonLoading(submitBtn, true);
 
         try {
+            // Validate email if not already validated
             if (!this.state.emailValidated) {
                 await this.validateTrialEmail();
                 if (!this.state.emailValidated) {
@@ -394,6 +310,7 @@ class FreeTrialManager {
                 }
             }
 
+            // Check repository
             const repoCheck = await this.checkRepositoryDuplicate(repoUrl);
             if (repoCheck.error) {
                 throw new Error(repoCheck.error);
@@ -402,11 +319,14 @@ class FreeTrialManager {
                 throw new Error(repoCheck.message);
             }
 
+            // Generate trial key and mark as used
             const freeTrialKey = await this.generateMonthlyFreeTrialKey(email);
             await this.setFreeTrialUsedFlag(this.emailHash);
             
+            // Success - populate form and show success
             this.populateMainFormWithTrialKey(freeTrialKey);
             this.showTrialKeySuccess(freeTrialKey);
+
         } catch (error) {
             console.error('Free trial submission error:', error);
             this.showNotification(error.message || 'Free trial setup failed. Please try again.', 'error', 5000);
@@ -427,7 +347,7 @@ class FreeTrialManager {
         try {
             const repoName = this.extractRepositoryName(repoUrl);
             if (!repoName) {
-                return { isDuplicate: false, error: 'Invalid repository URL' };
+                return { isDuplicate: false, error: 'Invalid repository URL format' };
             }
 
             const response = await fetch(this.config.SHOWCASE_JSON_URL, {
@@ -440,7 +360,7 @@ class FreeTrialManager {
 
             const showcaseData = await response.json();
             const isDuplicate = showcaseData.some(item => 
-                item.title.toLowerCase() === repoName.toLowerCase()
+                item.title?.toLowerCase() === repoName.toLowerCase()
             );
 
             return { 
@@ -463,8 +383,8 @@ class FreeTrialManager {
     extractRepositoryName(repoUrl) {
         try {
             if (repoUrl.includes('github.com/')) {
-                const parts = repoUrl.split('github.com/')[1].split('/');
-                return parts[1];
+                const parts = repoUrl.split('github.com/')[1]?.split('/');
+                return parts?.[1];
             } else if (repoUrl.includes('/')) {
                 const parts = repoUrl.split('/');
                 return parts[parts.length - 1];
@@ -529,14 +449,22 @@ class FreeTrialManager {
         const endOfMonth = this.getEndOfCurrentMonth();
 
         try {
-            localStorage.setItem(flag, timestamp);
-            sessionStorage.setItem(flag, timestamp);
+            // Store in multiple places for redundancy
+            if (typeof Storage !== 'undefined') {
+                localStorage.setItem(flag, timestamp);
+                sessionStorage.setItem(flag, timestamp);
+            }
+            
             this.setCookie(flag, timestamp, endOfMonth);
             await this.storeInIndexedDB(flag, timestamp);
 
             if ('caches' in window) {
-                const cache = await caches.open('freetrial-cache');
-                await cache.put(`/freetrial/${emailHash}`, new Response(timestamp));
+                try {
+                    const cache = await caches.open('freetrial-cache');
+                    await cache.put(`/freetrial/${emailHash}`, new Response(timestamp));
+                } catch (e) {
+                    console.warn('Cache API not available:', e);
+                }
             }
         } catch (error) {
             console.error('Error storing free trial flag:', error);
@@ -545,6 +473,7 @@ class FreeTrialManager {
 
     async checkFreeTrialUsed(emailHash) {
         const flag = `freetrial_used_${emailHash}`;
+        
         try {
             const checks = await Promise.allSettled([
                 this.checkStorage(localStorage, flag),
@@ -553,6 +482,7 @@ class FreeTrialManager {
                 this.checkIndexedDB(flag),
                 this.checkCache(emailHash)
             ]);
+            
             return checks.some(result => result.status === 'fulfilled' && result.value === true);
         } catch (error) {
             console.error('Error checking free trial usage:', error);
@@ -569,43 +499,51 @@ class FreeTrialManager {
     }
 
     async storeInIndexedDB(key, value) {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open('FreeTrialDB', 1);
-            request.onerror = () => reject(request.error);
-            request.onsuccess = (event) => {
-                const db = event.target.result;
-                const transaction = db.transaction(['freetrial'], 'readwrite');
-                const store = transaction.objectStore('freetrial');
-                store.put({ id: key, timestamp: value, created: Date.now() });
-                transaction.oncomplete = () => resolve();
-                transaction.onerror = () => reject(transaction.error);
-            };
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-                if (!db.objectStoreNames.contains('freetrial')) {
-                    const store = db.createObjectStore('freetrial', { keyPath: 'id' });
-                    store.createIndex('timestamp', 'timestamp', { unique: false });
-                }
-            };
+        return new Promise((resolve) => {
+            try {
+                const request = indexedDB.open('FreeTrialDB', 1);
+                request.onerror = () => resolve();
+                request.onsuccess = (event) => {
+                    const db = event.target.result;
+                    const transaction = db.transaction(['freetrial'], 'readwrite');
+                    const store = transaction.objectStore('freetrial');
+                    store.put({ id: key, timestamp: value, created: Date.now() });
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = () => resolve();
+                };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('freetrial')) {
+                        const store = db.createObjectStore('freetrial', { keyPath: 'id' });
+                        store.createIndex('timestamp', 'timestamp', { unique: false });
+                    }
+                };
+            } catch (error) {
+                resolve();
+            }
         });
     }
 
     async checkIndexedDB(flag) {
         return new Promise((resolve) => {
-            const request = indexedDB.open('FreeTrialDB', 1);
-            request.onerror = () => resolve(false);
-            request.onsuccess = (event) => {
-                const db = event.target.result;
-                if (!db.objectStoreNames.contains('freetrial')) {
-                    resolve(false);
-                    return;
-                }
-                const transaction = db.transaction(['freetrial'], 'readonly');
-                const store = transaction.objectStore('freetrial');
-                const getRequest = store.get(flag);
-                getRequest.onsuccess = () => resolve(!!getRequest.result);
-                getRequest.onerror = () => resolve(false);
-            };
+            try {
+                const request = indexedDB.open('FreeTrialDB', 1);
+                request.onerror = () => resolve(false);
+                request.onsuccess = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('freetrial')) {
+                        resolve(false);
+                        return;
+                    }
+                    const transaction = db.transaction(['freetrial'], 'readonly');
+                    const store = transaction.objectStore('freetrial');
+                    const getRequest = store.get(flag);
+                    getRequest.onsuccess = () => resolve(!!getRequest.result);
+                    getRequest.onerror = () => resolve(false);
+                };
+            } catch (error) {
+                resolve(false);
+            }
         });
     }
 
@@ -625,7 +563,8 @@ class FreeTrialManager {
         const modal = document.getElementById('freeTrialModal');
         if (modal) {
             modal.style.display = 'block';
-            modal.querySelector('#trialEmail').focus();
+            const emailInput = modal.querySelector('#trialEmail');
+            if (emailInput) emailInput.focus();
         }
     }
 
@@ -634,8 +573,7 @@ class FreeTrialManager {
         if (licenseKeyInput) {
             licenseKeyInput.value = freeTrialKey;
             licenseKeyInput.disabled = true;
-            const event = new Event('input');
-            licenseKeyInput.dispatchEvent(event);
+            licenseKeyInput.dispatchEvent(new Event('input'));
         }
     }
 
@@ -652,11 +590,11 @@ class FreeTrialManager {
                 <div id="trialKeyDisplayModal" class="modal">
                     <div class="modal-content">
                         <span class="close">&times;</span>
-                        <h2>Free Trial Activated! 🎉</h2>
+                        <h2>Free Trial Activated!</h2>
                         <p class="success-message">Your private license key for this month has been generated (holds 1 credit)</p>
                         <div class="key-display-container">
                             <input type="text" id="displayedTrialKey" value="${freeTrialKey}" readonly>
-                            <button id="copyKeyBtn" class="btn-secondary">📋 Copy</button>
+                            <button id="copyKeyBtn" class="btn-secondary">Copy</button>
                         </div>
                         <p class="key-note">This key has been automatically added to the main form. You can now analyze your repository!</p>
                         <button id="closeKeyModal" class="btn-primary">Continue to Analysis</button>
@@ -683,25 +621,27 @@ class FreeTrialManager {
             }
         }
         keyModal.style.display = 'block';
-        keyModal.querySelector('#closeKeyModal').focus();
+        const closeBtn = keyModal.querySelector('#closeKeyModal');
+        if (closeBtn) closeBtn.focus();
     }
 
     async copyKeyToClipboard(key, button) {
         try {
             await navigator.clipboard.writeText(key);
             const originalText = button.textContent;
-            button.textContent = '✅ Copied!';
+            button.textContent = 'Copied!';
             setTimeout(() => {
                 button.textContent = originalText;
             }, 2000);
         } catch (error) {
+            // Fallback for older browsers
             const keyInput = document.getElementById('displayedTrialKey');
             if (keyInput) {
                 keyInput.select();
                 document.execCommand('copy');
-                button.textContent = '✅ Copied!';
+                button.textContent = 'Copied!';
                 setTimeout(() => {
-                    button.textContent = '📋 Copy';
+                    button.textContent = 'Copy';
                 }, 2000);
             }
         }
@@ -716,15 +656,6 @@ class FreeTrialManager {
     getEndOfCurrentMonth() {
         const now = new Date();
         return new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    }
-
-    isPrivateIP(ip) {
-        return /^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)/.test(ip);
-    }
-
-    isValidPublicIP(ip) {
-        const ipRegex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
-        return ipRegex.test(ip) && !this.isPrivateIP(ip);
     }
 
     showNotification(message, type = 'info', duration = 5000) {
@@ -777,5 +708,11 @@ class FreeTrialManager {
     }
 }
 
-// Initialize Free Trial Manager
-const freeTrialManager = new FreeTrialManager();
+// Initialize Free Trial Manager when DOM is loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.freeTrialManager = new FreeTrialManager();
+    });
+} else {
+    window.freeTrialManager = new FreeTrialManager();
+}
