@@ -1,4 +1,4 @@
-// Improved VPN Detection with reduced false positives
+// CORS-free VPN Detection with fallback methods
 class ImprovedVPNDetection {
     constructor() {
         this.config = {
@@ -15,24 +15,24 @@ class ImprovedVPNDetection {
         
         this.detectionResults = {
             webrtc: { detected: false, confidence: 0, reason: '' },
-            ip: { detected: false, confidence: 0, reason: '' },
-            timezone: { detected: false, confidence: 0, reason: '' }
+            dns: { detected: false, confidence: 0, reason: '' },
+            behavioral: { detected: false, confidence: 0, reason: '' }
         };
     }
 
     async detectVPN() {
         try {
-            // Run detections in parallel with reduced aggression
-            const [webrtcResult, ipResult, timezoneResult] = await Promise.allSettled([
+            // Run detections in parallel - removed API-dependent methods
+            const [webrtcResult, dnsResult, behavioralResult] = await Promise.allSettled([
                 this.detectVPNWebRTCImproved(),
-                this.detectVPNIPAnalysis(),
-                this.detectVPNTimezoneImproved()
+                this.detectVPNDNSBehavior(),
+                this.detectVPNBehavioral()
             ]);
 
             // Process results with confidence scoring
             this.processDetectionResult(webrtcResult, 'webrtc');
-            this.processDetectionResult(ipResult, 'ip');
-            this.processDetectionResult(timezoneResult, 'timezone');
+            this.processDetectionResult(dnsResult, 'dns');
+            this.processDetectionResult(behavioralResult, 'behavioral');
 
             // Calculate overall confidence
             const totalConfidence = this.calculateOverallConfidence();
@@ -60,7 +60,7 @@ class ImprovedVPNDetection {
     }
 
     calculateOverallConfidence() {
-        const weights = { webrtc: 0.4, ip: 0.4, timezone: 0.2 }; // Reduced timezone weight
+        const weights = { webrtc: 0.5, dns: 0.3, behavioral: 0.2 };
         let totalConfidence = 0;
 
         Object.keys(this.detectionResults).forEach(method => {
@@ -121,22 +121,22 @@ class ImprovedVPNDetection {
 
                 if (candidateCount === 0) {
                     // No candidates - might be blocked/VPN
-                    confidence = 30;
+                    confidence = 40;
                     reason = 'no_candidates';
                     detected = true;
                 } else if (publicIPCount > 2) {
                     // Multiple public IPs - high VPN probability
-                    confidence = 80;
+                    confidence = 85;
                     reason = 'multiple_public_ips';
                     detected = true;
                 } else if (publicIPCount === 1 && localIPCount === 0) {
                     // Only public IP, no local - moderate VPN probability
-                    confidence = 50;
+                    confidence = 60;
                     reason = 'no_local_ip';
                     detected = true;
                 } else if (localIPCount > 3) {
                     // Too many local IPs - might indicate VPN tunneling
-                    confidence = 40;
+                    confidence = 50;
                     reason = 'excessive_local_ips';
                     detected = true;
                 }
@@ -146,139 +146,120 @@ class ImprovedVPNDetection {
         });
     }
 
-    async detectVPNIPAnalysis() {
+    // DNS-based detection (CORS-free)
+    async detectVPNDNSBehavior() {
         try {
-            const response = await fetch('https://ipapi.co/json/', {
-                signal: AbortSignal.timeout(3000)
-            });
+            const dnsTests = [
+                this.testDNSResolution('google.com'),
+                this.testDNSResolution('cloudflare.com'),
+                this.testDNSResolution('1.1.1.1')
+            ];
 
-            if (!response.ok) {
-                return { detected: false, confidence: 0, reason: 'api_failed' };
+            const results = await Promise.allSettled(dnsTests);
+            const failedCount = results.filter(r => r.status === 'rejected').length;
+            
+            let confidence = 0;
+            let detected = false;
+            
+            if (failedCount >= 2) {
+                confidence = 40;
+                detected = true;
+            } else if (failedCount === 1) {
+                confidence = 20;
+                detected = true;
             }
 
-            const data = await response.json();
+            return {
+                detected,
+                confidence,
+                reason: `dns_failures_${failedCount}`,
+                details: { failedCount, totalTests: dnsTests.length }
+            };
+        } catch (error) {
+            return { detected: false, confidence: 0, reason: 'dns_test_failed' };
+        }
+    }
+
+    async testDNSResolution(domain) {
+        return new Promise((resolve, reject) => {
+            const start = performance.now();
+            fetch(`https://${domain}/favicon.ico`, { 
+                method: 'HEAD', 
+                mode: 'no-cors',
+                signal: AbortSignal.timeout(3000)
+            })
+            .then(() => {
+                const duration = performance.now() - start;
+                resolve(duration);
+            })
+            .catch(reject);
+        });
+    }
+
+    // Behavioral detection (user agent, screen, etc.)
+    detectVPNBehavioral() {
+        try {
             let confidence = 0;
             let indicators = [];
             
-            // Check organization name for VPN indicators
-            const org = (data.org || '').toLowerCase();
-            if (org.includes('vpn')) {
-                confidence += 40;
-                indicators.push('org_contains_vpn');
+            // Check for common VPN user agent patterns
+            const ua = navigator.userAgent.toLowerCase();
+            if (ua.includes('vpn') || ua.includes('proxy') || ua.includes('tor')) {
+                confidence += 60;
+                indicators.push('suspicious_user_agent');
             }
-            if (org.includes('proxy')) {
-                confidence += 35;
-                indicators.push('org_contains_proxy');
-            }
-            if (org.includes('hosting') && !org.includes('web hosting')) {
+
+            // Check screen resolution patterns common with VPNs/VMs
+            const screenRatio = screen.width / screen.height;
+            if (screenRatio === 1.25 || screenRatio === 1.6) { // Common VM ratios
                 confidence += 20;
-                indicators.push('hosting_provider');
+                indicators.push('vm_screen_ratio');
             }
-            if (org.includes('datacenter') || org.includes('data center')) {
+
+            // Check for headless browser indicators
+            if (navigator.webdriver || window.phantom || window._phantom) {
+                confidence += 40;
+                indicators.push('headless_browser');
+            }
+
+            // Check timezone vs language mismatch
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const language = navigator.language;
+            if (this.isTimezoneLangMismatch(timezone, language)) {
                 confidence += 25;
-                indicators.push('datacenter');
+                indicators.push('timezone_lang_mismatch');
             }
 
-            // Check ASN against known VPN providers (more specific list)
-            if (data.asn && this.config.KNOWN_VPN_ASNS.includes(data.asn)) {
-                confidence += 30;
-                indicators.push('known_vpn_asn');
-            }
-
-            // Check for suspicious network types
-            if (data.network_type === 'hosting' || data.network_type === 'business') {
-                confidence += 15;
-                indicators.push('suspicious_network_type');
-            }
-
-            const detected = confidence >= 30; // Lower threshold for IP detection
+            const detected = confidence >= 30;
             
-            return { 
-                detected, 
-                confidence: Math.min(confidence, 90), // Cap at 90% for IP detection
-                reason: indicators.join(',') || 'clean_ip',
-                details: { org: data.org, asn: data.asn, country: data.country_code }
-            };
-        } catch (error) {
-            console.error('IP analysis error:', error);
-            return { detected: false, confidence: 0, reason: 'analysis_failed' };
-        }
-    }
-
-    async detectVPNTimezoneImproved() {
-        try {
-            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const response = await fetch('https://ipapi.co/json/', {
-                signal: AbortSignal.timeout(3000)
+            return Promise.resolve({
+                detected,
+                confidence: Math.min(confidence, 80),
+                reason: indicators.join(',') || 'clean_behavioral',
+                details: { indicators, timezone, language }
             });
-
-            if (!response.ok) {
-                return { detected: false, confidence: 0, reason: 'api_failed' };
-            }
-
-            const data = await response.json();
-            const ipTimezone = data.timezone;
-            
-            if (!ipTimezone) {
-                return { detected: false, confidence: 0, reason: 'no_timezone_data' };
-            }
-
-            // More sophisticated timezone comparison
-            const userTZ = new Date().toLocaleString('en', { timeZoneName: 'short', timeZone: userTimezone });
-            const ipTZ = new Date().toLocaleString('en', { timeZoneName: 'short', timeZone: ipTimezone });
-            
-            // Extract timezone offsets for comparison
-            const userOffset = new Date().getTimezoneOffset();
-            const ipOffset = this.getTimezoneOffset(ipTimezone);
-            
-            const offsetDifference = Math.abs(userOffset - ipOffset);
-            let confidence = 0;
-            
-            if (userTimezone !== ipTimezone) {
-                if (offsetDifference > 180) { // More than 3 hours difference
-                    confidence = 40;
-                } else if (offsetDifference > 60) { // 1-3 hours difference
-                    confidence = 25;
-                } else {
-                    confidence = 10; // Same timezone family, low confidence
-                }
-            }
-
-            const detected = confidence >= 25;
-            
-            return { 
-                detected, 
-                confidence,
-                reason: detected ? 'timezone_mismatch' : 'timezone_match',
-                details: { userTimezone, ipTimezone, offsetDifference }
-            };
         } catch (error) {
-            console.error('Timezone detection error:', error);
-            return { detected: false, confidence: 0, reason: 'detection_failed' };
+            return Promise.resolve({ detected: false, confidence: 0, reason: 'behavioral_test_failed' });
         }
     }
 
-    getTimezoneOffset(timezone) {
-        try {
-            const date = new Date();
-            const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
-            const targetTime = new Date(utc + (this.getTimezoneOffsetMinutes(timezone) * 60000));
-            return -targetTime.getTimezoneOffset();
-        } catch (error) {
-            return 0;
-        }
-    }
+    isTimezoneLangMismatch(timezone, language) {
+        // Basic timezone/language correlation check
+        const tzLangMap = {
+            'en': ['America/', 'Europe/London'],
+            'es': ['America/Mexico', 'Europe/Madrid'],
+            'fr': ['Europe/Paris', 'America/Montreal'],
+            'de': ['Europe/Berlin', 'Europe/Zurich'],
+            'ja': ['Asia/Tokyo'],
+            'zh': ['Asia/Shanghai', 'Asia/Hong_Kong'],
+            'ru': ['Europe/Moscow', 'Asia/Yekaterinburg']
+        };
 
-    getTimezoneOffsetMinutes(timezone) {
-        try {
-            const date = new Date();
-            const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
-            const targetDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
-            const localDate = new Date(date.toLocaleString('en-US'));
-            return (targetDate.getTime() - localDate.getTime()) / 60000;
-        } catch (error) {
-            return 0;
-        }
+        const baseLang = language.split('-')[0];
+        const expectedTzs = tzLangMap[baseLang];
+        
+        if (!expectedTzs) return false;
+        return !expectedTzs.some(tz => timezone.includes(tz));
     }
 
     isPrivateIP(ip) {
@@ -292,7 +273,7 @@ class ImprovedVPNDetection {
     }
 }
 
-// Improved Cookie Detection
+// Improved Cookie Detection (unchanged, working correctly)
 class ImprovedCookieManager {
     static areCookiesEnabled() {
         try {
