@@ -611,13 +611,13 @@ body {
 /* Desktop Fixed Heights */
 @media (min-width: 1201px) {
     .container {
-        min-height: 620px;
+        min-height: 630px;
     }
     
     .sidebar-left, 
     .sidebar-right, 
     .form-container {
-        height: 620px;
+        height: 630px;
         overflow-y: auto;
     }
 }
