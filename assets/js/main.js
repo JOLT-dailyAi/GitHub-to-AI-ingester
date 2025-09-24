@@ -1,8 +1,9 @@
 // Configuration
 const CONFIG = {
-  N8N_FORM_URL: 'https://api.yourdomain.com/form/45f473b3-3bb4-49f0-b2f0-b63ec6ea343a',
-  GITHUB_API_BASE: 'https://api.github.com/repos/',
-  LICENSE_VALIDATION_ENDPOINT: 'https://api.yourdomain.com/webhook/validate-license'
+    N8N_FORM_URL: 'https://api.yourdomain.com/form/45f473b3-3bb4-49f0-b2f0-b63ec6ea343a',
+    GITHUB_API_BASE: 'https://api.github.com/repos/',
+    LICENSE_VALIDATION_ENDPOINT: 'https://api.yourdomain.com/webhook/validate-license',
+    SHOWCASE_JSON_URL: 'https://raw.githubusercontent.com/JOLT-dailyAi/GitHub-to-AI-ingester/refs/heads/main/data/showcase/Showcase.json'
 };
 
 // DOM Elements
@@ -68,12 +69,6 @@ function initializeEventListeners() {
         }
     });
     
-    // Free trial form
-    const freeTrialForm = document.getElementById('freeTrialForm');
-    if (freeTrialForm) {
-        freeTrialForm.addEventListener('submit', handleFreeTrialSubmission);
-    }
-    
     // Showcase navigation
     if (prevBtn && nextBtn) {
         prevBtn.addEventListener('click', showPreviousShowcase);
@@ -102,7 +97,7 @@ function initializeShowcase() {
     showcaseItems = document.querySelectorAll('.showcase-item');
     filteredItems = Array.from(showcaseItems);
 
-    // Attach input listeners for textareas inside showcase items.
+    // Attach input listeners for textareas inside showcase items
     showcaseItems.forEach(item => {
         const textareas = item.querySelectorAll('textarea');
         textareas.forEach(el => {
@@ -301,7 +296,7 @@ function extractKeywords(text) {
 // -------------------------
 async function loadShowcaseFiles() {
     try {
-        const response = await fetch('data/showcase/Showcase.json');
+        const response = await fetch(CONFIG.SHOWCASE_JSON_URL);
         if (response.ok) {
             const showcaseData = await response.json();
             
@@ -342,10 +337,11 @@ async function loadShowcaseFiles() {
 
             console.log('Showcase files loaded successfully');
         } else {
-            console.log('Could not load showcase data, using existing content');
+            showStatusMessage('Failed to load showcase data. Please try again later.', 'error');
         }
     } catch (error) {
         console.error('Error loading showcase files:', error);
+        showStatusMessage('Failed to load showcase data. Please try again later.', 'error');
     }
 }
 
@@ -359,7 +355,8 @@ async function validateLicenseKey() {
         return;
     }
     
-    if (licenseKey === generateFreeLicenseKey()) {
+    // Check for FreeTrialManager format
+    if (/^FreeTrial-[A-Z]{3}\d{4}-[0-9a-f]{8,16}$/i.test(licenseKey)) {
         updateLicenseInfo('Free trial license - 1 analysis available', 'valid');
         cacheLicenseKey(licenseKey);
         checkFormValidity();
@@ -442,6 +439,7 @@ async function handleFormSubmission(e) {
     e.preventDefault();
     const licenseKey = licenseKeyInput.value.trim();
     const repoUrl = repoUrlInput.value.trim();
+    const discordId = document.getElementById('discordId').value.trim();
     if (!licenseKey || !repoUrl) {
         showStatusMessage('Please fill in all required fields', 'error');
         return;
@@ -451,7 +449,12 @@ async function handleFormSubmission(e) {
         const response = await fetch(CONFIG.N8N_FORM_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ license_key: licenseKey, repository_url: repoUrl, timestamp: new Date().toISOString() })
+            body: JSON.stringify({ 
+                license_key: licenseKey, 
+                repository_url: repoUrl, 
+                discord_id: discordId,
+                timestamp: new Date().toISOString() 
+            })
         });
         if (response.ok) {
             showStatusMessage(
@@ -460,6 +463,7 @@ async function handleFormSubmission(e) {
             );
             setTimeout(() => {
                 repoUrlInput.value = '';
+                document.getElementById('discordId').value = '';
                 updateUrlValidation('', '');
                 hideStatusMessage();
             }, 5000);
@@ -475,24 +479,8 @@ async function handleFormSubmission(e) {
 }
 
 // -------------------------
-// Free Trial Handler
-// -------------------------
-function handleFreeTrialSubmission(e) {
-    e.preventDefault();
-    // Let FreeTrialManager handle this
-    console.log('Free trial submission handled by FreeTrialManager');
-}
-
-// -------------------------
 // Utility Functions
 // -------------------------
-function generateFreeLicenseKey() {
-    const today = new Date();
-    const day = today.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-    const year = today.getFullYear();
-    return `FREETRIAL${day}${year}`;
-}
-
 function isValidLicenseFormat(key) {
     return key.length >= 8 && /^[A-Z0-9-]+$/i.test(key);
 }
@@ -570,7 +558,9 @@ function openModal(modal) {
 }
 
 function closeModals() {
-    if (freeTrialModal) freeTrialModal.style.display = 'none';
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.style.display = 'none';
+    });
 }
 
 function copyToClipboard(textareaId) {
