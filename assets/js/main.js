@@ -1,8 +1,8 @@
 // Configuration
 const CONFIG = {
-  N8N_FORM_URL: 'https://api.yourdomain.com/form/45f473b3-3bb4-49f0-b2f0-b63ec6ea343a',
-  GITHUB_API_BASE: 'https://api.github.com/repos/',
-  LICENSE_VALIDATION_ENDPOINT: 'https://api.yourdomain.com/webhook/validate-license'
+    N8N_FORM_URL: 'https://api.yourdomain.com/form/45f473b3-3bb4-49f0-b2f0-b63ec6ea343a',
+    GITHUB_API_BASE: 'https://api.github.com/repos/',
+    LICENSE_VALIDATION_ENDPOINT: 'https://api.yourdomain.com/webhook/validate-license'
 };
 
 // DOM Elements
@@ -13,11 +13,6 @@ const licenseInfo = document.getElementById('licenseInfo');
 const urlValidation = document.getElementById('urlValidation');
 const statusMessage = document.getElementById('statusMessage');
 const analysisForm = document.getElementById('analysisForm');
-
-// Modal elements
-const freeTrialModal = document.getElementById('freeTrialModal');
-const freeTrialBtn = document.getElementById('freeTrial');
-const closeBtns = document.querySelectorAll('.close');
 
 // Showcase elements
 const prevBtn = document.getElementById('prevBtn');
@@ -54,10 +49,7 @@ function initializeEventListeners() {
     if (analysisForm) analysisForm.addEventListener('submit', handleFormSubmission);
     
     // Modal controls
-    if (freeTrialBtn) {
-        freeTrialBtn.addEventListener('click', () => openModal(freeTrialModal));
-    }
-    
+    const closeBtns = document.querySelectorAll('.close');
     closeBtns.forEach(btn => {
         btn.addEventListener('click', closeModals);
     });
@@ -67,12 +59,6 @@ function initializeEventListeners() {
             closeModals();
         }
     });
-    
-    // Free trial form
-    const freeTrialForm = document.getElementById('freeTrialForm');
-    if (freeTrialForm) {
-        freeTrialForm.addEventListener('submit', handleFreeTrialSubmission);
-    }
     
     // Showcase navigation
     if (prevBtn && nextBtn) {
@@ -102,13 +88,17 @@ function initializeShowcase() {
     showcaseItems = document.querySelectorAll('.showcase-item');
     filteredItems = Array.from(showcaseItems);
 
-    // Attach input listeners for textareas inside showcase items.
+    // Attach input listeners for textareas inside showcase items
     showcaseItems.forEach(item => {
         const textareas = item.querySelectorAll('textarea');
         textareas.forEach(el => {
             if (!el) return;
             el.addEventListener('input', () => {
-                try { adjustTextareaHeight(el); } catch (err) { /* swallow */ }
+                try { 
+                    adjustTextareaHeight(el); 
+                } catch (err) { 
+                    console.warn('Error adjusting textarea height:', err);
+                }
             }, false);
         });
     });
@@ -126,7 +116,7 @@ function updateShowcaseDisplay() {
     if (filteredItems.length > 0) {
         filteredItems[currentShowcaseIndex].classList.add('active');
 
-        // Adjust heights after a slight delay to ensure DOM updates
+        // Adjust heights after DOM updates
         setTimeout(() => {
             try {
                 const activeItem = filteredItems[currentShowcaseIndex];
@@ -138,20 +128,23 @@ function updateShowcaseDisplay() {
                     }
                 }
             } catch (err) {
-                console.warn('Error adjusting heights for active showcase item', err);
+                console.warn('Error adjusting heights for active showcase item:', err);
             }
         }, 50);
 
+        // Update counters
         if (currentIndexSpan) currentIndexSpan.textContent = currentShowcaseIndex + 1;
         if (totalItemsSpan) totalItemsSpan.textContent = filteredItems.length;
         if (currentIndexBottomSpan) currentIndexBottomSpan.textContent = currentShowcaseIndex + 1;
         if (totalItemsBottomSpan) totalItemsBottomSpan.textContent = filteredItems.length;
         
+        // Update navigation buttons
         if (prevBtn) prevBtn.disabled = currentShowcaseIndex === 0;
         if (nextBtn) nextBtn.disabled = currentShowcaseIndex === filteredItems.length - 1;
         if (prevBtnBottom) prevBtnBottom.disabled = currentShowcaseIndex === 0;
         if (nextBtnBottom) nextBtnBottom.disabled = currentShowcaseIndex === filteredItems.length - 1;
     } else {
+        // No filtered items
         if (currentIndexSpan) currentIndexSpan.textContent = '0';
         if (totalItemsSpan) totalItemsSpan.textContent = '0';
         if (currentIndexBottomSpan) currentIndexBottomSpan.textContent = '0';
@@ -197,6 +190,7 @@ function handleSearchInput() {
         const content = taEl ? taEl.value.toLowerCase() : '';
         return title.includes(query) || content.includes(query);
     });
+    
     currentShowcaseIndex = 0;
     updateShowcaseDisplay();
     
@@ -218,16 +212,19 @@ function generateAutocompleteSuggestions(query) {
             suggestions.add(item.title);
         }
     });
+    
     return Array.from(suggestions).slice(0, 5);
 }
 
 function updateAutocomplete(suggestions) {
     if (!autocompleteDropdown) return;
     autocompleteDropdown.innerHTML = '';
+    
     if (suggestions.length === 0) {
         hideAutocomplete();
         return;
     }
+    
     suggestions.forEach(suggestion => {
         const item = document.createElement('div');
         item.className = 'autocomplete-item';
@@ -239,6 +236,7 @@ function updateAutocomplete(suggestions) {
         });
         autocompleteDropdown.appendChild(item);
     });
+    
     showAutocomplete();
 }
 
@@ -307,6 +305,7 @@ async function loadShowcaseFiles() {
             
             const textareas = document.querySelectorAll('.showcase-item textarea');
             const titles = document.querySelectorAll('.showcase-item h3');
+            
             showcaseData.forEach((item, index) => {
                 if (textareas[index]) {
                     textareas[index].value = item.content || 'No content available';
@@ -336,7 +335,7 @@ async function loadShowcaseFiles() {
                         }
                     });
                 } catch (err) {
-                    console.warn('Error adjusting heights after loading showcase files', err);
+                    console.warn('Error adjusting heights after loading showcase files:', err);
                 }
             }, 100);
 
@@ -359,7 +358,7 @@ async function validateLicenseKey() {
         return;
     }
     
-    if (licenseKey === generateFreeLicenseKey()) {
+    if (licenseKey.startsWith('FreeTrial-')) {
         updateLicenseInfo('Free trial license - 1 analysis available', 'valid');
         cacheLicenseKey(licenseKey);
         checkFormValidity();
@@ -373,12 +372,14 @@ async function validateLicenseKey() {
     }
     
     updateLicenseInfo('Validating license key...', '');
+    
     try {
         const response = await fetch(CONFIG.LICENSE_VALIDATION_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ license_key: licenseKey })
         });
+        
         if (response.ok) {
             const data = await response.json();
             if (data.success && data.uses < data.max_uses) {
@@ -395,6 +396,7 @@ async function validateLicenseKey() {
         console.error('License validation error:', error);
         updateLicenseInfo('Validation service unavailable', 'invalid');
     }
+    
     checkFormValidity();
 }
 
@@ -407,15 +409,19 @@ async function validateRepoUrl() {
         updateUrlValidation('', '');
         return;
     }
+    
     if (!isValidGitHubUrl(url)) {
         updateUrlValidation('Please enter a valid GitHub repository URL', 'invalid');
         checkFormValidity();
         return;
     }
+    
     updateUrlValidation('Validating repository...', '');
+    
     try {
         const repoPath = extractRepoPath(url);
         const response = await fetch(CONFIG.GITHUB_API_BASE + repoPath);
+        
         if (response.ok) {
             const data = await response.json();
             if (data.private) {
@@ -432,6 +438,7 @@ async function validateRepoUrl() {
         console.error('Repository validation error:', error);
         updateUrlValidation('Validation failed', 'invalid');
     }
+    
     checkFormValidity();
 }
 
@@ -440,24 +447,34 @@ async function validateRepoUrl() {
 // -------------------------
 async function handleFormSubmission(e) {
     e.preventDefault();
+    
     const licenseKey = licenseKeyInput.value.trim();
     const repoUrl = repoUrlInput.value.trim();
+    
     if (!licenseKey || !repoUrl) {
         showStatusMessage('Please fill in all required fields', 'error');
         return;
     }
+    
     setFormLoading(true);
+    
     try {
         const response = await fetch(CONFIG.N8N_FORM_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ license_key: licenseKey, repository_url: repoUrl, timestamp: new Date().toISOString() })
+            body: JSON.stringify({ 
+                license_key: licenseKey, 
+                repository_url: repoUrl, 
+                timestamp: new Date().toISOString() 
+            })
         });
+        
         if (response.ok) {
             showStatusMessage(
                 'Analysis request submitted successfully! Check your email and Discord for results within 5-10 minutes.',
                 'success'
             );
+            
             setTimeout(() => {
                 repoUrlInput.value = '';
                 updateUrlValidation('', '');
@@ -475,28 +492,8 @@ async function handleFormSubmission(e) {
 }
 
 // -------------------------
-// Free Trial Handler
-// -------------------------
-function handleFreeTrialSubmission(e) {
-    e.preventDefault();
-    const freeKey = generateFreeLicenseKey();
-    licenseKeyInput.value = freeKey;
-    licenseKeyInput.disabled = true;
-    alert(`Free trial activated! License key: ${freeKey}`);
-    closeModals();
-    validateLicenseKey();
-}
-
-// -------------------------
 // Utility Functions
 // -------------------------
-function generateFreeLicenseKey() {
-    const today = new Date();
-    const day = today.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-    const year = today.getFullYear();
-    return `FREETRIAL${day}${year}`;
-}
-
 function isValidLicenseFormat(key) {
     return key.length >= 8 && /^[A-Z0-9-]+$/i.test(key);
 }
@@ -528,8 +525,12 @@ function updateUrlValidation(message, type) {
 function checkFormValidity() {
     const licenseValid = licenseInfo && licenseInfo.classList.contains('valid');
     const urlValid = urlValidation && urlValidation.classList.contains('valid');
-    const bothFilled = licenseKeyInput && repoUrlInput && licenseKeyInput.value.trim() && repoUrlInput.value.trim();
-    if (submitBtn) submitBtn.disabled = !(licenseValid && urlValid && bothFilled);
+    const bothFilled = licenseKeyInput && repoUrlInput && 
+                       licenseKeyInput.value.trim() && repoUrlInput.value.trim();
+    
+    if (submitBtn) {
+        submitBtn.disabled = !(licenseValid && urlValid && bothFilled);
+    }
 }
 
 function showStatusMessage(message, type) {
@@ -540,13 +541,19 @@ function showStatusMessage(message, type) {
 }
 
 function hideStatusMessage() {
-    if (statusMessage) statusMessage.className = 'status-message';
+    if (statusMessage) {
+        statusMessage.className = 'status-message';
+    }
 }
 
 function setFormLoading(loading) {
-    if (submitBtn) submitBtn.disabled = loading;
-    if (submitBtn) submitBtn.textContent = loading ? 'Submitting..' : 'Analyze Repository';
-    if (analysisForm) analysisForm.classList.toggle('loading', loading);
+    if (submitBtn) {
+        submitBtn.disabled = loading;
+        submitBtn.textContent = loading ? 'Submitting...' : 'Analyze Repository';
+    }
+    if (analysisForm) {
+        analysisForm.classList.toggle('loading', loading);
+    }
 }
 
 function cacheLicenseKey(key) {
@@ -569,12 +576,11 @@ function loadCachedLicenseKey() {
     }
 }
 
-function openModal(modal) {
-    if (modal) modal.style.display = 'block';
-}
-
 function closeModals() {
-    if (freeTrialModal) freeTrialModal.style.display = 'none';
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
 }
 
 function copyToClipboard(textareaId) {
@@ -602,7 +608,7 @@ function adjustTextareaHeight(el) {
             el.style.height = Math.max(needed, 80) + 'px';
         }
     } catch (err) {
-        console.warn('adjustTextareaHeight error', err);
+        console.warn('adjustTextareaHeight error:', err);
     }
 }
 
@@ -629,7 +635,7 @@ function adjustContainerToTextarea(showcaseItem) {
             showcaseItem.style.height = totalHeight + 'px';
         }
     } catch (err) {
-        console.warn('Error adjusting container height', err);
+        console.warn('Error adjusting container height:', err);
     }
 }
 
