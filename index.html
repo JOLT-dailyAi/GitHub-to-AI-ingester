@@ -164,6 +164,7 @@
     </section>
 
     <!-- Free Trial Modal - Hidden by default -->
+    <!-- Free Trial Modal - Updated with repo field -->
     <div id="freeTrialModal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -172,7 +173,13 @@
             <form id="freeTrialForm">
                 <div class="form-group">
                     <label for="trialEmail">Email Address</label>
-                    <input type="email" id="trialEmail" required>
+                    <input type="email" id="trialEmail" required placeholder="your@email.com">
+                    <div id="emailValidationMsg" class="email-validation"></div>
+                </div>
+                <div class="form-group">
+                    <label for="repoUrl">Repository URL</label>
+                    <input type="url" id="repoUrl" required placeholder="https://github.com/user/repo">
+                    <small>We'll check if this repository has already been analyzed</small>
                 </div>
                 <button type="submit" class="btn-primary">Start Free Trial</button>
             </form>
