@@ -163,8 +163,10 @@
         </div>
     </section>
 
-    <!-- Enhanced Free Trial Modal -->
-    <div id="freeTrialModal" class="modal">
+    <!-- HIDDEN MODALS - These should not be visible until activated -->
+    
+    <!-- Free Trial Modal -->
+    <div id="freeTrialModal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Free Trial</h2>
@@ -181,14 +183,8 @@
         </div>
     </div>
 
-    <!-- Cookie Consent Modal (Dynamic) -->
-    <!-- This will be created dynamically by free-trial.js -->
-
-    <!-- Trial Key Display Modal (Dynamic) -->
-    <!-- This will be created dynamically by free-trial.js -->
-
-    <!-- Free Trial Notification -->
-    <div id="freeTrialNotification" class="free-trial-notification"></div>
+    <!-- Free Trial Notification (Hidden by default) -->
+    <div id="freeTrialNotification" class="free-trial-notification" style="display: none;"></div>
 
     <script src="assets/js/main.js"></script>
     <script src="assets/js/free-trial.js"></script>
