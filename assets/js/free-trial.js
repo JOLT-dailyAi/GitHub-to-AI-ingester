@@ -304,17 +304,17 @@ class FreeTrialManager {
         }
 
         const emailInput = document.getElementById('trialEmail');
-        const repoUrlInput = document.getElementById('repoUrl');
+        const trialRepoUrlInput = document.getElementById('trialRepoUrl');
         
-        if (!emailInput || !repoUrlInput) {
+        if (!emailInput || !trialRepoUrlInput) {
             this.showNotification('Required form elements not found', 'error', 5000);
             return;
         }
 
         const email = emailInput.value.trim();
-        const repoUrl = repoUrlInput.value.trim();
+        const trialRepoUrl = trialRepoUrlInput.value.trim();
 
-        if (!email || !repoUrl) {
+        if (!email || !trialRepoUrl) {
             this.showNotification('Please fill in both email and repository URL', 'error', 5000);
             return;
         }
@@ -332,7 +332,7 @@ class FreeTrialManager {
             }
 
             // Check repository
-            const repoCheck = await this.checkRepositoryDuplicate(repoUrl);
+            const repoCheck = await this.checkRepositoryDuplicate(trialRepoUrl);
             if (repoCheck.error) {
                 throw new Error(repoCheck.error);
             }
@@ -364,9 +364,9 @@ class FreeTrialManager {
     }
 
     // Repository Management
-    async checkRepositoryDuplicate(repoUrl) {
+    async checkRepositoryDuplicate(trialRepoUrl) {
         try {
-            const repoName = this.extractRepositoryName(repoUrl);
+            const repoName = this.extractRepositoryName(trialRepoUrl);
             if (!repoName) {
                 return { isDuplicate: false, error: 'Invalid repository URL format' };
             }
@@ -401,16 +401,16 @@ class FreeTrialManager {
         }
     }
 
-    extractRepositoryName(repoUrl) {
+    extractRepositoryName(trialRepoUrl) {
         try {
-            if (repoUrl.includes('github.com/')) {
-                const parts = repoUrl.split('github.com/')[1]?.split('/');
+            if (trialRepoUrl.includes('github.com/')) {
+                const parts = trialRepoUrl.split('github.com/')[1]?.split('/');
                 return parts?.[1];
-            } else if (repoUrl.includes('/')) {
-                const parts = repoUrl.split('/');
+            } else if (trialRepoUrl.includes('/')) {
+                const parts = trialRepoUrl.split('/');
                 return parts[parts.length - 1];
             }
-            return repoUrl;
+            return trialRepoUrl;
         } catch (error) {
             console.error('Error extracting repository name:', error);
             return null;
@@ -590,13 +590,23 @@ class FreeTrialManager {
     }
 
     populateMainFormWithTrialKey(freeTrialKey) {
-        const licenseKeyInput = document.getElementById('licenseKey');
-        if (licenseKeyInput) {
-            licenseKeyInput.value = freeTrialKey;
-            licenseKeyInput.disabled = true;
-            licenseKeyInput.dispatchEvent(new Event('input'));
-        }
-    }
+       // Existing license key population
+       const licenseKeyInput = document.getElementById('licenseKey');
+       if (licenseKeyInput) {
+           licenseKeyInput.value = freeTrialKey;
+           licenseKeyInput.disabled = true;
+           licenseKeyInput.dispatchEvent(new Event('input'));
+       }
+       
+       // NEW: Also populate and lock the main repo URL field
+       const trialRepoInput = document.getElementById('trialRepoUrl');
+       const mainRepoInput = document.getElementById('repoUrl');
+       if (trialRepoInput && mainRepoInput) {
+           mainRepoInput.value = trialRepoInput.value;
+           mainRepoInput.disabled = true;
+           mainRepoInput.dispatchEvent(new Event('input'));
+       }
+   }
 
     showTrialKeySuccess(freeTrialKey) {
         const modal = document.getElementById('freeTrialModal');
