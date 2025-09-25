@@ -404,6 +404,11 @@ async function validateLicenseKey() {
 // Repository URL Validation
 // -------------------------
 async function validateRepoUrl() {
+    const repoUrlInput = document.getElementById('repoUrl');
+    if (!repoUrlInput || repoUrlInput.disabled) {
+        return; // Skip validation if field is disabled (populated from free trial)
+    }
+    
     const url = repoUrlInput.value.trim();
     if (!url) {
         updateUrlValidation('', '');
