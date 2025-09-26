@@ -38,9 +38,7 @@
             <div class="form-container">
                 <div class="form-header" style="position: relative;">
                     <h2>Repository Analysis</h2>
-                    <div id="freeTrialButtonContainer">
-                        <button class="btn-secondary" id="freeTrial" style="position: absolute; top: 0; right: 0;">Try once for free</button>
-                    </div>
+                    <button class="btn-secondary" id="freeTrial" style="position: absolute; top: 0; right: 0;">Try once for free</button>
                 </div>
                 <form id="analysisForm">
                     <div class="form-group">
@@ -60,9 +58,11 @@
                         <input type="text" id="discordId" name="discordId" placeholder="username#1234">
                     </div>
                     
-                    <button type="submit" class="btn-primary btn-large" id="submitBtn" disabled>
-                        Analyze Repository
-                    </button>
+                    <div id="submitContainer">
+                        <button type="submit" class="btn-primary btn-large" id="submitBtn" disabled>
+                            Analyze Repository
+                        </button>
+                    </div>
                     
                     <p class="processing-note">Processing time varies by repository size.</p>
                 </form>
@@ -183,7 +183,9 @@
                     <div id="repoValidationMsg" class="repo-validation"></div>
                     <small>We'll check if this repository has already been analyzed</small>
                 </div>
-                <button type="submit" class="btn-primary">Start Free Trial</button>
+                <div id="freeTrialButtonContainer">
+                    <button type="submit" class="btn-primary">Start Free Trial</button>
+                </div>
             </form>
         </div>
     </div>
