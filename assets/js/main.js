@@ -1,6 +1,11 @@
 // Configuration
 const CONFIG = {
-    N8N_FORM_URL: 'https://api.yourdomain.com/form/45f473b3-3bb4-49f0-b2f0-b63ec6ea343a',
+    // Testing URL - currently active
+    N8N_FORM_URL: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/form-test/45f473b3-3bb4-49f0-b2f0-b63ec6ea343a',
+    
+    // Production URL - uncomment when ready to go live
+    // N8N_FORM_URL: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/form/45f473b3-3bb4-49f0-b2f0-b63ec6ea343a',
+    
     GITHUB_API_BASE: 'https://api.github.com/repos/',
     LICENSE_VALIDATION_ENDPOINT: 'https://api.yourdomain.com/webhook/validate-license',
     WEBHOOK_TIMEOUT: 300000 // 5 minutes timeout
