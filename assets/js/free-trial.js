@@ -276,7 +276,7 @@ class FreeTrialManager {
         this.emailHash = await this.hashEmail(this.normalizedEmail);
     }
 
-    // Repository Validation (NEW)
+    // Repository Validation
     async validateTrialRepository() {
         const repoInput = document.getElementById('trialRepoUrl');
         const validationMsg = document.getElementById('repoValidationMsg') || this.createRepoValidationElement();
@@ -409,10 +409,10 @@ class FreeTrialManager {
                 window.setGeneratedFreeTrialKey(freeTrialKey);
             }
             
-            // Success - populate form and replace button with input field
+            // Success - populate repo URL only and replace button with input field
             this.populateMainFormWithTrialKey(freeTrialKey, repoUrl);
             this.replaceFreeTrialButtonWithInput(freeTrialKey);
-            this.hideFreeTrialModal();
+            // DON'T auto-close modal - let user close manually
 
         } catch (error) {
             console.error('Free trial submission error:', error);
@@ -530,7 +530,7 @@ class FreeTrialManager {
         return await this.checkFreeTrialUsed(emailHash);
     }
 
-    // UPDATED: Mark trial as used (called from main.js after successful analysis submission)
+    // Mark trial as used (called from main.js after successful analysis submission)
     async markFreeTrialAsUsed(licenseKey) {
         if (!licenseKey.startsWith('FreeTrial-')) return;
         
@@ -673,15 +673,10 @@ class FreeTrialManager {
         if (modal) modal.style.display = 'none';
     }
 
+    // UPDATED: Only populate repo URL, DO NOT auto-populate license key
     populateMainFormWithTrialKey(freeTrialKey, repoUrl) {
-        // Populate license key
-        const licenseKeyInput = document.getElementById('licenseKey');
-        if (licenseKeyInput) {
-            licenseKeyInput.value = freeTrialKey;
-            licenseKeyInput.dispatchEvent(new Event('input'));
-        }
-
-        // Populate and lock repo URL
+        // DO NOT populate license key - user must copy/paste manually
+        // Only populate and lock repo URL
         const mainRepoInput = document.getElementById('repoUrl');
         if (mainRepoInput && repoUrl) {
             mainRepoInput.value = repoUrl;
@@ -690,28 +685,32 @@ class FreeTrialManager {
         }
     }
 
-    // UPDATED: Replace button with input field instead of showing modal
+    // UPDATED: Replace modal's "Start Free Trial" button with input field
     replaceFreeTrialButtonWithInput(freeTrialKey) {
         const buttonContainer = document.getElementById('freeTrialButtonContainer');
         if (!buttonContainer) return;
 
         buttonContainer.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 5px; position: absolute; top: 0; right: 0;">
+            <div style="display: flex; align-items: center; gap: 10px; justify-content: center;">
                 <input type="text" value="${freeTrialKey}" readonly style="
-                    width: 200px;
-                    padding: 5px 8px;
-                    font-size: 12px;
+                    width: 280px;
+                    padding: 8px 12px;
+                    font-size: 14px;
                     border: 1px solid #ccc;
-                    border-radius: 3px;
+                    border-radius: 4px;
                     background-color: #f9f9f9;
-                    color: #666;
+                    color: #333;
+                    font-family: monospace;
                 ">
                 <button id="copyTrialKeyBtn" class="btn-secondary" style="
-                    padding: 5px 8px;
-                    font-size: 12px;
+                    padding: 8px 12px;
+                    font-size: 14px;
                     min-width: auto;
-                ">📋</button>
+                ">📋 Copy</button>
             </div>
+            <p style="margin: 10px 0 0 0; font-size: 12px; color: #666; text-align: center;">
+                Copy this key and paste it in the License Key field above
+            </p>
         `;
 
         // Add copy functionality
@@ -725,7 +724,7 @@ class FreeTrialManager {
         try {
             await navigator.clipboard.writeText(key);
             const originalText = button.textContent;
-            button.textContent = '✅';
+            button.textContent = '✅ Copied';
             setTimeout(() => {
                 button.textContent = originalText;
             }, 2000);
@@ -739,9 +738,9 @@ class FreeTrialManager {
                 document.execCommand('copy');
                 document.body.removeChild(input);
                 
-                button.textContent = '✅';
+                button.textContent = '✅ Copied';
                 setTimeout(() => {
-                    button.textContent = '📋';
+                    button.textContent = '📋 Copy';
                 }, 2000);
             } catch (e) {
                 console.error('Copy failed:', e);
