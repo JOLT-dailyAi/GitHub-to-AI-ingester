@@ -671,6 +671,10 @@ class FreeTrialManager {
     hideFreeTrialModal() {
         const modal = document.getElementById('freeTrialModal');
         if (modal) modal.style.display = 'none';
+
+        // Cleanup trial credit info
+        const creditInfo = document.querySelector('.trial-credit-info');
+        if (creditInfo) creditInfo.remove();
     }
 
     // UPDATED: Only populate repo URL, DO NOT auto-populate license key
