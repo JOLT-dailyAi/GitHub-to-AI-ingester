@@ -1,10 +1,10 @@
 // Configuration
 const CONFIG = {
     // Testing URL - currently active
-    N8N_FORM_URL: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/form-test/45f473b3-3bb4-49f0-b2f0-b63ec6ea343a',
+    N8N_FORM_URL: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook-test/c4cb286d-e375-4cd8-96be-9866403fa54d',
     
     // Production URL - uncomment when ready to go live
-    // N8N_FORM_URL: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/form/45f473b3-3bb4-49f0-b2f0-b63ec6ea343a',
+    // N8N_FORM_URL: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook/c4cb286d-e375-4cd8-96be-9866403fa54d',
     
     GITHUB_API_BASE: 'https://api.github.com/repos/',
     LICENSE_VALIDATION_ENDPOINT: 'https://api.yourdomain.com/webhook/validate-license',
@@ -769,13 +769,40 @@ async function handleFormSubmission(e) {
         return;
     }
     
+    // Collect all form data
     const licenseKey = licenseKeyInput.value.trim();
     const repoUrl = repoUrlInput.value.trim();
+    const discordId = document.getElementById('discordId')?.value.trim() || '';
     
+    // Collect free trial data if available
+    const trialEmail = document.getElementById('trialEmail')?.value.trim() || '';
+    const trialRepoUrl = document.getElementById('trialRepoUrl')?.value.trim() || '';
+    
+    // Basic validation
     if (!licenseKey || !repoUrl) {
         showStatusMessage('Please fill in all required fields', 'error');
         return;
     }
+    
+    // Prepare comprehensive payload
+    const payload = {
+        // Main form data
+        license_key: licenseKey,
+        repository_url: repoUrl,
+        discord_username: discordId,
+        
+        // Free trial data (if used)
+        trial_email: trialEmail,
+        trial_repository_url: trialRepoUrl,
+        is_free_trial: licenseKey.startsWith('FreeTrial-'),
+        
+        // Metadata
+        timestamp: new Date().toISOString(),
+        user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        submission_source: 'github_ai_ingester_web'
+    };
+    
+    console.log('Sending payload:', payload); // For debugging
     
     // Create response container
     createResponseContainer();
@@ -788,16 +815,16 @@ async function handleFormSubmission(e) {
     try {
         const response = await fetch(CONFIG.N8N_FORM_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                license_key: licenseKey, 
-                repository_url: repoUrl, 
-                timestamp: new Date().toISOString() 
-            })
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
         });
         
         if (response.ok) {
             const data = await response.json();
+            console.log('Webhook response:', data); // For debugging
             
             // If using a free trial key, mark it as used
             if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
@@ -808,8 +835,9 @@ async function handleFormSubmission(e) {
             displayWebhookResponse({
                 status: data.status || 'Success',
                 message: data.message || 'Analysis request submitted successfully! Check your email and Discord for results within 5-10 minutes.',
-                analysisId: data.analysisId,
-                estimatedTime: data.estimatedTime
+                analysisId: data.analysisId || data.analysis_id,
+                estimatedTime: data.estimatedTime || data.estimated_time,
+                repositoryName: data.repositoryName || data.repository_name
             }, true);
             
         } else {
