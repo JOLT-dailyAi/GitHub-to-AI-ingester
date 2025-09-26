@@ -20,6 +20,9 @@ class FreeTrialManager {
         // Initialize improved detectors
         this.vpnDetector = new ImprovedVPNDetection();
         this.cookieManager = ImprovedCookieManager;
+        
+        // Store generated key for validation
+        this.generatedKey = null;
 
         this.init();
     }
@@ -46,6 +49,13 @@ class FreeTrialManager {
         if (trialEmailInput) {
             trialEmailInput.addEventListener('input', this.debounce(() => this.validateTrialEmail(), 500));
             trialEmailInput.addEventListener('blur', () => this.validateTrialEmail());
+        }
+
+        // Add real-time repo validation
+        const trialRepoInput = document.getElementById('trialRepoUrl');
+        if (trialRepoInput) {
+            trialRepoInput.addEventListener('input', this.debounce(() => this.validateTrialRepository(), 500));
+            trialRepoInput.addEventListener('blur', () => this.validateTrialRepository());
         }
     }
 
@@ -266,6 +276,67 @@ class FreeTrialManager {
         this.emailHash = await this.hashEmail(this.normalizedEmail);
     }
 
+    // Repository Validation (NEW)
+    async validateTrialRepository() {
+        const repoInput = document.getElementById('trialRepoUrl');
+        const validationMsg = document.getElementById('repoValidationMsg') || this.createRepoValidationElement();
+
+        if (!repoInput || !validationMsg) return;
+
+        const repoUrl = repoInput.value.trim();
+
+        if (!repoUrl) {
+            this.updateValidationMessage(validationMsg, '', '');
+            this.state.repositoryChecked = false;
+            return;
+        }
+
+        if (!this.isValidGitHubUrl(repoUrl)) {
+            this.updateValidationMessage(validationMsg, 'Please enter a valid GitHub repository URL', 'invalid');
+            this.state.repositoryChecked = false;
+            return;
+        }
+
+        this.updateValidationMessage(validationMsg, 'Checking repository...', '');
+
+        try {
+            const repoCheck = await this.checkRepositoryDuplicate(repoUrl);
+            if (repoCheck.error) {
+                this.updateValidationMessage(validationMsg, repoCheck.error, 'invalid');
+                this.state.repositoryChecked = false;
+                return;
+            }
+            if (repoCheck.isDuplicate) {
+                this.updateValidationMessage(validationMsg, repoCheck.message, 'invalid');
+                this.state.repositoryChecked = false;
+                return;
+            }
+
+            this.updateValidationMessage(validationMsg, 'Repository eligible for free trial', 'valid');
+            this.state.repositoryChecked = true;
+
+        } catch (error) {
+            this.updateValidationMessage(validationMsg, 'Repository check failed. Please try again.', 'invalid');
+            this.state.repositoryChecked = false;
+        }
+    }
+
+    createRepoValidationElement() {
+        const repoInput = document.getElementById('trialRepoUrl');
+        if (!repoInput) return null;
+
+        const validationDiv = document.createElement('div');
+        validationDiv.id = 'repoValidationMsg';
+        validationDiv.className = 'repo-validation';
+        repoInput.parentNode.insertBefore(validationDiv, repoInput.nextSibling);
+        return validationDiv;
+    }
+
+    isValidGitHubUrl(url) {
+        const githubRegex = /^https:\/\/github\.com\/[\w\-\.]+\/[\w\-\.]+\/?$/;
+        return githubRegex.test(url);
+    }
+
     isValidEmailFormat(email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
@@ -294,7 +365,7 @@ class FreeTrialManager {
         }
     }
 
-    // Form Submission
+    // Form Submission - UPDATED LOGIC
     async handleFreeTrialFormSubmission(event) {
         event.preventDefault();
 
@@ -304,18 +375,24 @@ class FreeTrialManager {
         }
 
         const emailInput = document.getElementById('trialEmail');
-        const trialRepoUrlInput = document.getElementById('trialRepoUrl');
+        const repoUrlInput = document.getElementById('trialRepoUrl');
         
-        if (!emailInput || !trialRepoUrlInput) {
+        if (!emailInput || !repoUrlInput) {
             this.showNotification('Required form elements not found', 'error', 5000);
             return;
         }
 
         const email = emailInput.value.trim();
-        const trialRepoUrl = trialRepoUrlInput.value.trim();
+        const repoUrl = repoUrlInput.value.trim();
 
-        if (!email || !trialRepoUrl) {
+        if (!email || !repoUrl) {
             this.showNotification('Please fill in both email and repository URL', 'error', 5000);
+            return;
+        }
+
+        // Check if both validations passed
+        if (!this.state.emailValidated || !this.state.repositoryChecked) {
+            this.showNotification('Please ensure both email and repository are valid', 'error', 5000);
             return;
         }
 
@@ -323,30 +400,19 @@ class FreeTrialManager {
         this.setSubmitButtonLoading(submitBtn, true);
 
         try {
-            // Validate email if not already validated
-            if (!this.state.emailValidated) {
-                await this.validateTrialEmail();
-                if (!this.state.emailValidated) {
-                    throw new Error('Email validation failed');
-                }
-            }
-
-            // Check repository
-            const repoCheck = await this.checkRepositoryDuplicate(trialRepoUrl);
-            if (repoCheck.error) {
-                throw new Error(repoCheck.error);
-            }
-            if (repoCheck.isDuplicate) {
-                throw new Error(repoCheck.message);
-            }
-
-            // Generate trial key and mark as used
+            // Generate trial key and store it
             const freeTrialKey = await this.generateMonthlyFreeTrialKey(email);
-            await this.setFreeTrialUsedFlag(this.emailHash);
+            this.generatedKey = freeTrialKey;
             
-            // Success - populate form and show success
-            this.populateMainFormWithTrialKey(freeTrialKey);
-            this.showTrialKeySuccess(freeTrialKey);
+            // Store key in main.js for validation
+            if (window.setGeneratedFreeTrialKey) {
+                window.setGeneratedFreeTrialKey(freeTrialKey);
+            }
+            
+            // Success - populate form and replace button with input field
+            this.populateMainFormWithTrialKey(freeTrialKey, repoUrl);
+            this.replaceFreeTrialButtonWithInput(freeTrialKey);
+            this.hideFreeTrialModal();
 
         } catch (error) {
             console.error('Free trial submission error:', error);
@@ -364,9 +430,9 @@ class FreeTrialManager {
     }
 
     // Repository Management
-    async checkRepositoryDuplicate(trialRepoUrl) {
+    async checkRepositoryDuplicate(repoUrl) {
         try {
-            const repoName = this.extractRepositoryName(trialRepoUrl);
+            const repoName = this.extractRepositoryName(repoUrl);
             if (!repoName) {
                 return { isDuplicate: false, error: 'Invalid repository URL format' };
             }
@@ -401,16 +467,16 @@ class FreeTrialManager {
         }
     }
 
-    extractRepositoryName(trialRepoUrl) {
+    extractRepositoryName(repoUrl) {
         try {
-            if (trialRepoUrl.includes('github.com/')) {
-                const parts = trialRepoUrl.split('github.com/')[1]?.split('/');
+            if (repoUrl.includes('github.com/')) {
+                const parts = repoUrl.split('github.com/')[1]?.split('/');
                 return parts?.[1];
-            } else if (trialRepoUrl.includes('/')) {
-                const parts = trialRepoUrl.split('/');
+            } else if (repoUrl.includes('/')) {
+                const parts = repoUrl.split('/');
                 return parts[parts.length - 1];
             }
-            return trialRepoUrl;
+            return repoUrl;
         } catch (error) {
             console.error('Error extracting repository name:', error);
             return null;
@@ -462,6 +528,19 @@ class FreeTrialManager {
         const normalizedEmail = this.normalizeEmail(email);
         const emailHash = await this.hashEmail(normalizedEmail);
         return await this.checkFreeTrialUsed(emailHash);
+    }
+
+    // UPDATED: Mark trial as used (called from main.js after successful analysis submission)
+    async markFreeTrialAsUsed(licenseKey) {
+        if (!licenseKey.startsWith('FreeTrial-')) return;
+        
+        try {
+            const emailHash = licenseKey.split('-')[2]; // Extract hash from key
+            await this.setFreeTrialUsedFlag(emailHash);
+            console.log('Free trial marked as used:', licenseKey);
+        } catch (error) {
+            console.error('Error marking free trial as used:', error);
+        }
     }
 
     async setFreeTrialUsedFlag(emailHash) {
@@ -589,91 +668,83 @@ class FreeTrialManager {
         }
     }
 
-    populateMainFormWithTrialKey(freeTrialKey) {
-       // Existing license key population
-       const licenseKeyInput = document.getElementById('licenseKey');
-       if (licenseKeyInput) {
-           licenseKeyInput.value = freeTrialKey;
-           licenseKeyInput.disabled = true;
-           licenseKeyInput.dispatchEvent(new Event('input'));
-       }
-       
-       // NEW: Also populate and lock the main repo URL field
-       const trialRepoInput = document.getElementById('trialRepoUrl');
-       const mainRepoInput = document.getElementById('repoUrl');
-       if (trialRepoInput && mainRepoInput) {
-           mainRepoInput.value = trialRepoInput.value;
-           mainRepoInput.disabled = true;
-           mainRepoInput.dispatchEvent(new Event('input'));
-       }
-   }
-
-    showTrialKeySuccess(freeTrialKey) {
+    hideFreeTrialModal() {
         const modal = document.getElementById('freeTrialModal');
         if (modal) modal.style.display = 'none';
-        this.showTrialKeyModal(freeTrialKey);
     }
 
-    showTrialKeyModal(freeTrialKey) {
-        let keyModal = document.getElementById('trialKeyDisplayModal');
-        if (!keyModal) {
-            const modalHTML = `
-                <div id="trialKeyDisplayModal" class="modal">
-                    <div class="modal-content">
-                        <span class="close">&times;</span>
-                        <h2>Free Trial Activated!</h2>
-                        <p class="success-message">Your private license key for this month has been generated (holds 1 credit)</p>
-                        <div class="key-display-container">
-                            <input type="text" id="displayedTrialKey" value="${freeTrialKey}" readonly>
-                            <button id="copyKeyBtn" class="btn-secondary">Copy</button>
-                        </div>
-                        <p class="key-note">This key has been automatically added to the main form. You can now analyze your repository!</p>
-                        <button id="closeKeyModal" class="btn-primary">Continue to Analysis</button>
-                    </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-            keyModal = document.getElementById('trialKeyDisplayModal');
-
-            const closeBtn = keyModal.querySelector('.close');
-            const closeKeyBtn = document.getElementById('closeKeyModal');
-            const copyBtn = document.getElementById('copyKeyBtn');
-
-            [closeBtn, closeKeyBtn].forEach(btn => {
-                if (btn) {
-                    btn.addEventListener('click', () => {
-                        keyModal.style.display = 'none';
-                    });
-                }
-            });
-
-            if (copyBtn) {
-                copyBtn.addEventListener('click', () => this.copyKeyToClipboard(freeTrialKey, copyBtn));
-            }
+    populateMainFormWithTrialKey(freeTrialKey, repoUrl) {
+        // Populate license key
+        const licenseKeyInput = document.getElementById('licenseKey');
+        if (licenseKeyInput) {
+            licenseKeyInput.value = freeTrialKey;
+            licenseKeyInput.dispatchEvent(new Event('input'));
         }
-        keyModal.style.display = 'block';
-        const closeBtn = keyModal.querySelector('#closeKeyModal');
-        if (closeBtn) closeBtn.focus();
+
+        // Populate and lock repo URL
+        const mainRepoInput = document.getElementById('repoUrl');
+        if (mainRepoInput && repoUrl) {
+            mainRepoInput.value = repoUrl;
+            mainRepoInput.disabled = true;
+            mainRepoInput.dispatchEvent(new Event('input'));
+        }
+    }
+
+    // UPDATED: Replace button with input field instead of showing modal
+    replaceFreeTrialButtonWithInput(freeTrialKey) {
+        const buttonContainer = document.getElementById('freeTrialButtonContainer');
+        if (!buttonContainer) return;
+
+        buttonContainer.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 5px; position: absolute; top: 0; right: 0;">
+                <input type="text" value="${freeTrialKey}" readonly style="
+                    width: 200px;
+                    padding: 5px 8px;
+                    font-size: 12px;
+                    border: 1px solid #ccc;
+                    border-radius: 3px;
+                    background-color: #f9f9f9;
+                    color: #666;
+                ">
+                <button id="copyTrialKeyBtn" class="btn-secondary" style="
+                    padding: 5px 8px;
+                    font-size: 12px;
+                    min-width: auto;
+                ">📋</button>
+            </div>
+        `;
+
+        // Add copy functionality
+        const copyBtn = document.getElementById('copyTrialKeyBtn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => this.copyKeyToClipboard(freeTrialKey, copyBtn));
+        }
     }
 
     async copyKeyToClipboard(key, button) {
         try {
             await navigator.clipboard.writeText(key);
             const originalText = button.textContent;
-            button.textContent = 'Copied!';
+            button.textContent = '✅';
             setTimeout(() => {
                 button.textContent = originalText;
             }, 2000);
         } catch (error) {
             // Fallback for older browsers
-            const keyInput = document.getElementById('displayedTrialKey');
-            if (keyInput) {
-                keyInput.select();
+            try {
+                const input = document.createElement('input');
+                input.value = key;
+                document.body.appendChild(input);
+                input.select();
                 document.execCommand('copy');
-                button.textContent = 'Copied!';
+                document.body.removeChild(input);
+                
+                button.textContent = '✅';
                 setTimeout(() => {
-                    button.textContent = 'Copy';
+                    button.textContent = '📋';
                 }, 2000);
+            } catch (e) {
+                console.error('Copy failed:', e);
             }
         }
     }
