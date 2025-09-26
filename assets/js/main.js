@@ -32,6 +32,9 @@ let showcaseItems = [];
 let filteredItems = [];
 let autocompleteData = [];
 
+// Store generated free trial key for validation
+let generatedFreeTrialKey = null;
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
@@ -359,7 +362,12 @@ async function validateLicenseKey() {
     }
     
     if (licenseKey.startsWith('FreeTrial-')) {
-        updateLicenseInfo('Free trial license - 1 analysis available', 'valid');
+        // Validate if this matches the generated free trial key
+        if (generatedFreeTrialKey && licenseKey === generatedFreeTrialKey) {
+            updateLicenseInfo('Free trial license - 1 analysis available', 'valid');
+        } else {
+            updateLicenseInfo('Invalid free trial key - please generate a new one', 'invalid');
+        }
         cacheLicenseKey(licenseKey);
         checkFormValidity();
         return;
@@ -475,6 +483,11 @@ async function handleFormSubmission(e) {
         });
         
         if (response.ok) {
+            // If using a free trial key, mark it as used
+            if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
+                await window.freeTrialManager.markFreeTrialAsUsed(licenseKey);
+            }
+            
             showStatusMessage(
                 'Analysis request submitted successfully! Check your email and Discord for results within 5-10 minutes.',
                 'success'
@@ -494,6 +507,13 @@ async function handleFormSubmission(e) {
     } finally {
         setFormLoading(false);
     }
+}
+
+// -------------------------
+// Free Trial Integration Functions
+// -------------------------
+function setGeneratedFreeTrialKey(key) {
+    generatedFreeTrialKey = key;
 }
 
 // -------------------------
