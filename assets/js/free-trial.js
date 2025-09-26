@@ -685,40 +685,60 @@ class FreeTrialManager {
         }
     }
 
-    // UPDATED: Replace modal's "Start Free Trial" button with input field
-    replaceFreeTrialButtonWithInput(freeTrialKey) {
-        const buttonContainer = document.getElementById('freeTrialButtonContainer');
-        if (!buttonContainer) return;
+   // UPDATED: Replace modal's "Start Free Trial" button with input field
+replaceFreeTrialButtonWithInput(freeTrialKey) {
+    const buttonContainer = document.getElementById('freeTrialButtonContainer');
+    if (!buttonContainer) return;
 
-        buttonContainer.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px; justify-content: center;">
-                <input type="text" value="${freeTrialKey}" readonly style="
-                    width: 280px;
-                    padding: 8px 12px;
-                    font-size: 14px;
-                    border: 1px solid #ccc;
-                    border-radius: 4px;
-                    background-color: #f9f9f9;
-                    color: #333;
-                    font-family: monospace;
-                ">
-                <button id="copyTrialKeyBtn" class="btn-secondary" style="
-                    padding: 8px 12px;
-                    font-size: 14px;
-                    min-width: auto;
-                ">📋 Copy</button>
-            </div>
-            <p style="margin: 10px 0 0 0; font-size: 12px; color: #666; text-align: center;">
-                Copy this key and paste it in the License Key field above
-            </p>
+    // Insert credit info box above container (only once)
+    if (!document.querySelector('.trial-credit-info')) {
+        const creditInfo = document.createElement('div');
+        creditInfo.className = 'trial-credit-info';
+        creditInfo.style.cssText = `
+            background-color: #e8f5e8; 
+            border: 1px solid #4CAF50; 
+            padding: 10px; 
+            margin: 15px 0; 
+            border-radius: 4px; 
+            text-align: center;
+            font-size: 14px;
+            color: #2E7D32;
         `;
-
-        // Add copy functionality
-        const copyBtn = document.getElementById('copyTrialKeyBtn');
-        if (copyBtn) {
-            copyBtn.addEventListener('click', () => this.copyKeyToClipboard(freeTrialKey, copyBtn));
-        }
+        creditInfo.innerHTML = `<strong>Free Trial Key Generated – 1 Analysis Credit Available</strong>`;
+        buttonContainer.parentNode.insertBefore(creditInfo, buttonContainer);
     }
+
+    // Replace content inside buttonContainer
+    buttonContainer.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px; justify-content: center;">
+            <input type="text" value="${freeTrialKey}" readonly style="
+                width: 280px;
+                padding: 8px 12px;
+                font-size: 14px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                background-color: #f9f9f9;
+                color: #333;
+                font-family: monospace;
+            ">
+            <button id="copyTrialKeyBtn" class="btn-secondary" style="
+                padding: 8px 12px;
+                font-size: 14px;
+                min-width: auto;
+            ">📋 Copy</button>
+        </div>
+        <p style="margin: 10px 0 0 0; font-size: 12px; color: #666; text-align: center;">
+            Copy this key and paste it in the License Key field above
+        </p>
+    `;
+
+    // Add copy functionality
+    const copyBtn = document.getElementById('copyTrialKeyBtn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', () => this.copyKeyToClipboard(freeTrialKey, copyBtn));
+    }
+}
+
 
     async copyKeyToClipboard(key, button) {
         try {
