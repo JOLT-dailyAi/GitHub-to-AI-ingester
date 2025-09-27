@@ -454,7 +454,7 @@ class FreeTrialManager {
                 isDuplicate, 
                 repoName,
                 message: isDuplicate ? 
-                    `Repository "${repoName}" already analyzed. Free trial is for new repositories only.` : 
+                    `Repository "${repoName}" already analyzed. <br>Free trial is for new repositories only.` : 
                     `Repository "${repoName}" is eligible for free trial.`
             };
         } catch (error) {
