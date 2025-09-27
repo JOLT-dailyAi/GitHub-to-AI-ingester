@@ -808,7 +808,7 @@ window.validateGitHubRepositoryAccess = async function(repoUrl) {
     // Update the input field if URL was cleaned (visual feedback to user)
     if (cleanedUrl !== repoUrl) {
         const repoInput = document.getElementById('repoUrl') || document.getElementById('trialRepoUrl');
-        if (repoInput && repoInput.value.trim() === repoUrl) {
+        if (repoInput) {
             repoInput.value = cleanedUrl;
             // Subtle visual indication that URL was cleaned
             repoInput.style.backgroundColor = '#f0fff0'; // Light green flash
