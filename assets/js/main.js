@@ -738,66 +738,119 @@ async function validateRepoUrl() {
 // -------------------------
 // Shared Repository Validation Function (Add to main.js)
 // -------------------------
+// -------------------------
+// Fixed Shared Repository Validation Function - Replace in main.js
+// -------------------------
 window.validateGitHubRepositoryAccess = async function(repoUrl) {
     // Basic format validation first
     if (!isValidGitHubUrl(repoUrl)) {
         return { 
             valid: false, 
-            message: 'Please enter a valid GitHub repository URL',
+            message: 'Please enter a valid GitHub repository URL (e.g., https://github.com/user/repo)',
             type: 'invalid' 
         };
     }
     
+    // Extract owner and repo name for API call
+    const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+    if (!match || !match[1] || !match[2]) {
+        return { 
+            valid: false, 
+            message: 'Invalid GitHub URL format. Must include both owner and repository name.',
+            type: 'invalid' 
+        };
+    }
+    
+    const [, owner, repo] = match;
+    
+    // Clean repo name (remove trailing slash, .git, etc.)
+    const cleanRepo = repo.replace(/\.git$/, '').replace(/\/$/, '');
+    
+    // Use GitHub API instead of direct page fetch to avoid CORS
+    const apiUrl = `https://api.github.com/repos/${owner}/${cleanRepo}`;
+    
     try {
-        const response = await fetch(repoUrl, {
+        const response = await fetch(apiUrl, {
             method: 'GET',
-            mode: 'cors'
+            headers: {
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'GitHub-to-AI-ingester'
+            },
+            signal: AbortSignal.timeout(8000) // 8 second timeout
         });
         
         if (response.status === 200) {
-            const html = await response.text();
+            const data = await response.json();
             
-            // Check for GitHub's 404 page indicators
-            if (html.includes("Didn't find anything here!") || 
-                html.includes("Need to sign in?")) {
+            // Check if repository is private
+            if (data.private) {
                 return { 
                     valid: false, 
-                    message: 'Repository not found or is private',
+                    message: 'Repository is private. Only public repositories can be analyzed.',
                     type: 'invalid' 
                 };
             }
-            // Check for actual repository content
-            else if (html.includes('repository-content') || 
-                     html.includes('js-repo-pjax-container') ||
-                     html.includes('data-testid="repository-container"') ||
-                     html.includes('js-repo-root')) {
-                return { 
-                    valid: true, 
-                    message: 'Valid public repository',
-                    type: 'valid' 
-                };
-            }
-            // Fallback check for repository-like content
-            else if (html.includes('branches') && 
-                     html.includes('commits') && 
-                     html.includes('Pull requests')) {
-                return { 
-                    valid: true, 
-                    message: 'Valid public repository',
-                    type: 'valid' 
-                };
-            }
-            else {
+            
+            // Check if repository is empty
+            if (data.size === 0) {
                 return { 
                     valid: false, 
-                    message: 'Repository status unclear',
+                    message: 'Repository appears to be empty.',
                     type: 'invalid' 
                 };
             }
+            
+            // Check if repository is archived
+            if (data.archived) {
+                return { 
+                    valid: true, 
+                    message: `Valid public repository: ${data.full_name} (archived)`,
+                    type: 'valid',
+                    repoData: data
+                };
+            }
+            
+            return { 
+                valid: true, 
+                message: `Valid public repository: ${data.full_name}`,
+                type: 'valid',
+                repoData: data
+            };
+            
+        } else if (response.status === 404) {
+            return { 
+                valid: false, 
+                message: 'Repository not found. Please check the URL and ensure it exists and is publicly accessible.',
+                type: 'invalid' 
+            };
+        } else if (response.status === 403) {
+            const rateLimitReset = response.headers.get('X-RateLimit-Reset');
+            if (rateLimitReset) {
+                const resetTime = new Date(parseInt(rateLimitReset) * 1000);
+                const now = new Date();
+                const waitMinutes = Math.ceil((resetTime - now) / 60000);
+                return { 
+                    valid: true, 
+                    message: `GitHub API rate limited (resets in ${waitMinutes}min) - repository will be verified during submission.`,
+                    type: 'valid' 
+                };
+            } else {
+                return { 
+                    valid: false, 
+                    message: 'GitHub API access denied. Repository may be private or restricted.',
+                    type: 'invalid' 
+                };
+            }
+        } else if (response.status === 451) {
+            return { 
+                valid: false, 
+                message: 'Repository is unavailable for legal reasons.',
+                type: 'invalid' 
+            };
         } else {
             return { 
                 valid: false, 
-                message: `Repository access failed (${response.status})`,
+                message: `GitHub API error (${response.status}). Please try again.`,
                 type: 'invalid' 
             };
         }
@@ -805,21 +858,67 @@ window.validateGitHubRepositoryAccess = async function(repoUrl) {
     } catch (error) {
         console.error('Repository validation error:', error);
         
-        // Handle CORS or network errors gracefully
-        if (error.name === 'TypeError' && error.message.includes('CORS')) {
+        // Handle different error types gracefully
+        if (error.name === 'AbortError') {
             return { 
                 valid: true, 
-                message: 'CORS blocked - will verify during submission',
+                message: 'Validation timeout - repository will be verified during submission.',
+                type: 'valid' 
+            };
+        } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+            return { 
+                valid: true, 
+                message: 'Network error - repository will be verified during submission.',
                 type: 'valid' 
             };
         } else {
             return { 
                 valid: true, 
-                message: 'Network error - will verify during submission',
+                message: 'Validation service unavailable - repository will be verified during submission.',
                 type: 'valid' 
             };
         }
     }
+};
+
+// Enhanced GitHub URL validation function
+function isValidGitHubUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    
+    // Clean the URL first
+    url = url.trim();
+    
+    // Must start with https://github.com
+    if (!url.startsWith('https://github.com/')) return false;
+    
+    // Remove trailing slash and .git if present
+    url = url.replace(/\.git$/, '').replace(/\/$/, '');
+    
+    // More comprehensive regex that handles various GitHub URL formats
+    const githubRegex = /^https:\/\/github\.com\/[a-zA-Z0-9][a-zA-Z0-9_.-]*\/[a-zA-Z0-9][a-zA-Z0-9_.-]*$/;
+    
+    // Check basic format
+    if (!githubRegex.test(url)) return false;
+    
+    // Extract parts for additional validation
+    const parts = url.split('/');
+    if (parts.length !== 5) return false; // https: + "" + github.com + owner + repo
+    
+    const owner = parts[3];
+    const repo = parts[4];
+    
+    // Owner and repo name validation
+    if (owner.length === 0 || repo.length === 0) return false;
+    if (owner.startsWith('.') || owner.endsWith('.')) return false;
+    if (repo.startsWith('.') || repo.endsWith('.')) return false;
+    if (owner.startsWith('-') || owner.endsWith('-')) return false;
+    if (repo.startsWith('-') || repo.endsWith('-')) return false;
+    
+    // Reserved names check
+    const reservedNames = ['settings', 'notifications', 'explore', 'integrations', 'marketplace'];
+    if (reservedNames.includes(owner.toLowerCase()) || reservedNames.includes(repo.toLowerCase())) return false;
+    
+    return true;
 }
 
 // -------------------------
