@@ -59,7 +59,22 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeEventListeners() {
     // Form validation
     if (licenseKeyInput) licenseKeyInput.addEventListener('input', debounce(validateLicenseKey, 500));
-    if (repoUrlInput) repoUrlInput.addEventListener('input', debounce(validateRepoUrl, 300));
+    if (repoUrlInput) {
+        repoUrlInput.addEventListener('input', debounce(() => {
+            // Clean URL first
+            const cleanedUrl = cleanGitHubUrl(repoUrlInput.value);
+            if (cleanedUrl !== repoUrlInput.value) {
+                repoUrlInput.value = cleanedUrl;
+                // Visual feedback
+                repoUrlInput.style.backgroundColor = '#f0fff0';
+                setTimeout(() => {
+                    repoUrlInput.style.backgroundColor = '';
+                }, 1000);
+            }
+            // Then validate
+            validateRepoUrl();
+        }, 300));
+    }
     
     // Form submission
     if (analysisForm) analysisForm.addEventListener('submit', handleFormSubmission);
