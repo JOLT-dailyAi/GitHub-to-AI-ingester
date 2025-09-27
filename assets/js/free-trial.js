@@ -284,49 +284,56 @@ class FreeTrialManager {
     }
 
     // Repository Validation
-    async validateTrialRepository() {
-        const repoInput = document.getElementById('trialRepoUrl');
-        const validationMsg = document.getElementById('repoValidationMsg') || this.createRepoValidationElement();
+    // -------------------------
+// Updated Free Trial Repository Validation (Replace validateTrialRepository in free-trial.js)
+// -------------------------
+async validateTrialRepository() {
+    const repoInput = document.getElementById('trialRepoUrl');
+    const validationMsg = document.getElementById('repoValidationMsg') || this.createRepoValidationElement();
 
-        if (!repoInput || !validationMsg) return;
+    if (!repoInput || !validationMsg) return;
 
-        const repoUrl = repoInput.value.trim();
+    const repoUrl = repoInput.value.trim();
 
-        if (!repoUrl) {
-            this.updateValidationMessage(validationMsg, '', '');
-            this.state.repositoryChecked = false;
-            return;
-        }
-
-        if (!this.isValidGitHubUrl(repoUrl)) {
-            this.updateValidationMessage(validationMsg, 'Please enter a valid GitHub repository URL', 'invalid');
-            this.state.repositoryChecked = false;
-            return;
-        }
-
-        this.updateValidationMessage(validationMsg, 'Checking repository...', '');
-
-        try {
-            const repoCheck = await this.checkRepositoryDuplicate(repoUrl);
-            if (repoCheck.error) {
-                this.updateValidationMessage(validationMsg, repoCheck.error, 'invalid');
-                this.state.repositoryChecked = false;
-                return;
-            }
-            if (repoCheck.isDuplicate) {
-                this.updateValidationMessage(validationMsg, repoCheck.message, 'invalid');
-                this.state.repositoryChecked = false;
-                return;
-            }
-
-            this.updateValidationMessage(validationMsg, 'Repository eligible for free trial', 'valid');
-            this.state.repositoryChecked = true;
-
-        } catch (error) {
-            this.updateValidationMessage(validationMsg, 'Repository check failed. Please try again.', 'invalid');
-            this.state.repositoryChecked = false;
-        }
+    if (!repoUrl) {
+        this.updateValidationMessage(validationMsg, '', '');
+        this.state.repositoryChecked = false;
+        return;
     }
+
+    this.updateValidationMessage(validationMsg, 'Checking repository...', '');
+
+    try {
+        // Use the shared validation function
+        const accessResult = await validateGitHubRepositoryAccess(repoUrl);
+        
+        if (!accessResult.valid) {
+            this.updateValidationMessage(validationMsg, accessResult.message, 'invalid');
+            this.state.repositoryChecked = false;
+            return;
+        }
+
+        // Additional check for duplicates in showcase
+        const repoCheck = await this.checkRepositoryDuplicate(repoUrl);
+        if (repoCheck.error) {
+            this.updateValidationMessage(validationMsg, repoCheck.error, 'invalid');
+            this.state.repositoryChecked = false;
+            return;
+        }
+        if (repoCheck.isDuplicate) {
+            this.updateValidationMessage(validationMsg, repoCheck.message, 'invalid');
+            this.state.repositoryChecked = false;
+            return;
+        }
+
+        this.updateValidationMessage(validationMsg, 'Repository eligible for free trial', 'valid');
+        this.state.repositoryChecked = true;
+
+    } catch (error) {
+        this.updateValidationMessage(validationMsg, 'Repository check failed. Please try again.', 'invalid');
+        this.state.repositoryChecked = false;
+    }
+}
 
     createRepoValidationElement() {
         const repoInput = document.getElementById('trialRepoUrl');
