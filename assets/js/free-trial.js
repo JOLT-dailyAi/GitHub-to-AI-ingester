@@ -777,27 +777,27 @@ class FreeTrialManager {
     }
 
    // UPDATED: Replace modal's "Start Free Trial" button with input field
-replaceFreeTrialButtonWithInput(freeTrialKey) {
-    const buttonContainer = document.getElementById('freeTrialButtonContainer');
-    if (!buttonContainer) return;
-
-    // Insert credit info box above container (only once)
-    if (!document.querySelector('.trial-credit-info')) {
-        const creditInfo = document.createElement('div');
-        creditInfo.className = 'trial-credit-info';
-        creditInfo.style.cssText = `
-            background-color: #e8f5e8; 
-            border: 1px solid #4CAF50; 
-            padding: 10px; 
-            margin: 15px 0; 
-            border-radius: 4px; 
-            text-align: center;
-            font-size: 14px;
-            color: #2E7D32;
-        `;
-        creditInfo.innerHTML = `<strong>Free Trial Key Generated – 1 Analysis Credit Available</strong>`;
-        buttonContainer.parentNode.insertBefore(creditInfo, buttonContainer);
-    }
+    replaceFreeTrialButtonWithInput(freeTrialKey) {
+        const buttonContainer = document.getElementById('freeTrialButtonContainer');
+        if (!buttonContainer) return;
+    
+        // Insert credit info box above container (only once)
+        if (!document.querySelector('.trial-credit-info')) {
+            const creditInfo = document.createElement('div');
+            creditInfo.className = 'trial-credit-info';
+            creditInfo.style.cssText = `
+                background-color: #e8f5e8; 
+                border: 1px solid #4CAF50; 
+                padding: 10px; 
+                margin: 15px 0; 
+                border-radius: 4px; 
+                text-align: center;
+                font-size: 14px;
+                color: #2E7D32;
+            `;
+            creditInfo.innerHTML = `<strong>Free Trial Key Generated – 1 Analysis Credit Available</strong>`;
+            buttonContainer.parentNode.insertBefore(creditInfo, buttonContainer);
+        }
 
     // Replace content inside buttonContainer
     buttonContainer.innerHTML = `
