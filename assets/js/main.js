@@ -710,6 +710,65 @@ async function validateLicenseKey() {
     checkFormValidity();
 }
 
+// ADD THIS NEW FUNCTION 
+function cleanGitHubUrl(url) {
+    if (!url || typeof url !== 'string') return url;
+    
+    // Trim whitespace
+    url = url.trim();
+    
+    // Must be a GitHub URL to clean
+    if (!url.includes('github.com/')) return url;
+    
+    try {
+        // Remove common suffixes and paths that users might copy
+        url = url
+            .replace(/\.git$/, '')                           // Remove .git suffix
+            .replace(/\/$/, '')                              // Remove trailing slash
+            .replace(/#.*$/, '')                             // Remove anchors/fragments
+            .replace(/\?.*$/, '');                           // Remove query parameters
+        
+        // Extract just the owner/repo part from various GitHub URL formats
+        const patterns = [
+            // Standard repository URLs with paths
+            /^(https:\/\/github\.com\/[^\/]+\/[^\/]+)\/.*$/,
+            // URLs with tree/blob/commits/releases etc.
+            /^(https:\/\/github\.com\/[^\/]+\/[^\/]+)(?:\/(?:tree|blob|commit|commits|releases|issues|pull|wiki|actions|projects|security|insights|settings).*)?$/,
+            // Archive download URLs  
+            /^(https:\/\/github\.com\/[^\/]+\/[^\/]+)\/archive\/.*$/,
+            // Raw content URLs
+            /^https:\/\/raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/.*$/
+        ];
+        
+        // Try each pattern
+        for (const pattern of patterns) {
+            const match = url.match(pattern);
+            if (match) {
+                if (match[1]) {
+                    // Direct capture of base URL
+                    return match[1];
+                } else if (match.length === 3) {
+                    // Raw content URL format - reconstruct base URL
+                    return `https://github.com/${match[1]}/${match[2]}`;
+                }
+            }
+        }
+        
+        // If no patterns match, try simple extraction
+        const simpleMatch = url.match(/^(https:\/\/github\.com\/[^\/]+\/[^\/]+)/);
+        if (simpleMatch) {
+            return simpleMatch[1];
+        }
+        
+        // Return original URL if no cleaning possible
+        return url;
+        
+    } catch (error) {
+        console.warn('URL cleaning error:', error);
+        return url; // Return original on error
+    }
+}
+
 // -------------------------
 // Repository URL Validation
 // -------------------------
@@ -741,9 +800,26 @@ async function validateRepoUrl() {
 // -------------------------
 // Fixed Shared Repository Validation Function - Replace in main.js
 // -------------------------
+// UPDATED: Repository validation function that cleans URLs automatically
 window.validateGitHubRepositoryAccess = async function(repoUrl) {
-    // Basic format validation first
-    if (!isValidGitHubUrl(repoUrl)) {
+    // Clean the URL first for better UX
+    const cleanedUrl = cleanGitHubUrl(repoUrl);
+    
+    // Update the input field if URL was cleaned (visual feedback to user)
+    if (cleanedUrl !== repoUrl) {
+        const repoInput = document.getElementById('repoUrl') || document.getElementById('trialRepoUrl');
+        if (repoInput && repoInput.value.trim() === repoUrl) {
+            repoInput.value = cleanedUrl;
+            // Subtle visual indication that URL was cleaned
+            repoInput.style.backgroundColor = '#f0fff0'; // Light green flash
+            setTimeout(() => {
+                repoInput.style.backgroundColor = '';
+            }, 1000);
+        }
+    }
+    
+    // Basic format validation first (now with cleaned URL)
+    if (!isValidGitHubUrl(cleanedUrl)) {
         return { 
             valid: false, 
             message: 'Please enter a valid GitHub repository URL (e.g., https://github.com/user/repo)',
@@ -752,7 +828,7 @@ window.validateGitHubRepositoryAccess = async function(repoUrl) {
     }
     
     // Extract owner and repo name for API call
-    const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+    const match = cleanedUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
     if (!match || !match[1] || !match[2]) {
         return { 
             valid: false, 
@@ -885,13 +961,13 @@ window.validateGitHubRepositoryAccess = async function(repoUrl) {
 function isValidGitHubUrl(url) {
     if (!url || typeof url !== 'string') return false;
     
-    // Clean the URL first
-    url = url.trim();
+    // Clean the URL first - THIS IS THE KEY ADDITION
+    url = cleanGitHubUrl(url);
     
     // Must start with https://github.com
     if (!url.startsWith('https://github.com/')) return false;
     
-    // Remove trailing slash and .git if present
+    // Remove trailing slash and .git if present (double-check after cleaning)
     url = url.replace(/\.git$/, '').replace(/\/$/, '');
     
     // More comprehensive regex that handles various GitHub URL formats
