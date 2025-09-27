@@ -731,32 +731,50 @@ class FreeTrialManager {
     }
 
     // UPDATED: Only populate repo URL, DO NOT auto-populate license key
-    populateMainFormWithTrialKey(freeTrialKey, repoUrl) {
-        const mainRepoInput = document.getElementById('repoUrl');
-            if (mainRepoInput && repoUrl) {
-                mainRepoInput.value = repoUrl;
-                
-                // Run validation BEFORE disabling the field
-                if (typeof validateRepoUrl === 'function') {
-                    validateRepoUrl();
-                }
-                
-                // Then disable the field after validation
-                setTimeout(() => {
-                    mainRepoInput.disabled = true;
-                }, 100);
-                
-                // Trigger input event for other listeners
-                mainRepoInput.dispatchEvent(new Event('input'));
-                
-                // Force form validity check after validation completes
-                setTimeout(() => {
-                    if (typeof checkFormValidity === 'function') {
-                        checkFormValidity();
-                    }
-                }, 200);
+    // Replace the populateMainFormWithTrialKey function in free-trial.js
+populateMainFormWithTrialKey(freeTrialKey, repoUrl) {
+    const mainRepoInput = document.getElementById('repoUrl');
+        if (mainRepoInput && repoUrl) {
+            mainRepoInput.value = repoUrl;
+            
+            // Make field readonly instead of disabled
+            mainRepoInput.readonly = true;
+            
+            // Apply visual styling to show it's locked
+            mainRepoInput.style.backgroundColor = '#f0f8ff';
+            mainRepoInput.style.border = '2px solid #4CAF50';
+            mainRepoInput.style.cursor = 'not-allowed';
+            mainRepoInput.style.color = '#333';
+            
+            // Add auto-populated label
+            if (!document.querySelector('.auto-populated-label')) {
+                const label = document.createElement('small');
+                label.className = 'auto-populated-label';
+                label.textContent = '✓ Auto-populated from free trial';
+                label.style.color = '#4CAF50';
+                label.style.display = 'block';
+                label.style.marginTop = '4px';
+                label.style.fontSize = '12px';
+                label.style.fontWeight = 'bold';
+                mainRepoInput.parentNode.insertBefore(label, mainRepoInput.nextSibling);
             }
-    }
+            
+            // Trigger validation normally (field is not disabled, so validation will run)
+            if (typeof validateRepoUrl === 'function') {
+                validateRepoUrl();
+            }
+            
+            // Also trigger the input event for any other listeners
+            mainRepoInput.dispatchEvent(new Event('input'));
+            
+            // Force form validity check after validation completes
+            setTimeout(() => {
+                if (typeof checkFormValidity === 'function') {
+                    checkFormValidity();
+                }
+            }, 100);
+        }
+}
 
    // UPDATED: Replace modal's "Start Free Trial" button with input field
 replaceFreeTrialButtonWithInput(freeTrialKey) {
