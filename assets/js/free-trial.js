@@ -54,7 +54,20 @@ class FreeTrialManager {
         // Add real-time repo validation
         const trialRepoInput = document.getElementById('trialRepoUrl');
         if (trialRepoInput) {
-            trialRepoInput.addEventListener('input', this.debounce(() => this.validateTrialRepository(), 500));
+            trialRepoInput.addEventListener('input', this.debounce(() => {
+                // Clean URL first
+                const cleanedUrl = cleanGitHubUrl(trialRepoInput.value);
+                if (cleanedUrl !== trialRepoInput.value) {
+                    trialRepoInput.value = cleanedUrl;
+                    // Visual feedback
+                    trialRepoInput.style.backgroundColor = '#f0fff0';
+                    setTimeout(() => {
+                        trialRepoInput.style.backgroundColor = '';
+                    }, 1000);
+                }
+                // Then validate
+                this.validateTrialRepository();
+            }, 500));
             trialRepoInput.addEventListener('blur', () => this.validateTrialRepository());
         }
     }
