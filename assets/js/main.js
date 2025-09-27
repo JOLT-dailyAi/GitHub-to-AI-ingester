@@ -819,20 +819,7 @@ async function validateRepoUrl() {
 window.validateGitHubRepositoryAccess = async function(repoUrl) {
     // Clean the URL first for better UX
     const cleanedUrl = cleanGitHubUrl(repoUrl);
-    
-    // Update the input field if URL was cleaned (visual feedback to user)
-    if (cleanedUrl !== repoUrl) {
-        const repoInput = document.getElementById('repoUrl') || document.getElementById('trialRepoUrl');
-        if (repoInput) {
-            repoInput.value = cleanedUrl;
-            // Subtle visual indication that URL was cleaned
-            repoInput.style.backgroundColor = '#f0fff0'; // Light green flash
-            setTimeout(() => {
-                repoInput.style.backgroundColor = '';
-            }, 1000);
-        }
-    }
-    
+        
     // Basic format validation first (now with cleaned URL)
     if (!isValidGitHubUrl(cleanedUrl)) {
         return { 
