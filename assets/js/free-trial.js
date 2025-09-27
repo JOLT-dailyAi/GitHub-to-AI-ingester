@@ -305,7 +305,7 @@ class FreeTrialManager {
     
         try {
             // Use the shared validation function
-            const accessResult = await validateGitHubRepositoryAccess(repoUrl);
+            const accessResult = await window.validateGitHubRepositoryAccess(repoUrl);
             
             if (!accessResult.valid) {
                 this.updateValidationMessage(validationMsg, accessResult.message, 'invalid');
