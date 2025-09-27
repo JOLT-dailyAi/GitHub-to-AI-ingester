@@ -732,8 +732,8 @@ class FreeTrialManager {
 
     // UPDATED: Only populate repo URL, DO NOT auto-populate license key
     // Replace the populateMainFormWithTrialKey function in free-trial.js
-populateMainFormWithTrialKey(freeTrialKey, repoUrl) {
-    const mainRepoInput = document.getElementById('repoUrl');
+    populateMainFormWithTrialKey(freeTrialKey, repoUrl) {
+        const mainRepoInput = document.getElementById('repoUrl');
         if (mainRepoInput && repoUrl) {
             mainRepoInput.value = repoUrl;
             
@@ -774,7 +774,7 @@ populateMainFormWithTrialKey(freeTrialKey, repoUrl) {
                 }
             }, 100);
         }
-}
+    }
 
    // UPDATED: Replace modal's "Start Free Trial" button with input field
 replaceFreeTrialButtonWithInput(freeTrialKey) {
