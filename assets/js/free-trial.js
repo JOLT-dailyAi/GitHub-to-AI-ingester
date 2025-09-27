@@ -270,6 +270,13 @@ class FreeTrialManager {
             return;
         }
 
+        // NEW: Check server database of used keys
+        if (await this.checkUsedKeysDatabase(email)) {
+            this.updateValidationMessage(validationMsg, 'Free trial has already been redeemed this month. Please try again next month.', 'invalid');
+            this.state.emailValidated = false;
+            return;
+        }
+
         this.updateValidationMessage(validationMsg, 'Valid email - ready for free trial', 'valid');
         this.state.emailValidated = true;
         this.normalizedEmail = this.normalizeEmail(email);
@@ -657,6 +664,33 @@ class FreeTrialManager {
         }
     }
 
+    // Add this new method around line 530, after checkCache method
+    async checkUsedKeysDatabase(email) {
+        try {
+            const response = await fetch('/data/UsedFreeLicenseKeys.json', {
+                signal: AbortSignal.timeout(5000)
+            });
+            
+            if (!response.ok) {
+                console.warn('Could not fetch used keys database');
+                return false; // Allow trial if database unavailable
+            }
+    
+            const usedKeys = await response.json();
+            const normalizedEmail = this.normalizeEmail(email);
+            const emailHash = await this.hashEmail(normalizedEmail);
+            const currentMonth = new Date().toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+            const currentYear = new Date().getFullYear();
+            const expectedKey = `FreeTrial-${currentMonth}${currentYear}-${emailHash}`;
+            
+            return usedKeys.includes(expectedKey);
+            
+        } catch (error) {
+            console.error('Error checking used keys database:', error);
+            return false; // Allow trial if check fails
+        }
+    }
+    
     // Modal Management
     showFreeTrialModal() {
         const modal = document.getElementById('freeTrialModal');
