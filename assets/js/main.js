@@ -738,7 +738,7 @@ async function validateRepoUrl() {
 // -------------------------
 // Shared Repository Validation Function (Add to main.js)
 // -------------------------
-async function validateGitHubRepositoryAccess(repoUrl) {
+window.validateGitHubRepositoryAccess = async function(repoUrl) {
     // Basic format validation first
     if (!isValidGitHubUrl(repoUrl)) {
         return { 
