@@ -732,29 +732,31 @@ class FreeTrialManager {
 
     // UPDATED: Only populate repo URL, DO NOT auto-populate license key
     populateMainFormWithTrialKey(freeTrialKey, repoUrl) {
-        // DO NOT populate license key - user must copy/paste manually
-        // Only populate and lock repo URL
         const mainRepoInput = document.getElementById('repoUrl');
             if (mainRepoInput && repoUrl) {
                 mainRepoInput.value = repoUrl;
-                mainRepoInput.disabled = true;
                 
-                // Force immediate validation without debounce delay
+                // Run validation BEFORE disabling the field
                 if (typeof validateRepoUrl === 'function') {
                     validateRepoUrl();
                 }
                 
-                // Also trigger the input event for any other listeners
+                // Then disable the field after validation
+                setTimeout(() => {
+                    mainRepoInput.disabled = true;
+                }, 100);
+                
+                // Trigger input event for other listeners
                 mainRepoInput.dispatchEvent(new Event('input'));
                 
-                // Force form validity check after a short delay to ensure validation completes
+                // Force form validity check after validation completes
                 setTimeout(() => {
                     if (typeof checkFormValidity === 'function') {
                         checkFormValidity();
                     }
-                }, 100);
+                }, 200);
             }
-        }
+    }
 
    // UPDATED: Replace modal's "Start Free Trial" button with input field
 replaceFreeTrialButtonWithInput(freeTrialKey) {
