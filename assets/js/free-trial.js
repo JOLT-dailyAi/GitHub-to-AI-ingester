@@ -738,7 +738,7 @@ class FreeTrialManager {
             mainRepoInput.value = repoUrl;
             
             // Make field readonly instead of disabled
-            mainRepoInput.readonly = true;
+            mainRepoInput.readOnly = true;
             
             // Apply visual styling to show it's locked
             mainRepoInput.style.backgroundColor = '#f0f8ff';
