@@ -467,21 +467,20 @@ class FreeTrialManager {
         }
     }
 
+
     extractRepositoryName(repoUrl) {
         try {
             if (repoUrl.includes('github.com/')) {
                 const parts = repoUrl.split('github.com/')[1]?.split('/');
-                return parts?.[1];
-            } else if (repoUrl.includes('/')) {
-                const parts = repoUrl.split('/');
-                return parts[parts.length - 1];
+                return parts && parts.length >= 2 ? `${parts[0]}_${parts[1]}` : null;
             }
-            return repoUrl;
+            return null;
         } catch (error) {
             console.error('Error extracting repository name:', error);
             return null;
-        }
+            }
     }
+    
 
     // Key Generation and Storage
     async generateMonthlyFreeTrialKey(email) {
