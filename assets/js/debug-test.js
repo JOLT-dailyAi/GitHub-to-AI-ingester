@@ -368,3 +368,279 @@ window.testRepoValidation = async function(repoUrl) {
 };
 
 console.log('\n🧪 Manual test available: testRepoValidation("https://github.com/owner/repo")');
+
+// =============================================================================
+// APPEND TO debug-test.js - Auto-Population Debug Enhancement
+// =============================================================================
+
+console.log('\n=== AUTO-POPULATION DEBUG ENHANCEMENT LOADED ===');
+
+// Enhanced Free Trial Form Monitoring
+const monitorFreeTrialFlow = () => {
+    console.log('\n9. Setting up Free Trial flow monitoring...');
+    
+    // Monitor free trial form submission
+    const freeTrialForm = document.getElementById('freeTrialForm');
+    if (freeTrialForm) {
+        freeTrialForm.addEventListener('submit', (e) => {
+            console.log('🎯 FREE TRIAL FORM SUBMITTED');
+            console.log('Form data:', {
+                email: document.getElementById('trialEmail')?.value,
+                repo: document.getElementById('trialRepoUrl')?.value
+            });
+        });
+        console.log('✅ Free trial form monitoring enabled');
+    } else {
+        console.log('❌ Free trial form not found');
+    }
+    
+    // Monitor free trial manager state
+    if (window.freeTrialManager) {
+        const originalPopulate = window.freeTrialManager.populateMainFormWithTrialKey;
+        window.freeTrialManager.populateMainFormWithTrialKey = function(freeTrialKey, repoUrl) {
+            console.log('\n🔄 AUTO-POPULATION TRIGGERED');
+            console.log('Key:', freeTrialKey);
+            console.log('Repo URL:', repoUrl);
+            
+            // Check if functions exist before calling
+            console.log('Function availability check:');
+            console.log('- validateRepoUrl:', typeof validateRepoUrl);
+            console.log('- checkFormValidity:', typeof checkFormValidity);
+            console.log('- window.validateGitHubRepositoryAccess:', typeof window.validateGitHubRepositoryAccess);
+            
+            // Call original function
+            const result = originalPopulate.call(this, freeTrialKey, repoUrl);
+            
+            // Check results after population
+            setTimeout(() => {
+                const repoInput = document.getElementById('repoUrl');
+                const submitBtn = document.getElementById('submitBtn');
+                const urlValidation = document.getElementById('urlValidation');
+                const licenseInfo = document.getElementById('licenseInfo');
+                
+                console.log('\n🔍 POST-POPULATION STATE:');
+                console.log('Repo input value:', repoInput?.value);
+                console.log('Repo input disabled:', repoInput?.disabled);
+                console.log('Submit button disabled:', submitBtn?.disabled);
+                console.log('URL validation text:', urlValidation?.textContent);
+                console.log('URL validation class:', urlValidation?.className);
+                console.log('License info text:', licenseInfo?.textContent);
+                console.log('License info class:', licenseInfo?.className);
+            }, 200);
+            
+            return result;
+        };
+        console.log('✅ Free trial manager monitoring enabled');
+    } else {
+        console.log('❌ Free trial manager not found - will monitor when available');
+        
+        // Watch for when it becomes available
+        const checkForManager = setInterval(() => {
+            if (window.freeTrialManager) {
+                monitorFreeTrialFlow(); // Re-run setup
+                clearInterval(checkForManager);
+            }
+        }, 500);
+        
+        setTimeout(() => clearInterval(checkForManager), 10000);
+    }
+};
+
+// Enhanced Form Validation Monitoring
+const monitorFormValidation = () => {
+    console.log('\n10. Enhanced form validation monitoring...');
+    
+    // Monitor checkFormValidity calls
+    if (typeof checkFormValidity === 'function') {
+        const originalCheck = checkFormValidity;
+        window.checkFormValidity = function() {
+            console.log('\n🔍 FORM VALIDITY CHECK CALLED');
+            
+            const licenseKeyInput = document.getElementById('licenseKey');
+            const repoUrlInput = document.getElementById('repoUrl');
+            const licenseInfo = document.getElementById('licenseInfo');
+            const urlValidation = document.getElementById('urlValidation');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            console.log('Form state before check:');
+            console.log('- License key filled:', !!licenseKeyInput?.value?.trim());
+            console.log('- Repo URL filled:', !!repoUrlInput?.value?.trim());
+            console.log('- License valid class:', licenseInfo?.classList.contains('valid'));
+            console.log('- URL valid class:', urlValidation?.classList.contains('valid'));
+            console.log('- License info text:', licenseInfo?.textContent);
+            console.log('- URL validation text:', urlValidation?.textContent);
+            
+            const result = originalCheck.call(this);
+            
+            console.log('Form state after check:');
+            console.log('- Submit button disabled:', submitBtn?.disabled);
+            
+            return result;
+        };
+        console.log('✅ Form validity monitoring enhanced');
+    } else {
+        console.log('❌ checkFormValidity not available - will monitor when loaded');
+        
+        // Watch for when it becomes available
+        const checkForValidation = setInterval(() => {
+            if (typeof checkFormValidity === 'function') {
+                monitorFormValidation(); // Re-run setup
+                clearInterval(checkForValidation);
+            }
+        }, 500);
+        
+        setTimeout(() => clearInterval(checkForValidation), 10000);
+    }
+    
+    // Monitor validateRepoUrl calls
+    if (typeof validateRepoUrl === 'function') {
+        const originalValidate = validateRepoUrl;
+        window.validateRepoUrl = async function() {
+            console.log('\n🔍 REPO VALIDATION CALLED');
+            
+            const repoUrlInput = document.getElementById('repoUrl');
+            console.log('Repo URL input state:');
+            console.log('- Value:', repoUrlInput?.value);
+            console.log('- Disabled:', repoUrlInput?.disabled);
+            console.log('- Element exists:', !!repoUrlInput);
+            
+            const result = await originalValidate.call(this);
+            
+            const urlValidation = document.getElementById('urlValidation');
+            console.log('Validation result:');
+            console.log('- Validation element exists:', !!urlValidation);
+            console.log('- Validation text:', urlValidation?.textContent);
+            console.log('- Validation class:', urlValidation?.className);
+            
+            return result;
+        };
+        console.log('✅ Repository validation monitoring enhanced');
+    }
+};
+
+// Monitor License Key Validation
+const monitorLicenseValidation = () => {
+    const licenseKeyInput = document.getElementById('licenseKey');
+    if (licenseKeyInput) {
+        licenseKeyInput.addEventListener('input', () => {
+            setTimeout(() => {
+                const licenseInfo = document.getElementById('licenseInfo');
+                console.log('📝 License key changed:');
+                console.log('- Value:', licenseKeyInput.value);
+                console.log('- Info text:', licenseInfo?.textContent);
+                console.log('- Info class:', licenseInfo?.className);
+            }, 100);
+        });
+        console.log('✅ License key monitoring enabled');
+    }
+};
+
+// Manual Testing Functions
+window.debugAutoPopulation = {
+    // Test auto-population manually
+    testPopulation: (testKey = 'FreeTrial-TEST2024-12345678', testRepo = 'https://github.com/test/repo') => {
+        console.log('\n🧪 MANUAL AUTO-POPULATION TEST');
+        if (window.freeTrialManager && typeof window.freeTrialManager.populateMainFormWithTrialKey === 'function') {
+            window.freeTrialManager.populateMainFormWithTrialKey(testKey, testRepo);
+        } else {
+            console.error('❌ Free trial manager or populate function not available');
+        }
+    },
+    
+    // Check current form state
+    checkFormState: () => {
+        const licenseKeyInput = document.getElementById('licenseKey');
+        const repoUrlInput = document.getElementById('repoUrl');
+        const licenseInfo = document.getElementById('licenseInfo');
+        const urlValidation = document.getElementById('urlValidation');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        console.log('\n📊 CURRENT FORM STATE:');
+        console.log('License Key:');
+        console.log('- Value:', licenseKeyInput?.value);
+        console.log('- Info text:', licenseInfo?.textContent);
+        console.log('- Info class:', licenseInfo?.className);
+        
+        console.log('\nRepository URL:');
+        console.log('- Value:', repoUrlInput?.value);
+        console.log('- Disabled:', repoUrlInput?.disabled);
+        console.log('- Validation text:', urlValidation?.textContent);
+        console.log('- Validation class:', urlValidation?.className);
+        
+        console.log('\nSubmit Button:');
+        console.log('- Disabled:', submitBtn?.disabled);
+        console.log('- Element exists:', !!submitBtn);
+        
+        return {
+            licenseKey: licenseKeyInput?.value,
+            repoUrl: repoUrlInput?.value,
+            submitDisabled: submitBtn?.disabled,
+            licenseValid: licenseInfo?.classList.contains('valid'),
+            urlValid: urlValidation?.classList.contains('valid')
+        };
+    },
+    
+    // Force validation manually
+    forceValidation: () => {
+        console.log('\n🔧 FORCING MANUAL VALIDATION');
+        
+        if (typeof validateRepoUrl === 'function') {
+            console.log('Calling validateRepoUrl...');
+            validateRepoUrl();
+        } else {
+            console.error('❌ validateRepoUrl not available');
+        }
+        
+        setTimeout(() => {
+            if (typeof checkFormValidity === 'function') {
+                console.log('Calling checkFormValidity...');
+                checkFormValidity();
+            } else {
+                console.error('❌ checkFormValidity not available');
+            }
+        }, 200);
+    }
+};
+
+// Initialize enhanced monitoring
+setTimeout(() => {
+    monitorFreeTrialFlow();
+    monitorFormValidation();
+    monitorLicenseValidation();
+    
+    console.log('\n🎯 ENHANCED DEBUG READY!');
+    console.log('Manual testing available:');
+    console.log('- debugAutoPopulation.testPopulation() - Test auto-population');
+    console.log('- debugAutoPopulation.checkFormState() - Check current state');
+    console.log('- debugAutoPopulation.forceValidation() - Force validation');
+    console.log('\nComplete free trial flow and watch console for detailed logs...');
+}, 1500);
+
+// Button State Change Monitor
+const monitorButtonStateChanges = () => {
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'disabled') {
+                    const isDisabled = submitBtn.disabled;
+                    console.log(`🔘 SUBMIT BUTTON STATE CHANGED: ${isDisabled ? 'DISABLED' : 'ENABLED'}`);
+                    
+                    if (!isDisabled) {
+                        console.log('🎉 BUTTON IS NOW ENABLED! Form validation successful.');
+                    }
+                }
+            });
+        });
+        
+        observer.observe(submitBtn, { 
+            attributes: true, 
+            attributeFilter: ['disabled'] 
+        });
+        
+        console.log('👁️ Submit button state monitoring enabled');
+    }
+};
+
+// Set up button monitoring
+setTimeout(monitorButtonStateChanges, 1000);
