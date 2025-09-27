@@ -730,7 +730,7 @@ async function validateRepoUrl() {
     
     updateUrlValidation('Checking repository access...', '');
     
-    const result = await validateGitHubRepositoryAccess(url);
+    const result = await window.validateGitHubRepositoryAccess(url);
     updateUrlValidation(result.message, result.type);
     checkFormValidity();
 }
