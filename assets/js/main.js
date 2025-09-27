@@ -1044,11 +1044,6 @@ function isValidLicenseFormat(key) {
     return key.length >= 8 && /^[A-Z0-9-]+$/i.test(key);
 }
 
-function isValidGitHubUrl(url) {
-    const githubRegex = /^https:\/\/github\.com\/[\w\-\.]+\/[\w\-\.]+\/?$/;
-    return githubRegex.test(url);
-}
-
 function extractRepoPath(url) {
     const match = url.match(/github\.com\/([^\/]+\/[^\/]+)/);
     return match ? match[1] : '';
