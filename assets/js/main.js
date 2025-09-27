@@ -713,6 +713,9 @@ async function validateLicenseKey() {
 // -------------------------
 // Repository URL Validation
 // -------------------------
+// -------------------------
+// Updated Main Form Repository Validation (Replace existing validateRepoUrl in main.js)
+// -------------------------
 async function validateRepoUrl() {
     const repoUrlInput = document.getElementById('repoUrl');
     if (!repoUrlInput || repoUrlInput.disabled) {
@@ -725,36 +728,98 @@ async function validateRepoUrl() {
         return;
     }
     
-    if (!isValidGitHubUrl(url)) {
-        updateUrlValidation('Please enter a valid GitHub repository URL', 'invalid');
-        checkFormValidity();
-        return;
-    }
+    updateUrlValidation('Checking repository access...', '');
     
-    updateUrlValidation('Validating repository...', '');
+    const result = await validateGitHubRepositoryAccess(url);
+    updateUrlValidation(result.message, result.type);
+    checkFormValidity();
+}
+
+// -------------------------
+// Shared Repository Validation Function (Add to main.js)
+// -------------------------
+async function validateGitHubRepositoryAccess(repoUrl) {
+    // Basic format validation first
+    if (!isValidGitHubUrl(repoUrl)) {
+        return { 
+            valid: false, 
+            message: 'Please enter a valid GitHub repository URL',
+            type: 'invalid' 
+        };
+    }
     
     try {
-        const repoPath = extractRepoPath(url);
-        const response = await fetch(CONFIG.GITHUB_API_BASE + repoPath);
+        const response = await fetch(repoUrl, {
+            method: 'GET',
+            mode: 'cors'
+        });
         
-        if (response.ok) {
-            const data = await response.json();
-            if (data.private) {
-                updateUrlValidation('Private repositories are not supported', 'invalid');
-            } else {
-                updateUrlValidation('Valid public repository', 'valid');
+        if (response.status === 200) {
+            const html = await response.text();
+            
+            // Check for GitHub's 404 page indicators
+            if (html.includes("Didn't find anything here!") || 
+                html.includes("Need to sign in?")) {
+                return { 
+                    valid: false, 
+                    message: 'Repository not found or is private',
+                    type: 'invalid' 
+                };
             }
-        } else if (response.status === 404) {
-            updateUrlValidation('Repository not found or private', 'invalid');
+            // Check for actual repository content
+            else if (html.includes('repository-content') || 
+                     html.includes('js-repo-pjax-container') ||
+                     html.includes('data-testid="repository-container"') ||
+                     html.includes('js-repo-root')) {
+                return { 
+                    valid: true, 
+                    message: 'Valid public repository',
+                    type: 'valid' 
+                };
+            }
+            // Fallback check for repository-like content
+            else if (html.includes('branches') && 
+                     html.includes('commits') && 
+                     html.includes('Pull requests')) {
+                return { 
+                    valid: true, 
+                    message: 'Valid public repository',
+                    type: 'valid' 
+                };
+            }
+            else {
+                return { 
+                    valid: false, 
+                    message: 'Repository status unclear',
+                    type: 'invalid' 
+                };
+            }
         } else {
-            updateUrlValidation('Could not validate repository', 'invalid');
+            return { 
+                valid: false, 
+                message: `Repository access failed (${response.status})`,
+                type: 'invalid' 
+            };
         }
+        
     } catch (error) {
         console.error('Repository validation error:', error);
-        updateUrlValidation('Validation failed', 'invalid');
+        
+        // Handle CORS or network errors gracefully
+        if (error.name === 'TypeError' && error.message.includes('CORS')) {
+            return { 
+                valid: true, 
+                message: 'CORS blocked - will verify during submission',
+                type: 'valid' 
+            };
+        } else {
+            return { 
+                valid: true, 
+                message: 'Network error - will verify during submission',
+                type: 'valid' 
+            };
+        }
     }
-    
-    checkFormValidity();
 }
 
 // -------------------------
