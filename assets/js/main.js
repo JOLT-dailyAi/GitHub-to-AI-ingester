@@ -1068,34 +1068,35 @@ async function handleFormSubmission(e) {
             const data = await response.json();
             console.log('Webhook response:', data); // For debugging
             
-            // If using a free trial key, mark it as used
-            if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
-                await window.freeTrialManager.markFreeTrialAsUsed(licenseKey);
+            // Check if it's actually an error disguised as success
+            if (data.status === 'error') {
+                displayWebhookResponse(data, false);
+            } else {
+                // If using a free trial key, mark it as used
+                if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
+                    await window.freeTrialManager.markFreeTrialAsUsed(licenseKey);
+                }
+                
+                // Display success response
+                displayWebhookResponse({
+                    status: data.status || 'Success',
+                    message: data.message || 'Analysis request submitted successfully! Check your email and Discord for results within 5-10 minutes.',
+                    analysisId: data.analysisId || data.analysis_id,
+                    estimatedTime: data.estimatedTime || data.estimated_time,
+                    repositoryName: data.repositoryName || data.repository_name
+                }, true);
             }
-            
-            // Display success response
-            displayWebhookResponse({
-                status: data.status || 'Success',
-                message: data.message || 'Analysis request submitted successfully! Check your email and Discord for results within 5-10 minutes.',
-                analysisId: data.analysisId || data.analysis_id,
-                estimatedTime: data.estimatedTime || data.estimated_time,
-                repositoryName: data.repositoryName || data.repository_name
-            }, true);
             
         } else {
             // Handle HTTP error responses
             let errorData;
             try {
                 errorData = await response.json();
+                displayWebhookResponse(errorData, false);
             } catch {
                 errorData = { error: 'Server Error', message: `HTTP ${response.status}: ${response.statusText}` };
+                displayWebhookResponse(errorData, false);
             }
-            
-            displayWebhookResponse({
-                error: errorData.error || 'Request Failed',
-                message: errorData.message || 'Failed to submit analysis request. Please try again.',
-                code: errorData.code || `HTTP_${response.status}`
-            }, false);
         }
     } catch (error) {
         console.error('Submission error:', error);
