@@ -1072,6 +1072,15 @@ async function handleFormSubmission(e) {
             if (data.status === 'error') {
                 displayWebhookResponse(data, false);
             } else {
+
+                // Display success response FIRST
+                displayWebhookResponse({
+                    status: data.status || 'Success',
+                    message: data.message || 'Analysis request submitted successfully! Check your email and Discord for results within 5-10 minutes.',
+                    analysisId: data.analysisId || data.analysis_id || data.requestId,
+                    estimatedTime: data.estimatedTime || data.estimated_time || data.estimatedProcessingTime,
+                    repositoryName: data.repositoryName || data.repository_name
+                }, true);
                 // If using a free trial key, mark it as used
                 if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
                     try {
@@ -1080,16 +1089,7 @@ async function handleFormSubmission(e) {
                         console.log('Could not mark free trial as used:', error.message);
                         // Continue anyway - don't let this block the success display
                     }
-                }
-                
-                // Display success response
-                displayWebhookResponse({
-                    status: data.status || 'Success',
-                    message: data.message || 'Analysis request submitted successfully! Check your email and Discord for results within 5-10 minutes.',
-                    analysisId: data.analysisId || data.analysis_id || data.requestId,
-                    estimatedTime: data.estimatedTime || data.estimated_time || data.estimatedProcessingTime,
-                    repositoryName: data.repositoryName || data.repository_name
-                }, true);
+                }              
             }
             
         } else {
