@@ -1081,8 +1081,8 @@ async function handleFormSubmission(e) {
                 displayWebhookResponse({
                     status: data.status || 'Success',
                     message: data.message || 'Analysis request submitted successfully! Check your email and Discord for results within 5-10 minutes.',
-                    analysisId: data.analysisId || data.analysis_id,
-                    estimatedTime: data.estimatedTime || data.estimated_time,
+                    analysisId: data.analysisId || data.analysis_id || data.requestId,
+                    estimatedTime: data.estimatedTime || data.estimated_time || data.estimatedProcessingTime,
                     repositoryName: data.repositoryName || data.repository_name
                 }, true);
             }
