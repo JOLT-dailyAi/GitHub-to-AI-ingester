@@ -1074,7 +1074,12 @@ async function handleFormSubmission(e) {
             } else {
                 // If using a free trial key, mark it as used
                 if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
-                    await window.freeTrialManager.markFreeTrialAsUsed(licenseKey);
+                    try {
+                        await window.freeTrialManager.markFreeTrialAsUsed(licenseKey);
+                    } catch (error) {
+                        console.log('Could not mark free trial as used:', error.message);
+                        // Continue anyway - don't let this block the success display
+                    }
                 }
                 
                 // Display success response
