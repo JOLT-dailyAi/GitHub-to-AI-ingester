@@ -273,7 +273,7 @@ function displayWebhookResponse(response, isSuccess = true) {
     
     // Update header
     if (responseHeader) {
-        responseHeader.textContent = isSuccess ? 'Analysis Complete' : 'Analysis Failed';
+        responseHeader.textContent = isSuccess ? 'Analysis Request Submitted' : 'Analysis Failed';
     }
     
     // Hide loading indicator
@@ -286,7 +286,7 @@ function displayWebhookResponse(response, isSuccess = true) {
         responseContent.innerHTML = `
             <div class="response-success">
                 <div class="success-icon">✅</div>
-                <h5>Repository Analysis Successful!</h5>
+                <h5>Repository Analysis Queued!</h5>
                 <div class="response-details">
                     <p><strong>Status:</strong> ${response.status || 'Completed'}</p>
                     <p><strong>Message:</strong> ${response.message || 'Analysis request submitted successfully!'}</p>
@@ -298,7 +298,7 @@ function displayWebhookResponse(response, isSuccess = true) {
                     <ul>
                         <li>Check your email for results within 5-10 minutes</li>
                         <li>Results will also be posted to Discord (if provided)</li>
-                        <li>Large repositories may take longer to process</li>
+                        <li>Large repositories and queue length affect processing time</li>
                     </ul>
                 </div>
                 <button id="newAnalysisBtn" class="btn-secondary" onclick="resetForNewAnalysis()">
