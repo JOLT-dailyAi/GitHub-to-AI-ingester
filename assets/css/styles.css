@@ -64,6 +64,23 @@ body {
     text-align: center;
 }
 
+.form-help {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85em;
+    color: #666;
+    line-height: 1.4;
+}
+
+.form-help a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.form-help a:hover {
+    text-decoration: underline;
+}
+
 .processing-note {
     margin-top: 0.75rem;
     text-align: center;
