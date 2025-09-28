@@ -227,6 +227,250 @@ window.fetch = async function(...args) {
     }
 };
 
+// Add this section to your existing debug-test.js file
+// Place it after your existing HTTP response logging section (around line 150)
+
+// Specifically monitor form submissions to the webhook
+const monitorFormSubmissions = () => {
+    const form = document.getElementById('analysisForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('🚀 FORM SUBMISSION INTERCEPTED');
+            console.log('Event:', e);
+            
+            // Don't prevent default - let it proceed normally
+            // We're just logging what happens
+            
+            const formData = new FormData(e.target);
+            const formEntries = Object.fromEntries(formData.entries());
+            console.log('Form data:', formEntries);
+            
+            const licenseKey = document.getElementById('licenseKey')?.value;
+            const repoUrl = document.getElementById('repoUrl')?.value;
+            const discordId = document.getElementById('discordId')?.value;
+            
+            console.log('Form fields at submission:');
+            console.log('- License Key:', licenseKey);
+            console.log('- Repository URL:', repoUrl);
+            console.log('- Discord ID:', discordId);
+            
+            // Check if submit button is enabled
+            const submitBtn = document.getElementById('submitBtn');
+            console.log('- Submit button disabled:', submitBtn?.disabled);
+            console.log('- Submit button text:', submitBtn?.textContent);
+        });
+        
+        console.log('📋 Form submission monitoring enabled');
+    } else {
+        console.log('⚠️ Analysis form not found for monitoring');
+    }
+};
+
+// Monitor webhook URL specifically
+const monitorWebhookCalls = () => {
+    // Store reference to check config
+    console.log('📡 Current webhook configuration:');
+    if (typeof CONFIG !== 'undefined') {
+        console.log('- N8N_FORM_URL:', CONFIG.N8N_FORM_URL);
+        console.log('- WEBHOOK_TIMEOUT:', CONFIG.WEBHOOK_TIMEOUT);
+    } else {
+        console.log('⚠️ CONFIG not available in debug scope');
+    }
+    
+    // Monitor specific webhook endpoint calls
+    const originalFetch = window.fetch;
+    window.fetch = async function(url, options) {
+        const startTime = Date.now();
+        
+        // Check if this is our webhook call
+        const isWebhookCall = typeof url === 'string' && 
+                             url.includes('jack-of-all-traits-official.workers.dev');
+        
+        if (isWebhookCall) {
+            console.log('🎯 WEBHOOK CALL DETECTED');
+            console.log('URL:', url);
+            console.log('Method:', options?.method);
+            console.log('Headers:', options?.headers);
+            
+            if (options?.body) {
+                try {
+                    const bodyData = JSON.parse(options.body);
+                    console.log('Webhook payload:', bodyData);
+                    
+                    // Validate required fields
+                    const requiredFields = ['license_key', 'repository_url'];
+                    const missingFields = requiredFields.filter(field => !bodyData[field]);
+                    if (missingFields.length > 0) {
+                        console.log('⚠️ Missing required fields:', missingFields);
+                    } else {
+                        console.log('✅ All required fields present');
+                    }
+                } catch (e) {
+                    console.log('Body (not JSON):', options.body);
+                }
+            }
+        }
+        
+        try {
+            const response = await originalFetch.apply(this, arguments);
+            const duration = Date.now() - startTime;
+            
+            if (isWebhookCall) {
+                console.log(`🎯 WEBHOOK RESPONSE (${duration}ms)`);
+                console.log('Status:', response.status, response.statusText);
+                console.log('Headers:', Object.fromEntries(response.headers.entries()));
+                
+                // Clone response to read body without consuming it
+                const responseClone = response.clone();
+                try {
+                    const responseText = await responseClone.text();
+                    console.log('Response body:', responseText);
+                    
+                    // Try to parse as JSON
+                    try {
+                        const responseJson = JSON.parse(responseText);
+                        console.log('Parsed response:', responseJson);
+                    } catch (e) {
+                        console.log('Response is not JSON');
+                    }
+                } catch (e) {
+                    console.log('Could not read response body:', e.message);
+                }
+                
+                // Check for common error statuses
+                if (response.status === 403) {
+                    console.log('🚨 403 FORBIDDEN - Possible causes:');
+                    console.log('- Authentication required');
+                    console.log('- IP blocking');
+                    console.log('- Rate limiting');
+                    console.log('- Incorrect endpoint');
+                } else if (response.status === 404) {
+                    console.log('🚨 404 NOT FOUND - Check webhook URL');
+                } else if (response.status === 500) {
+                    console.log('🚨 500 SERVER ERROR - Backend issue');
+                } else if (response.status >= 200 && response.status < 300) {
+                    console.log('✅ Successful webhook response');
+                }
+            }
+            
+            return response;
+        } catch (error) {
+            const duration = Date.now() - startTime;
+            
+            if (isWebhookCall) {
+                console.log(`🚨 WEBHOOK FAILED (${duration}ms)`);
+                console.log('Error:', error.message);
+                console.log('Error type:', error.name);
+                
+                if (error.name === 'AbortError') {
+                    console.log('Request was aborted (timeout or cancelled)');
+                } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    console.log('Network error - could not connect to server');
+                }
+            }
+            
+            throw error;
+        }
+    };
+    
+    console.log('📡 Webhook monitoring enabled');
+};
+
+// Test webhook endpoint directly
+window.testWebhook = async function(testPayload = null) {
+    console.log('🧪 TESTING WEBHOOK ENDPOINT');
+    
+    const testUrl = 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook-test/c4cb286d-e375-4cd8-96be-9866403fa54d';
+    
+    const defaultPayload = {
+        license_key: 'TEST-KEY-123',
+        repository_url: 'https://github.com/test/repo',
+        discord_username: 'debug-test',
+        timestamp: new Date().toISOString(),
+        user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        submission_source: 'debug_test_function'
+    };
+    
+    const payload = testPayload || defaultPayload;
+    
+    console.log('Test URL:', testUrl);
+    console.log('Test payload:', payload);
+    
+    try {
+        const response = await fetch(testUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        console.log('🧪 TEST RESPONSE STATUS:', response.status, response.statusText);
+        
+        const responseText = await response.text();
+        console.log('🧪 TEST RESPONSE BODY:', responseText);
+        
+        try {
+            const responseJson = JSON.parse(responseText);
+            console.log('🧪 TEST PARSED RESPONSE:', responseJson);
+        } catch (e) {
+            console.log('Response is not JSON');
+        }
+        
+        return { success: response.ok, status: response.status, body: responseText };
+        
+    } catch (error) {
+        console.error('🧪 TEST FAILED:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+// Monitor button state changes
+const monitorButtonState = () => {
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes') {
+                    if (mutation.attributeName === 'disabled') {
+                        console.log('🔘 Submit button disabled state changed:', submitBtn.disabled);
+                    }
+                }
+                if (mutation.type === 'childList') {
+                    console.log('🔘 Submit button text changed:', submitBtn.textContent);
+                }
+            });
+        });
+        
+        observer.observe(submitBtn, {
+            attributes: true,
+            childList: true,
+            subtree: true,
+            attributeFilter: ['disabled']
+        });
+        
+        console.log('👁️ Submit button monitoring enabled');
+    }
+};
+
+// Initialize the new monitoring functions
+setTimeout(() => {
+    monitorFormSubmissions();
+    monitorWebhookCalls();
+    monitorButtonState();
+    
+    console.log('\n🧪 Debug functions available:');
+    console.log('- testWebhook() - Test webhook endpoint directly');
+    console.log('- testWebhook(customPayload) - Test with custom data');
+    
+    console.log('\n📋 All monitoring systems active. Now try:');
+    console.log('1. Fill out the form normally');
+    console.log('2. Click "Analyze Repository"'); 
+    console.log('3. Watch this console for detailed request/response logging');
+    
+}, 2000);
+
 // Monitor repository validation calls specifically
 if (typeof window.validateGitHubRepositoryAccess === 'function') {
     const originalValidate = window.validateGitHubRepositoryAccess;
