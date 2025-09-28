@@ -1072,8 +1072,6 @@ async function handleFormSubmission(e) {
             if (data.status === 'error') {
                 displayWebhookResponse(data, false);
             } else {
-
-                // Display success response FIRST
                 displayWebhookResponse({
                     status: data.status || 'Success',
                     message: data.message || 'Analysis request submitted successfully! Check your email and Discord for results within 5-10 minutes.',
@@ -1081,15 +1079,15 @@ async function handleFormSubmission(e) {
                     estimatedTime: data.estimatedTime || data.estimated_time || data.estimatedProcessingTime,
                     repositoryName: data.repositoryName || data.repository_name
                 }, true);
-                // If using a free trial key, mark it as used
-                if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
-                    try {
-                        await window.freeTrialManager.markFreeTrialAsUsed(licenseKey);
-                    } catch (error) {
-                        console.log('Could not mark free trial as used:', error.message);
-                        // Continue anyway - don't let this block the success display
-                    }
-                }              
+            }
+            
+            // Handle free trial marking separately (outside the response handling)
+            if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
+                try {
+                    await window.freeTrialManager.markFreeTrialAsUsed(licenseKey);
+                } catch (error) {
+                    console.log('Could not mark free trial as used:', error.message);
+                }
             }
             
         } else {
