@@ -1081,15 +1081,6 @@ async function handleFormSubmission(e) {
                 }, true);
             }
             
-            // Handle free trial marking separately (outside the response handling)
-            if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
-                try {
-                    await window.freeTrialManager.markFreeTrialAsUsed(licenseKey);
-                } catch (error) {
-                    console.log('Could not mark free trial as used:', error.message);
-                }
-            }
-            
         } else {
             // Handle HTTP error responses
             let errorData;
@@ -1109,6 +1100,15 @@ async function handleFormSubmission(e) {
             message: 'Failed to connect to the server. Please check your internet connection and try again.',
             code: 'NETWORK_ERROR'
         }, false);
+    }
+    
+    // Handle free trial marking separately (outside the response handling)
+    if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
+        try {
+            await window.freeTrialManager.markFreeTrialAsUsed(licenseKey);
+        } catch (error) {
+            console.log('Could not mark free trial as used:', error.message);
+        }
     }
 }
 
