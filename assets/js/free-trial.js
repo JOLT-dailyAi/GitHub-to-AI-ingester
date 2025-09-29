@@ -395,12 +395,12 @@ class FreeTrialManager {
     // Form Submission - UPDATED LOGIC
     async handleFreeTrialFormSubmission(event) {
         event.preventDefault();
-
+    
         if (!this.checkCookieConsent()) {
             this.showNotification('Cookie consent required for free trial', 'error', 5000);
             return;
         }
-
+    
         const emailInput = document.getElementById('trialEmail');
         const repoUrlInput = document.getElementById('trialRepoUrl');
         
@@ -408,31 +408,31 @@ class FreeTrialManager {
             this.showNotification('Required form elements not found', 'error', 5000);
             return;
         }
-
+    
         const email = emailInput.value.trim();
         const repoUrl = repoUrlInput.value.trim();
-
+    
         if (!email || !repoUrl) {
             this.showNotification('Please fill in both email and repository URL', 'error', 5000);
             return;
         }
-
+    
         // Check if both validations passed
         if (!this.state.emailValidated || !this.state.repositoryChecked) {
             this.showNotification('Please ensure both email and repository are valid', 'error', 5000);
             return;
         }
-
+    
         const submitBtn = event.target.querySelector('button[type="submit"]');
         this.setSubmitButtonLoading(submitBtn, true);
-
-        / Double-check used keys database before generating key
+    
+        // Double-check used keys database before generating key
         if (await this.checkUsedKeysDatabase(email)) {
             this.showNotification('Free trial has already been redeemed this month. Please try again next month.', 'error', 5000);
             this.setSubmitButtonLoading(submitBtn, false);
             return;
         }
-
+    
         try {
             // Generate trial key and store it
             const freeTrialKey = await this.generateMonthlyFreeTrialKey(email);
@@ -447,7 +447,7 @@ class FreeTrialManager {
             this.populateMainFormWithTrialKey(freeTrialKey, repoUrl);
             this.replaceFreeTrialButtonWithInput(freeTrialKey);
             // DON'T auto-close modal - let user close manually
-
+    
         } catch (error) {
             console.error('Free trial submission error:', error);
             this.showNotification(error.message || 'Free trial setup failed. Please try again.', 'error', 5000);
