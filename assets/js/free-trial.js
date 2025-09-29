@@ -687,7 +687,7 @@ class FreeTrialManager {
     // Add this new method around line 530, after checkCache method
     async checkUsedKeysDatabase(email) {
         try {
-            const response = await fetch('/data/UsedFreeLicenseKeys.json', {
+            const response = await fetch('data/FreeTrialKeys/UsedFreeLicenseKeys.json', {
                 signal: AbortSignal.timeout(5000)
             });
             
