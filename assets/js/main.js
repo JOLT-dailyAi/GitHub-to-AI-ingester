@@ -1031,7 +1031,7 @@ async function handleFormSubmission(e) {
         // Main form data
         license_key: licenseKey,
         repository_url: repoUrl,
-        discord_username: discordId,
+        discord_id: discordId,
         
         // Free trial data (if used)
         trial_email: trialEmail,
