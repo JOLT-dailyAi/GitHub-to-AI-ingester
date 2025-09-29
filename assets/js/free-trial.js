@@ -426,6 +426,13 @@ class FreeTrialManager {
         const submitBtn = event.target.querySelector('button[type="submit"]');
         this.setSubmitButtonLoading(submitBtn, true);
 
+        / Double-check used keys database before generating key
+        if (await this.checkUsedKeysDatabase(email)) {
+            this.showNotification('Free trial has already been redeemed this month. Please try again next month.', 'error', 5000);
+            this.setSubmitButtonLoading(submitBtn, false);
+            return;
+        }
+
         try {
             // Generate trial key and store it
             const freeTrialKey = await this.generateMonthlyFreeTrialKey(email);
@@ -693,21 +700,32 @@ class FreeTrialManager {
             
             if (!response.ok) {
                 console.warn('Could not fetch used keys database');
-                return false; // Allow trial if database unavailable
+                return false;
             }
     
-            const usedKeys = await response.json();
+            const data = await response.json();
+            
+            // Handle n8n's array wrapper format: [{"usedKeys": [...]}]
+            let usedKeys = [];
+            if (Array.isArray(data) && data.length > 0 && data[0].usedKeys) {
+                usedKeys = data[0].usedKeys;
+            } else if (data.usedKeys) {
+                // Fallback for object format: {"usedKeys": [...]}
+                usedKeys = data.usedKeys;
+            }
+            
             const normalizedEmail = this.normalizeEmail(email);
             const emailHash = await this.hashEmail(normalizedEmail);
             const currentMonth = new Date().toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
             const currentYear = new Date().getFullYear();
             const expectedKey = `FreeTrial-${currentMonth}${currentYear}-${emailHash}`;
             
+            console.log('Checking key:', expectedKey, 'against database:', usedKeys);
             return usedKeys.includes(expectedKey);
             
         } catch (error) {
             console.error('Error checking used keys database:', error);
-            return false; // Allow trial if check fails
+            return false;
         }
     }
     
