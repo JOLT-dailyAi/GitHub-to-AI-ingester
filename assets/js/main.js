@@ -1034,7 +1034,7 @@ async function handleFormSubmission(e) {
         discord_id: discordId,
         
         // Free trial data (if used)
-        trial_email: trialEmail,
+        email: trialEmail,
         trial_repository_url: trialRepoUrl,
         is_free_trial: licenseKey.startsWith('FreeTrial-'),
         
