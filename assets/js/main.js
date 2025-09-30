@@ -8,9 +8,9 @@ const CONFIG = {
     
     GITHUB_API_BASE: 'https://api.github.com/repos/',
     //Test URL
-    LICENSE_VALIDATION_ENDPOINT: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook-test/validate-gumroad-license-key',
+    //LICENSE_VALIDATION_ENDPOINT: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook-test/validate-gumroad-license-key',
     //Production URL
-    // LICENSE_VALIDATION_ENDPOINT: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook/validate-gumroad-license-key',
+    LICENSE_VALIDATION_ENDPOINT: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook/validate-gumroad-license-key',
     WEBHOOK_TIMEOUT: 300000, // 5 minutes timeout
 };
 
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // -------------------------
-// 3. UPDATE initializeEventListeners (around line 54)
+// initializeEventListeners
 // -------------------------
 function initializeEventListeners() {
     // Form validation - INCREASED DEBOUNCE to 2000ms (2 seconds)
@@ -714,12 +714,16 @@ async function validateLicenseKey() {
         if (response.ok) {
             const data = await response.json();
             
-            if (data.success && data.uses < data.max_uses) {
-                const remaining = data.max_uses - data.uses;
-                updateLicenseInfo(`Valid license - ${remaining} analyses remaining`, 'valid');
+            // Handle the actual API response format
+            if (data.success && data.remaining !== undefined) {
+                updateLicenseInfo(`Valid license - ${data.remaining} analyses remaining`, 'valid');
+                cacheLicenseKey(licenseKey);
+            } else if (data.success) {
+                // Fallback if remaining not provided
+                updateLicenseInfo('Valid license', 'valid');
                 cacheLicenseKey(licenseKey);
             } else {
-                updateLicenseInfo('License key expired or invalid', 'invalid');
+                updateLicenseInfo(data.message || 'License key expired or invalid', 'invalid');
             }
         } else {
             updateLicenseInfo('Could not validate license key', 'invalid');
