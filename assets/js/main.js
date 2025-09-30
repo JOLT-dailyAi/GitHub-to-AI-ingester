@@ -50,7 +50,6 @@ let generatedFreeTrialKey = null;
 
 // Maintenance and response state
 let maintenanceInterval = null;
-let webhookTimeout = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -126,7 +125,6 @@ function initializeEventListeners() {
 // -------------------------
 function getISTTime() {
     const now = new Date();
-    // Convert to IST (UTC+5:30)
     const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
     const ist = new Date(utc + (5.5 * 3600000));
     return ist;
@@ -136,8 +134,6 @@ function isMaintenanceTime() {
     const ist = getISTTime();
     const hours = ist.getHours();
     const minutes = ist.getMinutes();
-    
-    // Check if time is between 1:05 AM and 1:15 AM IST
     return (hours === 1 && minutes >= 5 && minutes < 15);
 }
 
@@ -148,7 +144,6 @@ function checkMaintenanceModeOnLoad() {
 }
 
 function startMaintenanceMonitor() {
-    // Check every 30 seconds for maintenance window
     setInterval(() => {
         const isCurrentlyMaintenance = isMaintenanceTime();
         const hasMaintenanceTimer = document.getElementById('maintenanceTimer');
@@ -164,7 +159,6 @@ function startMaintenanceMonitor() {
 function createMaintenanceTimer() {
     if (!submitContainer) return;
     
-    // Clear any existing intervals
     if (maintenanceInterval) {
         clearInterval(maintenanceInterval);
     }
@@ -206,7 +200,6 @@ function updateCountdownTimer() {
         
         countdownElement.textContent = `${remainingMinutes}:${remainingSeconds.toString().padStart(2, '0')} remaining`;
     } else {
-        // Maintenance window ended
         restoreSubmitButton();
     }
 }
@@ -220,193 +213,93 @@ function restoreSubmitButton() {
     if (submitContainer) {
         submitContainer.innerHTML = `
             <button type="submit" class="btn-primary btn-large" id="submitBtn" disabled>
-                Analyze Repository
+                Process Repository
             </button>
         `;
         
-        // Re-attach event listener to new button
         const newSubmitBtn = document.getElementById('submitBtn');
         if (newSubmitBtn && analysisForm) {
-            // Remove old listener if exists
             analysisForm.removeEventListener('submit', handleFormSubmission);
-            // Add new listener
             analysisForm.addEventListener('submit', handleFormSubmission);
         }
         
-        // Re-validate form to set correct button state
         checkFormValidity();
     }
 }
 
 // -------------------------
-// Response Container Functions
+// Simplified Status Messages (Single Line with Color Indicators)
 // -------------------------
-function createResponseContainer() {
-    if (!submitContainer) return;
+function showProcessingStatus(message, type) {
+    if (!statusMessage) return;
     
-    submitContainer.innerHTML = `
-        <div id="responseContainer" class="response-container">
-            <div class="response-header">
-                <h4>Processing Repository Analysis</h4>
-                <div class="loading-indicator">
-                    <div class="spinner"></div>
-                    <span>Please wait while we analyze your repository...</span>
-                </div>
-            </div>
-            <div id="responseContent" class="response-content">
-                <div class="response-placeholder">
-                    <p>⏳ Initializing analysis...</p>
-                    <p>📡 Connecting to processing server...</p>
-                    <p>🔄 This may take several minutes depending on repository size...</p>
-                </div>
-            </div>
-            <div class="response-footer">
-                <small>Processing timeout: 5 minutes</small>
-            </div>
-        </div>
-    `;
+    const icons = {
+        'processing': '⏳',
+        'success': '✅',
+        'error': '❌',
+        'warning': '⚠️'
+    };
+    
+    statusMessage.textContent = `${icons[type] || ''} ${message}`;
+    statusMessage.className = `status-message ${type}`;
+    statusMessage.style.display = 'block';
 }
 
-function displayWebhookResponse(response, isSuccess = true) {
-    const responseContent = document.getElementById('responseContent');
-    const responseHeader = document.querySelector('.response-header h4');
-    const loadingIndicator = document.querySelector('.loading-indicator');
-    
-    if (!responseContent) return;
-    
-    // Clear timeout
-    if (webhookTimeout) {
-        clearTimeout(webhookTimeout);
-        webhookTimeout = null;
-    }
-    
-    // Update header
-    if (responseHeader) {
-        responseHeader.textContent = isSuccess ? 'Analysis Request Submitted' : 'Analysis Failed';
-    }
-    
-    // Hide loading indicator
-    if (loadingIndicator) {
-        loadingIndicator.style.display = 'none';
-    }
-    
-    // Display response
-    if (isSuccess) {
-        responseContent.innerHTML = `
-            <div class="response-success">
-                <div class="success-icon">✅</div>
-                <h5>Repository Analysis Queued!</h5>
-                <div class="response-details">
-                    <p><strong>Status:</strong> ${response.status || 'Completed'}</p>
-                    <p><strong>Message:</strong> ${response.message || 'Analysis request submitted successfully!'}</p>
-                    ${response.analysisId ? `<p><strong>Analysis ID:</strong> ${response.analysisId}</p>` : ''}
-                    ${response.estimatedTime ? `<p><strong>Est. Completion:</strong> ${response.estimatedTime}</p>` : ''}
-                </div>
-                <div class="next-steps">
-                    <h6>What's Next?</h6>
-                    <ul>
-                        <li>Check your email for results within 5-10 minutes</li>
-                        <li>Results will also be posted to Discord (if provided)</li>
-                        <li>Large repositories and queue length affect processing time</li>
-                    </ul>
-                </div>
-                <button id="newAnalysisBtn" class="btn-secondary" onclick="resetForNewAnalysis()">
-                    Start New Analysis
-                </button>
-            </div>
-        `;
-    } else {
-        responseContent.innerHTML = `
-            <div class="response-error">
-                <div class="error-icon">❌</div>
-                <h5>Analysis Failed</h5>
-                <div class="error-details">
-                    <p><strong>Error:</strong> ${response.error || 'Unknown error occurred'}</p>
-                    <p><strong>Message:</strong> ${response.message || 'Please try again or contact support.'}</p>
-                    ${response.code ? `<p><strong>Error Code:</strong> ${response.code}</p>` : ''}
-                </div>
-                <div class="troubleshooting">
-                    <h6>Troubleshooting:</h6>
-                    <ul>
-                        <li>Check if the repository URL is correct and accessible</li>
-                        <li>Verify your license key has remaining credits</li>
-                        <li>Try again in a few minutes</li>
-                        <li>Contact support if the issue persists</li>
-                    </ul>
-                </div>
-                <div class="error-actions">
-                    <button id="retryAnalysisBtn" class="btn-primary" onclick="retryAnalysis()">
-                        Try Again
-                    </button>
-                    <button id="newAnalysisBtn" class="btn-secondary" onclick="resetForNewAnalysis()">
-                        New Analysis
-                    </button>
-                </div>
-            </div>
-        `;
+function hideStatusMessage() {
+    if (statusMessage) {
+        statusMessage.className = 'status-message';
+        statusMessage.style.display = 'none';
     }
 }
 
-function displayTimeoutResponse() {
-    displayWebhookResponse({
-        error: 'Request Timeout',
-        message: 'The analysis request timed out after 5 minutes. Your request may still be processing in the background.',
-        code: 'TIMEOUT_ERROR'
-    }, false);
+// -------------------------
+// Error Handler
+// -------------------------
+function handleResponseError(data) {
+    const errorCode = data.code || data.error || 'UNKNOWN_ERROR';
+    
+    switch(errorCode) {
+        case 'LICENSE_NO_CREDITS':
+            showProcessingStatus('No credits remaining. Purchase more credits to continue.', 'error');
+            break;
+        case 'SERVICE_UNAVAILABLE':
+        case '404':
+            showProcessingStatus('Service temporarily unavailable. Try again in 2-3 minutes.', 'error');
+            break;
+        case 'INVALID_LICENSE':
+            showProcessingStatus('Invalid license key. Please check and try again.', 'error');
+            break;
+        case 'TIMEOUT_ERROR':
+            showProcessingStatus('Request timeout. Check email in 10 minutes or try again.', 'warning');
+            break;
+        default:
+            showProcessingStatus(data.message || 'Processing failed. Please try again.', 'error');
+    }
 }
 
-function resetForNewAnalysis() {
-    // Clear the repo URL field and re-enable it
+// -------------------------
+// Form Reset After Successful Submission
+// -------------------------
+function resetFormAfterSubmission() {
     if (repoUrlInput) {
         repoUrlInput.value = '';
         repoUrlInput.disabled = false;
+        repoUrlInput.readOnly = false;
+        repoUrlInput.style.backgroundColor = '';
+        repoUrlInput.style.border = '';
+        repoUrlInput.style.cursor = '';
         updateUrlValidation('', '');
     }
     
-    // Reset generated free trial key
+    const autoLabel = document.querySelector('.auto-populated-label');
+    if (autoLabel) autoLabel.remove();
+    
     generatedFreeTrialKey = null;
     
-    // Restore submit button
-    if (submitContainer) {
-        submitContainer.innerHTML = `
-            <button type="submit" class="btn-primary btn-large" id="submitBtn" disabled>
-                Analyze Repository
-            </button>
-        `;
-        
-        // Re-attach event listener
-        const newSubmitBtn = document.getElementById('submitBtn');
-        if (newSubmitBtn && analysisForm) {
-            analysisForm.removeEventListener('submit', handleFormSubmission);
-            analysisForm.addEventListener('submit', handleFormSubmission);
-        }
-    }
+    setTimeout(() => {
+        hideStatusMessage();
+    }, 3000);
     
-    // Clear status message
-    hideStatusMessage();
-    
-    // Re-validate form
-    checkFormValidity();
-}
-
-function retryAnalysis() {
-    // Simply restore the submit button without clearing fields
-    if (submitContainer) {
-        submitContainer.innerHTML = `
-            <button type="submit" class="btn-primary btn-large" id="submitBtn" disabled>
-                Analyze Repository
-            </button>
-        `;
-        
-        // Re-attach event listener
-        const newSubmitBtn = document.getElementById('submitBtn');
-        if (newSubmitBtn && analysisForm) {
-            analysisForm.removeEventListener('submit', handleFormSubmission);
-            analysisForm.addEventListener('submit', handleFormSubmission);
-        }
-    }
-    
-    // Re-validate form
     checkFormValidity();
 }
 
@@ -417,7 +310,6 @@ function initializeShowcase() {
     showcaseItems = document.querySelectorAll('.showcase-item');
     filteredItems = Array.from(showcaseItems);
 
-    // Attach input listeners for textareas inside showcase items
     showcaseItems.forEach(item => {
         const textareas = item.querySelectorAll('textarea');
         textareas.forEach(el => {
@@ -436,16 +328,13 @@ function initializeShowcase() {
 }
 
 function updateShowcaseDisplay() {
-    // Hide all items
     showcaseItems.forEach(item => {
         item.classList.remove('active');
     });
     
-    // Show current item if exists
     if (filteredItems.length > 0) {
         filteredItems[currentShowcaseIndex].classList.add('active');
 
-        // Adjust heights after DOM updates
         setTimeout(() => {
             try {
                 const activeItem = filteredItems[currentShowcaseIndex];
@@ -461,19 +350,16 @@ function updateShowcaseDisplay() {
             }
         }, 50);
 
-        // Update counters
         if (currentIndexSpan) currentIndexSpan.textContent = currentShowcaseIndex + 1;
         if (totalItemsSpan) totalItemsSpan.textContent = filteredItems.length;
         if (currentIndexBottomSpan) currentIndexBottomSpan.textContent = currentShowcaseIndex + 1;
         if (totalItemsBottomSpan) totalItemsBottomSpan.textContent = filteredItems.length;
         
-        // Update navigation buttons
         if (prevBtn) prevBtn.disabled = currentShowcaseIndex === 0;
         if (nextBtn) nextBtn.disabled = currentShowcaseIndex === filteredItems.length - 1;
         if (prevBtnBottom) prevBtnBottom.disabled = currentShowcaseIndex === 0;
         if (nextBtnBottom) nextBtnBottom.disabled = currentShowcaseIndex === filteredItems.length - 1;
     } else {
-        // No filtered items
         if (currentIndexSpan) currentIndexSpan.textContent = '0';
         if (totalItemsSpan) totalItemsSpan.textContent = '0';
         if (currentIndexBottomSpan) currentIndexBottomSpan.textContent = '0';
@@ -644,14 +530,12 @@ async function loadShowcaseFiles() {
                 }
             });
 
-            // Initialize autocomplete data
             autocompleteData = Array.from(showcaseItems).map(item => {
                 const title = item.querySelector('h3').textContent;
                 const content = item.querySelector('textarea').value;
                 return { title: title, keywords: extractKeywords(title + ' ' + content) };
             });
 
-            // Adjust heights for active item
             setTimeout(() => {
                 try {
                     showcaseItems.forEach(item => {
@@ -689,7 +573,7 @@ async function validateLicenseKey() {
     
     if (licenseKey.startsWith('FreeTrial-')) {
         if (generatedFreeTrialKey && licenseKey === generatedFreeTrialKey) {
-            updateLicenseInfo('Free trial license - 1 analysis available', 'valid');
+            updateLicenseInfo('Free trial license - 1 repository credit', 'valid');
         } else {
             updateLicenseInfo('Invalid free trial key - please generate a new one', 'invalid');
         }
@@ -718,10 +602,8 @@ async function validateLicenseKey() {
             const data = await response.json();
             
             if (data.success) {
-                // BUILD DYNAMIC MESSAGE WITH ALL FIELDS
                 let displayMessage = data.message || 'Valid license';
                 
-                // Add any additional fields dynamically (exclude success and message)
                 const additionalInfo = [];
                 for (const [key, value] of Object.entries(data)) {
                     if (key !== 'success' && key !== 'message' && value !== null && value !== undefined) {
@@ -730,7 +612,6 @@ async function validateLicenseKey() {
                     }
                 }
                 
-                // Append additional fields to message if any exist
                 if (additionalInfo.length > 0) {
                     displayMessage += ' (' + additionalInfo.join(', ') + ')';
                 }
@@ -756,75 +637,58 @@ async function validateLicenseKey() {
     checkFormValidity();
 }
 
-// ADD THIS NEW FUNCTION 
 function cleanGitHubUrl(url) {
     if (!url || typeof url !== 'string') return url;
     
-    // Trim whitespace
     url = url.trim();
     
-    // Must be a GitHub URL to clean
     if (!url.includes('github.com/')) return url;
     
     try {
-        // Remove common suffixes and paths that users might copy
         url = url
-            .replace(/\.git$/, '')                           // Remove .git suffix
-            .replace(/\/$/, '')                              // Remove trailing slash
-            .replace(/#.*$/, '')                             // Remove anchors/fragments
-            .replace(/\?.*$/, '');                           // Remove query parameters
+            .replace(/\.git$/, '')
+            .replace(/\/$/, '')
+            .replace(/#.*$/, '')
+            .replace(/\?.*$/, '');
         
-        // Extract just the owner/repo part from various GitHub URL formats
         const patterns = [
-            // Standard repository URLs with paths
             /^(https:\/\/github\.com\/[^\/]+\/[^\/]+)\/.*$/,
-            // URLs with tree/blob/commits/releases etc.
             /^(https:\/\/github\.com\/[^\/]+\/[^\/]+)(?:\/(?:tree|blob|commit|commits|releases|issues|pull|wiki|actions|projects|security|insights|settings).*)?$/,
-            // Archive download URLs  
             /^(https:\/\/github\.com\/[^\/]+\/[^\/]+)\/archive\/.*$/,
-            // Raw content URLs
             /^https:\/\/raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/.*$/
         ];
         
-        // Try each pattern
         for (const pattern of patterns) {
             const match = url.match(pattern);
             if (match) {
                 if (match[1]) {
-                    // Direct capture of base URL
                     return match[1];
                 } else if (match.length === 3) {
-                    // Raw content URL format - reconstruct base URL
                     return `https://github.com/${match[1]}/${match[2]}`;
                 }
             }
         }
         
-        // If no patterns match, try simple extraction
         const simpleMatch = url.match(/^(https:\/\/github\.com\/[^\/]+\/[^\/]+)/);
         if (simpleMatch) {
             return simpleMatch[1];
         }
         
-        // Return original URL if no cleaning possible
         return url;
         
     } catch (error) {
         console.warn('URL cleaning error:', error);
-        return url; // Return original on error
+        return url;
     }
 }
 
 // -------------------------
 // Repository URL Validation
 // -------------------------
-// -------------------------
-// Updated Main Form Repository Validation (Replace existing validateRepoUrl in main.js)
-// -------------------------
 async function validateRepoUrl() {
     const repoUrlInput = document.getElementById('repoUrl');
     if (!repoUrlInput || repoUrlInput.disabled) {
-        return; // Skip validation if field is disabled (populated from free trial)
+        return;
     }
     
     const url = repoUrlInput.value.trim();
@@ -840,18 +704,9 @@ async function validateRepoUrl() {
     checkFormValidity();
 }
 
-// -------------------------
-// Shared Repository Validation Function (Add to main.js)
-// -------------------------
-// -------------------------
-// Fixed Shared Repository Validation Function - Replace in main.js
-// -------------------------
-// UPDATED: Repository validation function that cleans URLs automatically
 window.validateGitHubRepositoryAccess = async function(repoUrl) {
-    // Clean the URL first for better UX
     const cleanedUrl = cleanGitHubUrl(repoUrl);
         
-    // Basic format validation first (now with cleaned URL)
     if (!isValidGitHubUrl(cleanedUrl)) {
         return { 
             valid: false, 
@@ -860,7 +715,6 @@ window.validateGitHubRepositoryAccess = async function(repoUrl) {
         };
     }
     
-    // Extract owner and repo name for API call
     const match = cleanedUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
     if (!match || !match[1] || !match[2]) {
         return { 
@@ -871,11 +725,7 @@ window.validateGitHubRepositoryAccess = async function(repoUrl) {
     }
     
     const [, owner, repo] = match;
-    
-    // Clean repo name (remove trailing slash, .git, etc.)
     const cleanRepo = repo.replace(/\.git$/, '').replace(/\/$/, '');
-    
-    // Use GitHub API instead of direct page fetch to avoid CORS
     const apiUrl = `https://api.github.com/repos/${owner}/${cleanRepo}`;
     
     try {
@@ -885,22 +735,20 @@ window.validateGitHubRepositoryAccess = async function(repoUrl) {
                 'Accept': 'application/vnd.github.v3+json',
                 'User-Agent': 'GitHub-to-AI-ingester'
             },
-            signal: AbortSignal.timeout(8000) // 8 second timeout
+            signal: AbortSignal.timeout(8000)
         });
         
         if (response.status === 200) {
             const data = await response.json();
             
-            // Check if repository is private
             if (data.private) {
                 return { 
                     valid: false, 
-                    message: 'Repository is private. Only public repositories can be analyzed.',
+                    message: 'Repository is private. Only public repositories can be processed.',
                     type: 'invalid' 
                 };
             }
             
-            // Check if repository is empty
             if (data.size === 0) {
                 return { 
                     valid: false, 
@@ -909,7 +757,6 @@ window.validateGitHubRepositoryAccess = async function(repoUrl) {
                 };
             }
             
-            // Check if repository is archived
             if (data.archived) {
                 return { 
                     valid: true, 
@@ -967,7 +814,6 @@ window.validateGitHubRepositoryAccess = async function(repoUrl) {
     } catch (error) {
         console.error('Repository validation error:', error);
         
-        // Handle different error types gracefully
         if (error.name === 'AbortError') {
             return { 
                 valid: true, 
@@ -990,40 +836,31 @@ window.validateGitHubRepositoryAccess = async function(repoUrl) {
     }
 };
 
-// Enhanced GitHub URL validation function
 function isValidGitHubUrl(url) {
     if (!url || typeof url !== 'string') return false;
     
-    // Clean the URL first - THIS IS THE KEY ADDITION
     url = cleanGitHubUrl(url);
     
-    // Must start with https://github.com
     if (!url.startsWith('https://github.com/')) return false;
     
-    // Remove trailing slash and .git if present (double-check after cleaning)
     url = url.replace(/\.git$/, '').replace(/\/$/, '');
     
-    // More comprehensive regex that handles various GitHub URL formats
     const githubRegex = /^https:\/\/github\.com\/[a-zA-Z0-9][a-zA-Z0-9_.-]*\/[a-zA-Z0-9][a-zA-Z0-9_.-]*$/;
     
-    // Check basic format
     if (!githubRegex.test(url)) return false;
     
-    // Extract parts for additional validation
     const parts = url.split('/');
-    if (parts.length !== 5) return false; // https: + "" + github.com + owner + repo
+    if (parts.length !== 5) return false;
     
     const owner = parts[3];
     const repo = parts[4];
     
-    // Owner and repo name validation
     if (owner.length === 0 || repo.length === 0) return false;
     if (owner.startsWith('.') || owner.endsWith('.')) return false;
     if (repo.startsWith('.') || repo.endsWith('.')) return false;
     if (owner.startsWith('-') || owner.endsWith('-')) return false;
     if (repo.startsWith('-') || repo.endsWith('-')) return false;
     
-    // Reserved names check
     const reservedNames = ['settings', 'notifications', 'explore', 'integrations', 'marketplace'];
     if (reservedNames.includes(owner.toLowerCase()) || reservedNames.includes(repo.toLowerCase())) return false;
     
@@ -1036,54 +873,40 @@ function isValidGitHubUrl(url) {
 async function handleFormSubmission(e) {
     e.preventDefault();
     
-    // Check maintenance mode first
     if (isMaintenanceTime()) {
-        showStatusMessage('System is currently under maintenance. Please try again in a few minutes.', 'error');
+        showProcessingStatus('System under maintenance. Try again in a few minutes.', 'error');
         return;
     }
     
-    // Collect all form data
     const licenseKey = licenseKeyInput.value.trim();
     const repoUrl = repoUrlInput.value.trim();
     const discordId = document.getElementById('discordId')?.value.trim() || '';
-    
-    // Collect free trial data if available
     const trialEmail = document.getElementById('trialEmail')?.value.trim() || '';
     const trialRepoUrl = document.getElementById('trialRepoUrl')?.value.trim() || '';
     
-    // Basic validation
     if (!licenseKey || !repoUrl) {
-        showStatusMessage('Please fill in all required fields', 'error');
+        showProcessingStatus('Please fill in all required fields', 'error');
         return;
     }
     
-    // Prepare comprehensive payload
     const payload = {
-        // Main form data
         license_key: licenseKey,
         repository_url: repoUrl,
         discord_id: discordId,
-        
-        // Free trial data (if used)
         email: trialEmail,
         trial_repository_url: trialRepoUrl,
         is_free_trial: licenseKey.startsWith('FreeTrial-'),
-        
-        // Metadata
         timestamp: new Date().toISOString(),
         user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         submission_source: 'github_ai_ingester_web'
     };
     
-    console.log('Sending payload:', payload); // For debugging
-    
-    // Create response container
-    createResponseContainer();
-    
-    // Set timeout for webhook response
-    webhookTimeout = setTimeout(() => {
-        displayTimeoutResponse();
-    }, CONFIG.WEBHOOK_TIMEOUT);
+    const currentSubmitBtn = document.getElementById('submitBtn');
+    if (currentSubmitBtn) {
+        currentSubmitBtn.disabled = true;
+        currentSubmitBtn.textContent = 'Processing...';
+    }
+    showProcessingStatus('Processing request - please wait...', 'processing');
     
     try {
         const response = await fetch(CONFIG.N8N_FORM_URL, {
@@ -1092,53 +915,58 @@ async function handleFormSubmission(e) {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(CONFIG.WEBHOOK_TIMEOUT)
         });
         
         if (response.ok) {
             const data = await response.json();
-            console.log('Webhook response:', data); // For debugging
             
-            // Check if it's actually an error disguised as success
             if (data.status === 'error') {
-                displayWebhookResponse(data, false);
+                handleResponseError(data);
             } else {
-                displayWebhookResponse({
-                    status: data.status || 'Success',
-                    message: data.message || 'Analysis request submitted successfully! Check your email and Discord for results within 5-10 minutes.',
-                    analysisId: data.analysisId || data.analysis_id || data.requestId,
-                    estimatedTime: data.estimatedTime || data.estimated_time || data.estimatedProcessingTime,
-                    repositoryName: data.repositoryName || data.repository_name
-                }, true);
+                const jobId = data.requestId || data.analysisId || data.analysis_id || 'N/A';
+                showProcessingStatus(
+                    `Request submitted! Check email in 5-10 minutes. Job ID: ${jobId}`, 
+                    'success'
+                );
+                
+                if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
+                    try {
+                        await window.freeTrialManager.markFreeTrialAsUsed(licenseKey);
+                    } catch (error) {
+                        console.log('Could not mark free trial as used:', error.message);
+                    }
+                }
+                
+                setTimeout(() => {
+                    resetFormAfterSubmission();
+                }, 5000);
             }
-            
         } else {
-            // Handle HTTP error responses
             let errorData;
             try {
                 errorData = await response.json();
-                displayWebhookResponse(errorData, false);
             } catch {
-                errorData = { error: 'Server Error', message: `HTTP ${response.status}: ${response.statusText}` };
-                displayWebhookResponse(errorData, false);
+                errorData = { 
+                    error: 'Server Error', 
+                    message: `HTTP ${response.status}` 
+                };
             }
+            handleResponseError(errorData);
         }
     } catch (error) {
         console.error('Submission error:', error);
         
-        displayWebhookResponse({
-            error: 'Network Error',
-            message: 'Failed to connect to the server. Please check your internet connection and try again.',
-            code: 'NETWORK_ERROR'
-        }, false);
-    }
-    
-    // Handle free trial marking separately (outside the response handling)
-    if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
-        try {
-            await window.freeTrialManager.markFreeTrialAsUsed(licenseKey);
-        } catch (error) {
-            console.log('Could not mark free trial as used:', error.message);
+        if (error.name === 'AbortError') {
+            showProcessingStatus('Request timeout. Your request may still be processing - check email in 10 minutes.', 'warning');
+        } else {
+            showProcessingStatus('Network error. Please check your connection and try again.', 'error');
+        }
+    } finally {
+        if (currentSubmitBtn) {
+            currentSubmitBtn.disabled = false;
+            currentSubmitBtn.textContent = 'Process Repository';
         }
     }
 }
@@ -1178,7 +1006,7 @@ function updateUrlValidation(message, type) {
 
 function checkFormValidity() {
     const currentSubmitBtn = document.getElementById('submitBtn');
-    if (!currentSubmitBtn) return; // No submit button (in maintenance or response mode)
+    if (!currentSubmitBtn) return;
     
     const licenseValid = licenseInfo && licenseInfo.classList.contains('valid');
     const urlValid = urlValidation && urlValidation.classList.contains('valid');
@@ -1186,19 +1014,6 @@ function checkFormValidity() {
                        licenseKeyInput.value.trim() && repoUrlInput.value.trim();
     
     currentSubmitBtn.disabled = !(licenseValid && urlValid && bothFilled);
-}
-
-function showStatusMessage(message, type) {
-    if (statusMessage) {
-        statusMessage.textContent = message;
-        statusMessage.className = `status-message ${type}`;
-    }
-}
-
-function hideStatusMessage() {
-    if (statusMessage) {
-        statusMessage.className = 'status-message';
-    }
 }
 
 function cacheLicenseKey(key) {
@@ -1284,7 +1099,6 @@ function adjustContainerToTextarea(showcaseItem) {
     }
 }
 
-// Debounce utility
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
