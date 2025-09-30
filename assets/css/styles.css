@@ -90,6 +90,42 @@ body {
     font-weight: bold;
 }
 
+/* Status Message Styles - Single Line */
+.status-message {
+    padding: 12px 20px;
+    margin: 15px 0;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    display: none;
+    transition: all 0.3s ease;
+}
+
+.status-message.processing {
+    background-color: #E3F2FD; /* Light Blue */
+    color: #1565C0; /* Dark Blue */
+    border: 1px solid #90CAF9;
+}
+
+.status-message.success {
+    background-color: #E8F5E9; /* Light Green */
+    color: #2E7D32; /* Dark Green */
+    border: 1px solid #81C784;
+}
+
+.status-message.error {
+    background-color: #FFEBEE; /* Light Red */
+    color: #C62828; /* Dark Red */
+    border: 1px solid #EF5350;
+}
+
+.status-message.warning {
+    background-color: #FFF3E0; /* Light Orange/Yellow */
+    color: #E65100; /* Dark Orange */
+    border: 1px solid #FFB74D;
+}
+
 /* Sidebars */
 .sidebar-left, .sidebar-right {
     background-color: #161b22;
