@@ -266,7 +266,7 @@ function displayWebhookResponse(response, isSuccess = true) {
     }
     
     if (responseHeader) {
-        responseHeader.textContent = isSuccess ? 'Analysis Request Submitted' : 'Analysis Failed';
+        responseHeader.textContent = isSuccess ? 'Request Submitted' : 'Request Failed';
     }
     
     if (loadingIndicator) {
@@ -279,15 +279,9 @@ function displayWebhookResponse(response, isSuccess = true) {
             <div class="response-success">
                 <div class="status-message success">✅ Request submitted! Check email in 5-10 minutes. Job ID: ${jobId}</div>
                 <div class="next-steps">
-                    <h6>What's Next?</h6>
-                    <ul>
-                        <li>Check your email for results within 5-10 minutes</li>
-                        <li>Results will also be posted to Discord (if provided)</li>
-                        <li>Large repositories and queue length affect processing time</li>
-                    </ul>
                 </div>
                 <button id="newAnalysisBtn" class="btn-secondary" onclick="resetForNewAnalysis()">
-                    Start New Analysis
+                    Submit New Request
                 </button>
             </div>
         `;
@@ -316,21 +310,12 @@ function displayWebhookResponse(response, isSuccess = true) {
         responseContent.innerHTML = `
             <div class="response-error">
                 <div class="status-message error">${errorMessage}</div>
-                <div class="troubleshooting">
-                    <h6>Troubleshooting:</h6>
-                    <ul>
-                        <li>Check if the repository URL is correct and accessible</li>
-                        <li>Verify your license key has remaining credits</li>
-                        <li>Try again in a few minutes</li>
-                        <li>Contact support if the issue persists</li>
-                    </ul>
-                </div>
                 <div class="error-actions">
                     <button id="retryAnalysisBtn" class="btn-primary" onclick="retryAnalysis()">
                         Try Again
                     </button>
                     <button id="newAnalysisBtn" class="btn-secondary" onclick="resetForNewAnalysis()">
-                        New Analysis
+                        New Request
                     </button>
                 </div>
             </div>
@@ -384,7 +369,7 @@ function retryAnalysis() {
     if (submitContainer) {
         submitContainer.innerHTML = `
             <button type="submit" class="btn-primary btn-large" id="submitBtn" disabled>
-                Analyze Repository
+                Process Repository
             </button>
         `;
         
