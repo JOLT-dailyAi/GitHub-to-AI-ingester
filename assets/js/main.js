@@ -253,7 +253,7 @@ function hideStatusMessage() {
 }
 
 // -------------------------
-// Error Handler
+// Error Handler - Simplified to Single Line
 // -------------------------
 function handleResponseError(data) {
     const errorCode = data.code || data.error || 'UNKNOWN_ERROR';
@@ -273,7 +273,8 @@ function handleResponseError(data) {
             showProcessingStatus('Request timeout. Check email in 10 minutes or try again.', 'warning');
             break;
         default:
-            showProcessingStatus(data.message || 'Processing failed. Please try again.', 'error');
+            const errorMsg = data.message || 'Processing failed. Please try again.';
+            showProcessingStatus(errorMsg, 'error');
     }
 }
 
@@ -868,7 +869,7 @@ function isValidGitHubUrl(url) {
 }
 
 // -------------------------
-// Form Submission Handler
+// Form Submission Handler - SIMPLIFIED STATUS MESSAGES
 // -------------------------
 async function handleFormSubmission(e) {
     e.preventDefault();
