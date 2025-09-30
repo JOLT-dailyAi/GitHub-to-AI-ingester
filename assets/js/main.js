@@ -50,6 +50,7 @@ let generatedFreeTrialKey = null;
 
 // Maintenance and response state
 let maintenanceInterval = null;
+let webhookTimeout = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -213,7 +214,7 @@ function restoreSubmitButton() {
     if (submitContainer) {
         submitContainer.innerHTML = `
             <button type="submit" class="btn-primary btn-large" id="submitBtn" disabled>
-                Process Repository
+                Analyze Repository
             </button>
         `;
         
@@ -228,60 +229,124 @@ function restoreSubmitButton() {
 }
 
 // -------------------------
-// Simplified Status Messages (Single Line with Color Indicators)
+// Response Container Functions - SIMPLIFIED TEXT MESSAGES
 // -------------------------
-function showProcessingStatus(message, type) {
-    if (!statusMessage) return;
+function createResponseContainer() {
+    if (!submitContainer) return;
     
-    const icons = {
-        'processing': '⏳',
-        'success': '✅',
-        'error': '❌',
-        'warning': '⚠️'
-    };
-    
-    statusMessage.textContent = `${icons[type] || ''} ${message}`;
-    statusMessage.className = `status-message ${type}`;
-    statusMessage.style.display = 'block';
+    submitContainer.innerHTML = `
+        <div id="responseContainer" class="response-container">
+            <div class="response-header">
+                <h4>Processing Repository Analysis</h4>
+                <div class="loading-indicator">
+                    <div class="spinner"></div>
+                    <span>Please wait while we analyze your repository...</span>
+                </div>
+            </div>
+            <div id="responseContent" class="response-content">
+                <div class="status-message processing">⏳ Processing request - please wait...</div>
+            </div>
+            <div class="response-footer">
+                <small>Processing timeout: 5 minutes</small>
+            </div>
+        </div>
+    `;
 }
 
-function hideStatusMessage() {
-    if (statusMessage) {
-        statusMessage.className = 'status-message';
-        statusMessage.style.display = 'none';
+function displayWebhookResponse(response, isSuccess = true) {
+    const responseContent = document.getElementById('responseContent');
+    const responseHeader = document.querySelector('.response-header h4');
+    const loadingIndicator = document.querySelector('.loading-indicator');
+    
+    if (!responseContent) return;
+    
+    if (webhookTimeout) {
+        clearTimeout(webhookTimeout);
+        webhookTimeout = null;
+    }
+    
+    if (responseHeader) {
+        responseHeader.textContent = isSuccess ? 'Analysis Request Submitted' : 'Analysis Failed';
+    }
+    
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'none';
+    }
+    
+    if (isSuccess) {
+        const jobId = response.analysisId || response.analysis_id || response.requestId || 'N/A';
+        responseContent.innerHTML = `
+            <div class="response-success">
+                <div class="status-message success">✅ Request submitted! Check email in 5-10 minutes. Job ID: ${jobId}</div>
+                <div class="next-steps">
+                    <h6>What's Next?</h6>
+                    <ul>
+                        <li>Check your email for results within 5-10 minutes</li>
+                        <li>Results will also be posted to Discord (if provided)</li>
+                        <li>Large repositories and queue length affect processing time</li>
+                    </ul>
+                </div>
+                <button id="newAnalysisBtn" class="btn-secondary" onclick="resetForNewAnalysis()">
+                    Start New Analysis
+                </button>
+            </div>
+        `;
+    } else {
+        const errorCode = response.code || response.error || 'UNKNOWN_ERROR';
+        let errorMessage = '';
+        
+        switch(errorCode) {
+            case 'LICENSE_NO_CREDITS':
+                errorMessage = '❌ No credits remaining. Purchase more credits to continue.';
+                break;
+            case 'SERVICE_UNAVAILABLE':
+            case '404':
+                errorMessage = '❌ Service temporarily unavailable. Try again in 2-3 minutes.';
+                break;
+            case 'INVALID_LICENSE':
+                errorMessage = '❌ Invalid license key. Please check and try again.';
+                break;
+            case 'TIMEOUT_ERROR':
+                errorMessage = '⚠️ Request timeout. Check email in 10 minutes or try again.';
+                break;
+            default:
+                errorMessage = `❌ ${response.message || 'Processing failed. Please try again.'}`;
+        }
+        
+        responseContent.innerHTML = `
+            <div class="response-error">
+                <div class="status-message error">${errorMessage}</div>
+                <div class="troubleshooting">
+                    <h6>Troubleshooting:</h6>
+                    <ul>
+                        <li>Check if the repository URL is correct and accessible</li>
+                        <li>Verify your license key has remaining credits</li>
+                        <li>Try again in a few minutes</li>
+                        <li>Contact support if the issue persists</li>
+                    </ul>
+                </div>
+                <div class="error-actions">
+                    <button id="retryAnalysisBtn" class="btn-primary" onclick="retryAnalysis()">
+                        Try Again
+                    </button>
+                    <button id="newAnalysisBtn" class="btn-secondary" onclick="resetForNewAnalysis()">
+                        New Analysis
+                    </button>
+                </div>
+            </div>
+        `;
     }
 }
 
-// -------------------------
-// Error Handler - Simplified to Single Line
-// -------------------------
-function handleResponseError(data) {
-    const errorCode = data.code || data.error || 'UNKNOWN_ERROR';
-    
-    switch(errorCode) {
-        case 'LICENSE_NO_CREDITS':
-            showProcessingStatus('No credits remaining. Purchase more credits to continue.', 'error');
-            break;
-        case 'SERVICE_UNAVAILABLE':
-        case '404':
-            showProcessingStatus('Service temporarily unavailable. Try again in 2-3 minutes.', 'error');
-            break;
-        case 'INVALID_LICENSE':
-            showProcessingStatus('Invalid license key. Please check and try again.', 'error');
-            break;
-        case 'TIMEOUT_ERROR':
-            showProcessingStatus('Request timeout. Check email in 10 minutes or try again.', 'warning');
-            break;
-        default:
-            const errorMsg = data.message || 'Processing failed. Please try again.';
-            showProcessingStatus(errorMsg, 'error');
-    }
+function displayTimeoutResponse() {
+    displayWebhookResponse({
+        error: 'Request Timeout',
+        message: 'Your request may still be processing - check email in 10 minutes.',
+        code: 'TIMEOUT_ERROR'
+    }, false);
 }
 
-// -------------------------
-// Form Reset After Successful Submission
-// -------------------------
-function resetFormAfterSubmission() {
+function resetForNewAnalysis() {
     if (repoUrlInput) {
         repoUrlInput.value = '';
         repoUrlInput.disabled = false;
@@ -297,9 +362,38 @@ function resetFormAfterSubmission() {
     
     generatedFreeTrialKey = null;
     
-    setTimeout(() => {
-        hideStatusMessage();
-    }, 3000);
+    if (submitContainer) {
+        submitContainer.innerHTML = `
+            <button type="submit" class="btn-primary btn-large" id="submitBtn" disabled>
+                Analyze Repository
+            </button>
+        `;
+        
+        const newSubmitBtn = document.getElementById('submitBtn');
+        if (newSubmitBtn && analysisForm) {
+            analysisForm.removeEventListener('submit', handleFormSubmission);
+            analysisForm.addEventListener('submit', handleFormSubmission);
+        }
+    }
+    
+    hideStatusMessage();
+    checkFormValidity();
+}
+
+function retryAnalysis() {
+    if (submitContainer) {
+        submitContainer.innerHTML = `
+            <button type="submit" class="btn-primary btn-large" id="submitBtn" disabled>
+                Analyze Repository
+            </button>
+        `;
+        
+        const newSubmitBtn = document.getElementById('submitBtn');
+        if (newSubmitBtn && analysisForm) {
+            analysisForm.removeEventListener('submit', handleFormSubmission);
+            analysisForm.addEventListener('submit', handleFormSubmission);
+        }
+    }
     
     checkFormValidity();
 }
@@ -574,7 +668,7 @@ async function validateLicenseKey() {
     
     if (licenseKey.startsWith('FreeTrial-')) {
         if (generatedFreeTrialKey && licenseKey === generatedFreeTrialKey) {
-            updateLicenseInfo('Free trial license - 1 repository credit', 'valid');
+            updateLicenseInfo('Free trial license - 1 analysis available', 'valid');
         } else {
             updateLicenseInfo('Invalid free trial key - please generate a new one', 'invalid');
         }
@@ -745,7 +839,7 @@ window.validateGitHubRepositoryAccess = async function(repoUrl) {
             if (data.private) {
                 return { 
                     valid: false, 
-                    message: 'Repository is private. Only public repositories can be processed.',
+                    message: 'Repository is private. Only public repositories can be analyzed.',
                     type: 'invalid' 
                 };
             }
@@ -869,13 +963,13 @@ function isValidGitHubUrl(url) {
 }
 
 // -------------------------
-// Form Submission Handler - SIMPLIFIED STATUS MESSAGES
+// Form Submission Handler
 // -------------------------
 async function handleFormSubmission(e) {
     e.preventDefault();
     
     if (isMaintenanceTime()) {
-        showProcessingStatus('System under maintenance. Try again in a few minutes.', 'error');
+        showStatusMessage('System is currently under maintenance. Please try again in a few minutes.', 'error');
         return;
     }
     
@@ -886,7 +980,7 @@ async function handleFormSubmission(e) {
     const trialRepoUrl = document.getElementById('trialRepoUrl')?.value.trim() || '';
     
     if (!licenseKey || !repoUrl) {
-        showProcessingStatus('Please fill in all required fields', 'error');
+        showStatusMessage('Please fill in all required fields', 'error');
         return;
     }
     
@@ -902,12 +996,13 @@ async function handleFormSubmission(e) {
         submission_source: 'github_ai_ingester_web'
     };
     
-    const currentSubmitBtn = document.getElementById('submitBtn');
-    if (currentSubmitBtn) {
-        currentSubmitBtn.disabled = true;
-        currentSubmitBtn.textContent = 'Processing...';
-    }
-    showProcessingStatus('Processing request - please wait...', 'processing');
+    console.log('Sending payload:', payload);
+    
+    createResponseContainer();
+    
+    webhookTimeout = setTimeout(() => {
+        displayTimeoutResponse();
+    }, CONFIG.WEBHOOK_TIMEOUT);
     
     try {
         const response = await fetch(CONFIG.N8N_FORM_URL, {
@@ -916,58 +1011,50 @@ async function handleFormSubmission(e) {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(CONFIG.WEBHOOK_TIMEOUT)
+            body: JSON.stringify(payload)
         });
         
         if (response.ok) {
             const data = await response.json();
+            console.log('Webhook response:', data);
             
             if (data.status === 'error') {
-                handleResponseError(data);
+                displayWebhookResponse(data, false);
             } else {
-                const jobId = data.requestId || data.analysisId || data.analysis_id || 'N/A';
-                showProcessingStatus(
-                    `Request submitted! Check email in 5-10 minutes. Job ID: ${jobId}`, 
-                    'success'
-                );
-                
-                if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
-                    try {
-                        await window.freeTrialManager.markFreeTrialAsUsed(licenseKey);
-                    } catch (error) {
-                        console.log('Could not mark free trial as used:', error.message);
-                    }
-                }
-                
-                setTimeout(() => {
-                    resetFormAfterSubmission();
-                }, 5000);
+                displayWebhookResponse({
+                    status: data.status || 'Success',
+                    message: data.message || 'Analysis request submitted successfully!',
+                    analysisId: data.analysisId || data.analysis_id || data.requestId,
+                    estimatedTime: data.estimatedTime || data.estimated_time || data.estimatedProcessingTime,
+                    repositoryName: data.repositoryName || data.repository_name
+                }, true);
             }
+            
         } else {
             let errorData;
             try {
                 errorData = await response.json();
+                displayWebhookResponse(errorData, false);
             } catch {
-                errorData = { 
-                    error: 'Server Error', 
-                    message: `HTTP ${response.status}` 
-                };
+                errorData = { error: 'Server Error', message: `HTTP ${response.status}: ${response.statusText}` };
+                displayWebhookResponse(errorData, false);
             }
-            handleResponseError(errorData);
         }
     } catch (error) {
         console.error('Submission error:', error);
         
-        if (error.name === 'AbortError') {
-            showProcessingStatus('Request timeout. Your request may still be processing - check email in 10 minutes.', 'warning');
-        } else {
-            showProcessingStatus('Network error. Please check your connection and try again.', 'error');
-        }
-    } finally {
-        if (currentSubmitBtn) {
-            currentSubmitBtn.disabled = false;
-            currentSubmitBtn.textContent = 'Process Repository';
+        displayWebhookResponse({
+            error: 'Network Error',
+            message: 'Failed to connect to the server. Please check your internet connection and try again.',
+            code: 'NETWORK_ERROR'
+        }, false);
+    }
+    
+    if (licenseKey.startsWith('FreeTrial-') && window.freeTrialManager) {
+        try {
+            await window.freeTrialManager.markFreeTrialAsUsed(licenseKey);
+        } catch (error) {
+            console.log('Could not mark free trial as used:', error.message);
         }
     }
 }
@@ -1015,6 +1102,19 @@ function checkFormValidity() {
                        licenseKeyInput.value.trim() && repoUrlInput.value.trim();
     
     currentSubmitBtn.disabled = !(licenseValid && urlValid && bothFilled);
+}
+
+function showStatusMessage(message, type) {
+    if (statusMessage) {
+        statusMessage.textContent = message;
+        statusMessage.className = `status-message ${type}`;
+    }
+}
+
+function hideStatusMessage() {
+    if (statusMessage) {
+        statusMessage.className = 'status-message';
+    }
 }
 
 function cacheLicenseKey(key) {
