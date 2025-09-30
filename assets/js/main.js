@@ -12,7 +12,6 @@ const CONFIG = {
     //Production URL
     // LICENSE_VALIDATION_ENDPOINT: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook/validate-gumroad-license-key',
     WEBHOOK_TIMEOUT: 300000, // 5 minutes timeout
-    LICENSE_CACHE_DURATION: 300000 // 5 minutes cache
 };
 
 // DOM Elements
@@ -59,74 +58,6 @@ document.addEventListener('DOMContentLoaded', function() {
     checkMaintenanceModeOnLoad();
     startMaintenanceMonitor();
 });
-
-// -------------------------
-// 2. ADD CACHE HELPER FUNCTIONS (after CONFIG, around line 50)
-// -------------------------
-// License validation cache manager
-const LicenseCache = {
-    get: function(licenseKey) {
-        try {
-            const cacheKey = `license_validation_${licenseKey}`;
-            const cached = localStorage.getItem(cacheKey);
-            
-            if (!cached) return null;
-            
-            const data = JSON.parse(cached);
-            const cacheAge = Date.now() - data.timestamp;
-            
-            // Return cached data if less than 5 minutes old
-            if (cacheAge < CONFIG.LICENSE_CACHE_DURATION) {
-                console.log('Using cached license validation');
-                return data;
-            }
-            
-            // Cache expired, remove it
-            this.remove(licenseKey);
-            return null;
-        } catch (e) {
-            console.warn('Error reading license cache:', e);
-            return null;
-        }
-    },
-    
-    set: function(licenseKey, validationData) {
-        try {
-            const cacheKey = `license_validation_${licenseKey}`;
-            const data = {
-                ...validationData,
-                timestamp: Date.now()
-            };
-            localStorage.setItem(cacheKey, JSON.stringify(data));
-            console.log('License validation cached');
-        } catch (e) {
-            console.warn('Error setting license cache:', e);
-        }
-    },
-    
-    remove: function(licenseKey) {
-        try {
-            const cacheKey = `license_validation_${licenseKey}`;
-            localStorage.removeItem(cacheKey);
-        } catch (e) {
-            console.warn('Error removing license cache:', e);
-        }
-    },
-    
-    clear: function() {
-        try {
-            // Clear all license validation caches
-            Object.keys(localStorage).forEach(key => {
-                if (key.startsWith('license_validation_')) {
-                    localStorage.removeItem(key);
-                }
-            });
-            console.log('All license caches cleared');
-        } catch (e) {
-            console.warn('Error clearing license caches:', e);
-        }
-    }
-};
 
 // -------------------------
 // 3. UPDATE initializeEventListeners (around line 54)
@@ -754,7 +685,6 @@ async function validateLicenseKey() {
     }
     
     if (licenseKey.startsWith('FreeTrial-')) {
-        // Validate if this matches the generated free trial key
         if (generatedFreeTrialKey && licenseKey === generatedFreeTrialKey) {
             updateLicenseInfo('Free trial license - 1 analysis available', 'valid');
         } else {
@@ -771,16 +701,6 @@ async function validateLicenseKey() {
         return;
     }
     
-    // CHECK CACHE FIRST (prevents unnecessary API calls)
-    const cached = LicenseCache.get(licenseKey);
-    if (cached) {
-        updateLicenseInfo(cached.message, cached.success ? 'valid' : 'invalid');
-        cacheLicenseKey(licenseKey);
-        checkFormValidity();
-        return;
-    }
-    
-    // No cache hit, proceed with API validation
     updateLicenseInfo('Validating license key...', '');
     
     try {
@@ -788,7 +708,7 @@ async function validateLicenseKey() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ license_key: licenseKey }),
-            signal: AbortSignal.timeout(10000) // 10 second timeout
+            signal: AbortSignal.timeout(10000)
         });
         
         if (response.ok) {
@@ -796,28 +716,10 @@ async function validateLicenseKey() {
             
             if (data.success && data.uses < data.max_uses) {
                 const remaining = data.max_uses - data.uses;
-                const message = `Valid license - ${remaining} analyses remaining`;
-                
-                updateLicenseInfo(message, 'valid');
-                
-                // CACHE THE SUCCESSFUL VALIDATION
-                LicenseCache.set(licenseKey, {
-                    success: true,
-                    message: message,
-                    uses: data.uses,
-                    max_uses: data.max_uses
-                });
-                
+                updateLicenseInfo(`Valid license - ${remaining} analyses remaining`, 'valid');
                 cacheLicenseKey(licenseKey);
             } else {
-                const message = 'License key expired or invalid';
-                updateLicenseInfo(message, 'invalid');
-                
-                // CACHE THE FAILED VALIDATION (prevents repeated checks of invalid keys)
-                LicenseCache.set(licenseKey, {
-                    success: false,
-                    message: message
-                });
+                updateLicenseInfo('License key expired or invalid', 'invalid');
             }
         } else {
             updateLicenseInfo('Could not validate license key', 'invalid');
@@ -825,7 +727,6 @@ async function validateLicenseKey() {
     } catch (error) {
         console.error('License validation error:', error);
         
-        // Handle timeout vs network errors differently
         if (error.name === 'AbortError') {
             updateLicenseInfo('Validation timeout - please try again', 'invalid');
         } else {
@@ -835,6 +736,7 @@ async function validateLicenseKey() {
     
     checkFormValidity();
 }
+
 // ADD THIS NEW FUNCTION 
 function cleanGitHubUrl(url) {
     if (!url || typeof url !== 'string') return url;
