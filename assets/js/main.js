@@ -1,10 +1,10 @@
 // Configuration
 const CONFIG = {
     // Testing URL - currently active
-    // N8N_FORM_URL: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook-test/new-repo-request',
+    N8N_FORM_URL: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook-test/new-repo-request',
     
     // Production URL - uncomment when ready to go live
-    N8N_FORM_URL: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook/new-repo-request',
+    // N8N_FORM_URL: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook/new-repo-request',
     
     GITHUB_API_BASE: 'https://api.github.com/repos/',
     
