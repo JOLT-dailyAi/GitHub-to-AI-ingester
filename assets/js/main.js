@@ -714,16 +714,28 @@ async function validateLicenseKey() {
         if (response.ok) {
             const data = await response.json();
             
-            // Handle the actual API response format
-            if (data.success && data.remaining !== undefined) {
-                updateLicenseInfo(`Valid license - ${data.remaining} analyses remaining`, 'valid');
-                cacheLicenseKey(licenseKey);
-            } else if (data.success) {
-                // Fallback if remaining not provided
-                updateLicenseInfo('Valid license', 'valid');
+            if (data.success) {
+                // BUILD DYNAMIC MESSAGE WITH ALL FIELDS
+                let displayMessage = data.message || 'Valid license';
+                
+                // Add any additional fields dynamically (exclude success and message)
+                const additionalInfo = [];
+                for (const [key, value] of Object.entries(data)) {
+                    if (key !== 'success' && key !== 'message' && value !== null && value !== undefined) {
+                        const formattedKey = key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
+                        additionalInfo.push(`${formattedKey}: ${value}`);
+                    }
+                }
+                
+                // Append additional fields to message if any exist
+                if (additionalInfo.length > 0) {
+                    displayMessage += ' (' + additionalInfo.join(', ') + ')';
+                }
+                
+                updateLicenseInfo(displayMessage, 'valid');
                 cacheLicenseKey(licenseKey);
             } else {
-                updateLicenseInfo(data.message || 'License key expired or invalid', 'invalid');
+                updateLicenseInfo(data.message || 'Invalid license key', 'invalid');
             }
         } else {
             updateLicenseInfo('Could not validate license key', 'invalid');
