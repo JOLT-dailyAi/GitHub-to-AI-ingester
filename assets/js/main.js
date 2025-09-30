@@ -7,7 +7,7 @@ const CONFIG = {
     // N8N_FORM_URL: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook/c4cb286d-e375-4cd8-96be-9866403fa54d',
     
     GITHUB_API_BASE: 'https://api.github.com/repos/',
-    LICENSE_VALIDATION_ENDPOINT: 'https://api.yourdomain.com/webhook/validate-license',
+    LICENSE_VALIDATION_ENDPOINT: 'https://jolt-dailyai.jack-of-all-traits-official.workers.dev/api/webhook/validate-gumroad-license-key',
     WEBHOOK_TIMEOUT: 300000 // 5 minutes timeout
 };
 
