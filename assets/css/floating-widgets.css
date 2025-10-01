@@ -47,3 +47,73 @@
     height: 56px;
   }
 }
+
+/* Discord Modal */
+.discord-modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+}
+
+.discord-modal-content {
+  position: relative;
+  background-color: #36393f;
+  margin: 10% auto;
+  padding: 0;
+  border-radius: 8px;
+  width: 350px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.discord-close {
+  position: absolute;
+  top: -35px;
+  right: 0;
+  color: #fff;
+  font-size: 32px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10001;
+  transition: color 0.3s;
+}
+
+.discord-close:hover,
+.discord-close:focus {
+  color: #5865F2;
+}
+
+.discord-modal-content iframe {
+  border-radius: 8px;
+  display: block;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .discord-modal-content {
+    width: 90%;
+    margin: 20% auto;
+  }
+  
+  .discord-modal-content iframe {
+    width: 100%;
+    height: 400px;
+  }
+}
