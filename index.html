@@ -74,27 +74,32 @@
         </main>
 
         <!-- Right Sidebar - Reviews -->
+        <!-- Replace the existing sidebar-right section with this code -->
         <aside class="sidebar-right">
             <div class="review-section">
-                <h3>Leave a Review</h3>
-                <textarea id="reviewText" placeholder="Share your experience..." rows="3"></textarea>
-                <button class="btn-secondary" id="submitReview">Submit Review</button>
+                <h3>⭐ Customer Reviews</h3>
                 
-                <div class="reviews">
-                    <h4>Recent Reviews</h4>
-                    <div class="review">
-                        <p>"Perfect for AI code analysis. Saved hours of manual work when feeding repositories to ChatGPT."</p>
-                        <small>- Anonymous Developer</small>
-                    </div>
-                    
-                    <div class="review">
-                        <p>"The structured output format is exactly what I needed for Claude. Much better than manual copying."</p>
-                        <small>- AI Researcher</small>
-                    </div>
+                <!-- Leave Review Button -->
+                <a href="https://forms.gle/cF5izZhej5GZ8M1k7" 
+                   class="leave-review-btn" 
+                   target="_blank" 
+                   rel="noopener noreferrer">
+                    Leave a Review
+                </a>
+                
+                <!-- Reviews Container - Populated by JavaScript -->
+                <div class="reviews" id="reviewsContainer">
+                    <div class="reviews-loading">Loading reviews</div>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="review-pagination">
+                    <button id="prevReviewBtn" disabled>← Previous</button>
+                    <span class="review-page-info" id="reviewPageInfo">Page 1 of 1</span>
+                    <button id="nextReviewBtn" disabled>Next →</button>
                 </div>
             </div>
         </aside>
-    </div>
 
     <!-- Showcase Section -->
     <section class="showcase">
