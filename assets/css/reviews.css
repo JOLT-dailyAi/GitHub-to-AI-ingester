@@ -57,7 +57,7 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-height: 500px;
+    max-height: 400px;
     overflow-y: auto;
     padding-right: 8px;
 }
@@ -208,6 +208,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -217,11 +218,13 @@
     background: rgba(255, 255, 255, 0.1);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 8px 16px;
+    padding: 8px 12px;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .review-pagination button:hover:not(:disabled) {
@@ -236,7 +239,10 @@
 
 .review-page-info {
     color: rgba(255, 255, 255, 0.7);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    text-align: center;
+    flex-shrink: 0;
+    min-width: fit-content;
 }
 
 /* Empty State */
@@ -292,5 +298,45 @@
     
     .reviews {
         max-height: 400px;
+    }
+}
+
+/* Optimize for narrow sidebars (desktop) */
+@media (min-width: 769px) {
+    .review-section {
+        min-width: 200px;
+    }
+    
+    .leave-review-btn {
+        font-size: 0.9rem;
+        padding: 10px 16px;
+    }
+    
+    .review {
+        padding: 12px;
+    }
+    
+    .review-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    
+    .review-text {
+        font-size: 0.9rem;
+    }
+    
+    .badge {
+        font-size: 0.65rem;
+        padding: 3px 8px;
+    }
+    
+    .review-pagination button {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+    
+    .review-page-info {
+        font-size: 0.8rem;
     }
 }
