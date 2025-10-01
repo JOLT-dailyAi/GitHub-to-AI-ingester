@@ -8,7 +8,16 @@ const REFRESH_INTERVAL = 60000; // Refresh every 60 seconds
 
 let allReviews = [];
 let currentPage = 0;
-const REVIEWS_PER_PAGE = 3;
+let REVIEWS_PER_PAGE = 2; // Default for narrow sidebars
+
+// Adjust reviews per page based on container width
+function adjustReviewsPerPage() {
+    const sidebar = document.querySelector('.sidebar-right');
+    if (sidebar) {
+        const width = sidebar.offsetWidth;
+        REVIEWS_PER_PAGE = width > 250 ? 3 : 2;
+    }
+}
 
 // Initialize review system
 function initReviewSystem() {
@@ -220,7 +229,7 @@ function updatePagination() {
     
     if (pageInfo && allReviews.length > 0) {
         const totalPages = Math.ceil(allReviews.length / REVIEWS_PER_PAGE);
-        pageInfo.textContent = `Page ${currentPage + 1} of ${totalPages}`;
+        pageInfo.textContent = `${currentPage + 1}/${totalPages}`;
     }
 }
 
