@@ -1,0 +1,296 @@
+/* reviews.css - Styles for Google Sheets Review System */
+/* Place this in assets/css/reviews.css */
+
+.review-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 24px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.review-section h3 {
+    color: #fff;
+    margin-bottom: 16px;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.review-section h4 {
+    color: #fff;
+    margin: 24px 0 16px 0;
+    font-size: 1.2rem;
+}
+
+/* Leave Review Button */
+.leave-review-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    margin-bottom: 24px;
+    width: 100%;
+    text-align: center;
+}
+
+.leave-review-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.leave-review-btn::before {
+    content: "✍️ ";
+    margin-right: 8px;
+}
+
+/* Reviews Container */
+.reviews {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.reviews::-webkit-scrollbar {
+    width: 6px;
+}
+
+.reviews::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.reviews::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.reviews::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Individual Review */
+.review {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.review:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(4px);
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.review-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.review-author strong {
+    color: #fff;
+    font-size: 1rem;
+}
+
+.review-rating {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.review-text {
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+    margin: 12px 0;
+    font-style: italic;
+}
+
+.review-use-case {
+    margin: 8px 0;
+}
+
+.review-use-case small {
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.review-suggestions {
+    margin: 8px 0;
+}
+
+.review-suggestions small {
+    color: rgba(255, 223, 128, 0.9);
+    background: rgba(255, 193, 7, 0.1);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    border-left: 3px solid rgba(255, 193, 7, 0.5);
+    display: block;
+    font-style: italic;
+}
+
+.review-time {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+}
+
+/* User Badges */
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-paid {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.badge-trial {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.badge-referral {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    color: white;
+}
+
+.badge-organic {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+}
+
+/* Pagination */
+.review-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.review-pagination button {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.review-pagination button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.review-pagination button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.review-page-info {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+/* Empty State */
+.no-reviews {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 32px;
+    font-style: italic;
+}
+
+/* Error Message */
+.error-message {
+    text-align: center;
+    color: #ff6b6b;
+    padding: 16px;
+    background: rgba(255, 107, 107, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+/* Loading State */
+.reviews-loading {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 32px;
+}
+
+.reviews-loading::after {
+    content: "...";
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0%, 20% { content: "."; }
+    40% { content: ".."; }
+    60%, 100% { content: "..."; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .review-section {
+        padding: 16px;
+    }
+    
+    .review-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .review-rating {
+        font-size: 0.9rem;
+    }
+    
+    .reviews {
+        max-height: 400px;
+    }
+}
