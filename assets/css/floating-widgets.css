@@ -1,0 +1,49 @@
+/* ============================================
+   FLOATING WIDGETS - Ko-fi & Discord
+   ============================================ */
+
+/* Discord Floating Button */
+.discord-floating-btn {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 70px;
+  height: 70px;
+  background-color: #5865F2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  z-index: 9999;
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.discord-floating-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(88, 101, 242, 0.5);
+  background-color: #4752C4;
+}
+
+.discord-floating-btn img {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .discord-floating-btn {
+    width: 56px;
+    height: 56px;
+    bottom: 15px;
+    left: 15px;
+  }
+  
+  .discord-floating-btn img {
+    width: 56px;
+    height: 56px;
+  }
+}
