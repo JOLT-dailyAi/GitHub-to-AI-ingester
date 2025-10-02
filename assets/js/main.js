@@ -44,6 +44,7 @@ let currentShowcaseIndex = 0;
 let showcaseItems = [];
 let filteredItems = [];
 let autocompleteData = [];
+let virtualShowcaseData = []; // Store all showcase data from JSON
 
 // Store generated free trial key for validation
 let generatedFreeTrialKey = null;
@@ -388,53 +389,61 @@ function retryAnalysis() {
 // -------------------------
 function initializeShowcase() {
     showcaseItems = document.querySelectorAll('.showcase-item');
-    filteredItems = Array.from(showcaseItems);
-
+    
+    // Only set up listeners on physical items (the 3 divs)
     showcaseItems.forEach(item => {
-        const textareas = item.querySelectorAll('textarea');
-        textareas.forEach(el => {
-            if (!el) return;
-            el.addEventListener('input', () => {
+        const textarea = item.querySelector('textarea');
+        if (textarea) {
+            textarea.addEventListener('input', () => {
                 try { 
-                    adjustTextareaHeight(el); 
+                    adjustTextareaHeight(textarea); 
                 } catch (err) { 
                     console.warn('Error adjusting textarea height:', err);
                 }
             }, false);
-        });
+        }
     });
 
     updateShowcaseDisplay();
 }
 
 function updateShowcaseDisplay() {
-    showcaseItems.forEach(item => {
-        item.classList.remove('active');
-    });
+    const physicalItems = document.querySelectorAll('.showcase-item');
+    
+    // Hide all physical items
+    physicalItems.forEach(item => item.classList.remove('active'));
     
     if (filteredItems.length > 0) {
-        filteredItems[currentShowcaseIndex].classList.add('active');
+        // Get current data from virtual array
+        const currentData = filteredItems[currentShowcaseIndex];
+        const currentTitle = currentData.title || `Repository ${currentShowcaseIndex + 1}`;
+        const currentContent = currentData.content || 'No content available';
+        
+        // Update first physical item with current data
+        const activePhysicalItem = physicalItems[0];
+        activePhysicalItem.querySelector('h3').textContent = currentTitle;
+        activePhysicalItem.querySelector('textarea').value = currentContent;
+        activePhysicalItem.classList.add('active');
 
         setTimeout(() => {
             try {
-                const activeItem = filteredItems[currentShowcaseIndex];
-                if (activeItem) {
-                    const textarea = activeItem.querySelector('textarea');
-                    if (textarea) {
-                        adjustTextareaHeight(textarea);
-                        adjustContainerToTextarea(activeItem);
-                    }
+                const textarea = activePhysicalItem.querySelector('textarea');
+                if (textarea) {
+                    adjustTextareaHeight(textarea);
+                    adjustContainerToTextarea(activePhysicalItem);
                 }
             } catch (err) {
-                console.warn('Error adjusting heights for active showcase item:', err);
+                console.warn('Error adjusting heights:', err);
             }
         }, 50);
 
+        // Update counters with virtual array length
         if (currentIndexSpan) currentIndexSpan.textContent = currentShowcaseIndex + 1;
         if (totalItemsSpan) totalItemsSpan.textContent = filteredItems.length;
         if (currentIndexBottomSpan) currentIndexBottomSpan.textContent = currentShowcaseIndex + 1;
         if (totalItemsBottomSpan) totalItemsBottomSpan.textContent = filteredItems.length;
         
+        // Navigation buttons based on virtual array
         if (prevBtn) prevBtn.disabled = currentShowcaseIndex === 0;
         if (nextBtn) nextBtn.disabled = currentShowcaseIndex === filteredItems.length - 1;
         if (prevBtnBottom) prevBtnBottom.disabled = currentShowcaseIndex === 0;
@@ -470,19 +479,19 @@ function showNextShowcase() {
 // -------------------------
 function handleSearchInput() {
     const query = showcaseSearch.value.toLowerCase().trim();
+    
     if (query === '') {
-        filteredItems = Array.from(showcaseItems);
+        filteredItems = virtualShowcaseData; // Use virtual data
         currentShowcaseIndex = 0;
         updateShowcaseDisplay();
         updateAutocomplete([]);
         return;
     }
     
-    filteredItems = Array.from(showcaseItems).filter(item => {
-        const titleEl = item.querySelector('h3');
-        const taEl = item.querySelector('textarea');
-        const title = titleEl ? titleEl.textContent.toLowerCase() : '';
-        const content = taEl ? taEl.value.toLowerCase() : '';
+    // Filter virtual data instead of DOM elements
+    filteredItems = virtualShowcaseData.filter(item => {
+        const title = (item.title || '').toLowerCase();
+        const content = (item.content || '').toLowerCase();
         return title.includes(query) || content.includes(query);
     });
     
@@ -598,41 +607,23 @@ async function loadShowcaseFiles() {
         if (response.ok) {
             const showcaseData = await response.json();
             
-            const textareas = document.querySelectorAll('.showcase-item textarea');
-            const titles = document.querySelectorAll('.showcase-item h3');
+            // Store all data in virtual array
+            virtualShowcaseData = showcaseData;
+            filteredItems = virtualShowcaseData;
             
-            showcaseData.forEach((item, index) => {
-                if (textareas[index]) {
-                    textareas[index].value = item.content || 'No content available';
-                }
-                if (titles[index]) {
-                    titles[index].textContent = item.title || `Repository ${index + 1}`;
-                }
+            // Build autocomplete data from virtual array
+            autocompleteData = virtualShowcaseData.map(item => {
+                return { 
+                    title: item.title || 'Repository', 
+                    keywords: extractKeywords((item.title || '') + ' ' + (item.content || '')) 
+                };
             });
 
-            autocompleteData = Array.from(showcaseItems).map(item => {
-                const title = item.querySelector('h3').textContent;
-                const content = item.querySelector('textarea').value;
-                return { title: title, keywords: extractKeywords(title + ' ' + content) };
-            });
+            // Display the first item
+            currentShowcaseIndex = 0;
+            updateShowcaseDisplay();
 
-            setTimeout(() => {
-                try {
-                    showcaseItems.forEach(item => {
-                        if (item.classList.contains('active')) {
-                            const textarea = item.querySelector('textarea');
-                            if (textarea) {
-                                adjustTextareaHeight(textarea);
-                                adjustContainerToTextarea(item);
-                            }
-                        }
-                    });
-                } catch (err) {
-                    console.warn('Error adjusting heights after loading showcase files:', err);
-                }
-            }, 100);
-
-            console.log('Showcase files loaded successfully');
+            console.log('Showcase files loaded successfully:', virtualShowcaseData.length, 'items');
         } else {
             console.log('Could not load showcase data, using existing content');
         }
