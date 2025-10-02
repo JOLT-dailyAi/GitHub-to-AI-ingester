@@ -2,6 +2,51 @@
 
 Transform any public GitHub repository into AI-ready structured output for seamless integration with Claude, GPT-4, and all major AI models.
 
+---
+
+## For Developers: Reference Implementation
+
+This project serves dual purposes:
+1. **Commercial Service**: Process GitHub repositories for AI consumption
+2. **Reference Implementation**: Open-source frontend for developers building workflow-as-a-service platforms
+
+### Why This Matters
+
+If you're looking to monetize n8n/Make/Zapier workflows or sell API execution services, you've likely discovered there are **no complete reference implementations** available. Individual pieces exist (VPN APIs, payment processors, form validators), but no cohesive system.
+
+This frontend solves that gap.
+
+### Features You Can Study & Adapt
+
+- **Anti-Abuse Free Trial System**: Monthly hash-based trial keys with SHA-256 validation against used-keys database
+- **VPN Detection**: Multi-method detection (timezone mismatch, WebRTC leaks, DNS analysis) with graceful fallbacks
+- **License Key Validation**: Gumroad API integration with real-time credit checking and debounced validation
+- **Webhook Architecture**: Cloudflare Workers integration with proper timeout handling and state management
+- **Maintenance Windows**: IST timezone-aware automatic maintenance mode with countdown timers
+- **Dynamic State Management**: Handles processing, maintenance, and error states with proper button replacement
+- **Virtual Showcase System**: Data-driven architecture for displaying results without DOM bloat
+- **Repository Validation**: GitHub API integration with intelligent URL cleaning and accessibility checks
+
+### Usage Terms
+
+- Frontend code is open source under MIT License (see LICENSE file)
+- Study, learn from, and adapt for your own projects
+- Attribution appreciated but not required
+- **Backend workflows are proprietary and not included**
+- See [CONTRIBUTIONS.md](CONTRIBUTIONS.md) for collaboration guidelines
+
+### Not Just Another SaaS Template
+
+Unlike generic SaaS starters that focus on subscription management and user authentication, this implements:
+- **Per-execution billing** (credits, not subscriptions)
+- **Stateless free trials** (no database required for trial tracking)
+- **Client-side abuse prevention** (reduces backend load)
+- **Webhook-based processing** (decoupled frontend/backend)
+
+If you're building a similar service and want implementation guidance, check out our consulting options below.
+
+---
+
 ## What It Does
 
 GitHub to AI Ingester processes public GitHub repositories and delivers a comprehensive, structured text file containing:
