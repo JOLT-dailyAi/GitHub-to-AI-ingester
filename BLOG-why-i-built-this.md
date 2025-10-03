@@ -32,25 +32,25 @@ Testing this query across multiple AI platforms reveals a consistent pattern:
 **What happens when the AI fetches a repository URL directly:**
 
 Fetching the official Material Components repo URL returns:
-- ✅ Repository homepage content
-- ✅ Archive status (January 2025)
-- ✅ Fork count: 2.1k
-- ❌ Zero code files
-- ❌ No directory structure
-- ❌ No implementation details
-- ❌ No way to verify functionality
+- âœ… Repository homepage content
+- âœ… Archive status (January 2025)
+- âœ… Fork count: 2.1k
+- âŒ Zero code files
+- âŒ No directory structure
+- âŒ No implementation details
+- âŒ No way to verify functionality
 
 ## The Information Gap
 
 AI assistants receive surface-level data from web searches and GitHub URLs:
 
-✅ **Available information:**
+âœ… **Available information:**
 - Repository names from search results
 - Descriptions from repo metadata
 - Star counts and popularity metrics
 - README summaries (when URLs are fetched)
 
-❌ **Missing information:**
+âŒ **Missing information:**
 - Actual code implementation
 - File structure or organization
 - Real dependencies vs. claimed dependencies
@@ -118,12 +118,12 @@ Pasting a repository URL directly seems like the obvious solution:
 `https://github.com/material-components/material-components-web`
 
 **What AI assistants receive:**
-- ✅ README.md content (rendered HTML)
-- ✅ Repository metadata
-- ✅ Language statistics
-- ❌ Zero actual code files
-- ❌ No subdirectory access
-- ❌ No file structure beyond landing page
+- âœ… README.md content (rendered HTML)
+- âœ… Repository metadata
+- âœ… Language statistics
+- âŒ Zero actual code files
+- âŒ No subdirectory access
+- âŒ No file structure beyond landing page
 
 The AI sees repository marketing, not implementation. It can describe what the README claims, but cannot verify or analyze the actual code.
 
@@ -164,40 +164,40 @@ All three approaches require significant manual effort or technical infrastructu
 GitHub to AI Ingester generates complete repository maps automatically:
 
 ```
-📊 REPOSITORY: material-components-web (👤 material-components)
-════════════════════════════════════════════════════════════════════════════════
-🌐 Web Application
-🔗 https://github.com/material-components/material-components-web
+ðŸ“Š REPOSITORY: material-components-web (ðŸ‘¤ material-components)
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+ðŸŒ Web Application
+ðŸ”— https://github.com/material-components/material-components-web
 
-📊 STATS
-├── 📏 Size: 45.2 MB
-├── 📁 Directories: 156
-├── 📄 Files: 892
-└── 🏗️ Max Depth: 8
+ðŸ“Š STATS
+â”œâ”€â”€ ðŸ“ Size: 45.2 MB
+â”œâ”€â”€ ðŸ“ Directories: 156
+â”œâ”€â”€ ðŸ“„ Files: 892
+â””â”€â”€ ðŸ—ï¸ Max Depth: 8
 
-🌳 REPOSITORY STRUCTURE:
-📂 material-components-web/
-├── 📄 README.md
-├── 📄 package.json
-├── 📂 packages/
-│   ├── 📂 mdc-floating-label/
-│   │   ├── 📄 package.json (0.8 KB)
-│   │   ├── 📄 index.ts (2.1 KB) ⚡
-│   │   ├── 📄 foundation.ts (4.3 KB) ⚡
-│   │   └── 📂 test/
-│   ├── 📂 mdc-textfield/
-│   │   ├── 📄 index.ts (5.4 KB) ⚡
-│   │   └── 📄 styles.scss (8.2 KB) 🎨
-│   └── [154 more packages]
+ðŸŒ³ REPOSITORY STRUCTURE:
+ðŸ“‚ material-components-web/
+â”œâ”€â”€ ðŸ“„ README.md
+â”œâ”€â”€ ðŸ“„ package.json
+â”œâ”€â”€ ðŸ“‚ packages/
+â”‚   â”œâ”€â”€ ðŸ“‚ mdc-floating-label/
+â”‚   â”‚   â”œâ”€â”€ ðŸ“„ package.json (0.8 KB)
+â”‚   â”‚   â”œâ”€â”€ ðŸ“„ index.ts (2.1 KB) âš¡
+â”‚   â”‚   â”œâ”€â”€ ðŸ“„ foundation.ts (4.3 KB) âš¡
+â”‚   â”‚   â””â”€â”€ ðŸ“‚ test/
+â”‚   â”œâ”€â”€ ðŸ“‚ mdc-textfield/
+â”‚   â”‚   â”œâ”€â”€ ðŸ“„ index.ts (5.4 KB) âš¡
+â”‚   â”‚   â””â”€â”€ ðŸ“„ styles.scss (8.2 KB) ðŸŽ¨
+â”‚   â””â”€â”€ [154 more packages]
 
-💡 TECH STACK: TypeScript, Sass, JavaScript
+ðŸ’¡ TECH STACK: TypeScript, Sass, JavaScript
 
-📊 FILE DETAILS (Cached | Stable):
-  2.1 KB - 📄 index.ts ⚡ - https://raw.githubusercontent.com/.../main/packages/mdc-floating-label/index.ts
-  4.3 KB - 📄 foundation.ts ⚡ - https://raw.githubusercontent.com/.../main/packages/mdc-floating-label/foundation.ts
+ðŸ“Š FILE DETAILS (Cached | Stable):
+  2.1 KB - ðŸ“„ index.ts âš¡ - https://raw.githubusercontent.com/.../main/packages/mdc-floating-label/index.ts
+  4.3 KB - ðŸ“„ foundation.ts âš¡ - https://raw.githubusercontent.com/.../main/packages/mdc-floating-label/foundation.ts
 
-📝 CURRENT BRANCH HEAD URLS (Latest):
-📄 index.ts - https://raw.githubusercontent.com/.../refs/heads/main/packages/mdc-floating-label/index.ts
+ðŸ“ CURRENT BRANCH HEAD URLS (Latest):
+ðŸ“„ index.ts - https://raw.githubusercontent.com/.../refs/heads/main/packages/mdc-floating-label/index.ts
 ```
 
 With this structured output, AI assistants can:
@@ -262,5 +262,4 @@ The frontend is open source, demonstrating anti-abuse mechanisms, VPN detection,
 **Community:** [Discord Server](https://discord.gg/AEJvSEWcZk)
 
 ---
-
 **Questions?** Open a GitHub issue or join Discord. Share this with developers still manually verifying AI code recommendations.
