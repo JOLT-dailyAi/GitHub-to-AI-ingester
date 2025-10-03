@@ -57,6 +57,8 @@ IDE tools like Copilot help you *write* code, but they don't *discover* implemen
 
 This service bridges that gap: submit any public repository, receive complete structure with direct file URLs, feed to any AI for informed analysis instead of blind recommendations.
 
+**Read the full story:** [Why I Built This](docs/why-i-built-this.md)
+
 ---
 
 ## What It Does
