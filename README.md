@@ -47,6 +47,18 @@ If you're building a similar service and want implementation guidance, check out
 
 ---
 
+## Why This Exists
+
+When you ask AI to "find repos for material design floating labels," it searches the web and returns repository names and descriptions. But it can't verify implementations.
+
+Paste a GitHub URL into Claude or ChatGPT? You get the README, not the code. The AI sees metadata but can't access actual files without manual raw URL construction.
+
+IDE tools like Copilot help you *write* code, but they don't *discover* implementations. They assume you already picked your solution.
+
+This service bridges that gap: submit any public repository, receive complete structure with direct file URLs, feed to any AI for informed analysis instead of blind recommendations.
+
+---
+
 ## What It Does
 
 GitHub to AI Ingester processes public GitHub repositories and delivers a comprehensive, structured text file containing:
