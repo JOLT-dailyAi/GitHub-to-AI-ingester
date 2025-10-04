@@ -1,19 +1,13 @@
 
-# Why GitHub to AI Ingester Exists: The Repository Discovery Gap
+# Why GitHub to AI Ingester Exists: The Repository Verification Gap
 
-## A Typical Developer Request
+## The Real Problem Developers Face
++ Finding GitHub repositories is easy. A quick search for "material design floating labels" returns dozens of results through Google, GitHub's search, or AI assistants.
++ 
++ The hard part comes next: which repository is actually worth using?
 
-A developer may ask an AI assistant:
-
-> "Find repositories for material design floating labels"
-
-At first glance, this request appears well-suited for AI with web access in 2025. The expectation is that an AI should search GitHub, evaluate implementations, and recommend the best solution.
-
-However, the reality is different.
-
-## How AI Assistants Respond
-
-Testing this query across popular AI platforms reveals a clear pattern:
+## What Search Actually Provides
++ Search engines and AI assistants successfully find repositories:
 
 **Search Query:** "material design floating labels GitHub repository"
 
@@ -28,16 +22,14 @@ Testing this query across popular AI platforms reveals a clear pattern:
    - Lists repos tagged "floating-labels"
    - Mentions NPM modules, React Native components
 
-**Direct fetches of the official Material Components repository yield:**
-- ✅ Repository homepage content
-- ✅ Archive status (January 2025)
-- ✅ Fork count: 2.1k
-- ❌ No code files
-- ❌ No directory structure
-- ❌ No implementation details
-- ❌ No means to verify functionality
+The developer now has candidate repositories. But evaluating them requires accessing:
++ ❌ Actual code files
++ ❌ Complete directory structure
++ ❌ Implementation details
++ ❌ Dependency information
++ ❌ File sizes and architecture
 
-## The Information Limitations of AI Assistants
+## The Verification Gap
 
 AI assistants gather only surface-level data from web search and GitHub URLs:
 
@@ -64,9 +56,9 @@ AI assistants gather only surface-level data from web search and GitHub URLs:
 
 Recommendations are typically based on popularity and brief descriptions, not verified implementation details.
 
-## IDE AI Tools: Still Not a Solution
+## IDE Tools Don't Help With Selection
 
-Developer-focused IDE extensions (e.g., GitHub Copilot, Amazon CodeWhisperer, Tabnine, Codeium) each have their own discovery limitations.
+GitHub Copilot and similar tools help write code after a developer chooses a library. They don't help choose which library to use in the first place.
 
 **Capabilities of these tools:**
 ```javascript
@@ -229,7 +221,7 @@ For developers evaluating repo options, what truly matters:
 - Real code, not just claims
 - Technical comparisons, not only “star” counts
 
-Without full repo mapping, AI/IDE assistants cannot deliver this value. GitHub to AI Ingester automates the entire discovery and mapping process—eliminating a major barrier for effective AI-assisted software analysis.
+Without full repo mapping, AI assistants cannot verify repository quality. GitHub to AI Ingester automates the verification and mapping process—eliminating the manual work between finding candidates and making informed decisions.
 
 ## Accessing the Service
 
