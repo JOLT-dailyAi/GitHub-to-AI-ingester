@@ -47,15 +47,13 @@ Unlike generic SaaS starters that focus on subscription management and user auth
 
 ## Why This Exists
 
-When developers ask AI to "find repos for material design floating labels," the AI searches the web and returns repository names and descriptions. But it can't verify implementations.
+Finding GitHub repositories is easy - search returns dozens of candidates. The challenge is verifying which one is actually worth using.
 
-Paste a GitHub URL into Claude or ChatGPT? The AI gets the README, not the code. It sees metadata but can't access actual files without manual raw URL construction.
++ Paste a GitHub URL into Claude or ChatGPT? The AI gets the README, not the code. It can't access actual files, directory structure, or implementation details without manual raw URL construction.
+  
++ This service automates verification: submit any public repository, receive complete structure with direct file URLs, feed to any AI for informed analysis instead of surface-level recommendations.
 
-IDE tools like Copilot help write code, but they don't discover implementations. They assume the developer already picked a solution.
-
-This service bridges that gap: submit any public repository, receive complete structure with direct file URLs, feed to any AI for informed analysis instead of blind recommendations.
-
-**Read the full analysis:** [Why This Exists](BLOG-why-i-built-this.md)
+**Read the full analysis:** [Why This Exists](BLOG-why-github-to-ai-ingester-exists.md)
 
 ---
 
