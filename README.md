@@ -49,9 +49,9 @@ Unlike generic SaaS starters that focus on subscription management and user auth
 
 Finding GitHub repositories is easy - search returns dozens of candidates. The challenge is verifying which one is actually worth using.
 
-+ Paste a GitHub URL into Claude or ChatGPT? The AI gets the README, not the code. It can't access actual files, directory structure, or implementation details without manual raw URL construction.
+Paste a GitHub URL into Claude or ChatGPT? The AI gets the README, not the code. It can't access actual files, directory structure, or implementation details without manual raw URL construction.
   
-+ This service automates verification: submit any public repository, receive complete structure with direct file URLs, feed to any AI for informed analysis instead of surface-level recommendations.
+This service automates verification: submit any public repository, receive complete structure with direct file URLs, feed to any AI for informed analysis instead of surface-level recommendations.
 
 **Read the full analysis:** [Why This Exists](BLOG-why-github-to-ai-ingester-exists.md)
 
