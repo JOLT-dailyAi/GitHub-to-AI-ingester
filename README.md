@@ -43,21 +43,19 @@ Unlike generic SaaS starters that focus on subscription management and user auth
 - **Client-side abuse prevention** (reduces backend load)
 - **Webhook-based processing** (decoupled frontend/backend)
 
-If you're building a similar service and want implementation guidance, check out our consulting options below.
-
 ---
 
 ## Why This Exists
 
-When you ask AI to "find repos for material design floating labels," it searches the web and returns repository names and descriptions. But it can't verify implementations.
+When developers ask AI to "find repos for material design floating labels," the AI searches the web and returns repository names and descriptions. But it can't verify implementations.
 
-Paste a GitHub URL into Claude or ChatGPT? You get the README, not the code. The AI sees metadata but can't access actual files without manual raw URL construction.
+Paste a GitHub URL into Claude or ChatGPT? The AI gets the README, not the code. It sees metadata but can't access actual files without manual raw URL construction.
 
-IDE tools like Copilot help you *write* code, but they don't *discover* implementations. They assume you already picked your solution.
+IDE tools like Copilot help write code, but they don't discover implementations. They assume the developer already picked a solution.
 
 This service bridges that gap: submit any public repository, receive complete structure with direct file URLs, feed to any AI for informed analysis instead of blind recommendations.
 
-**Read the full story:** [Why I Built This](docs/why-i-built-this.md)
+**Read the full analysis:** [Why This Exists](BLOG-why-i-built-this.md)
 
 ---
 
