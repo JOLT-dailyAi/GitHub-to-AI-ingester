@@ -106,5 +106,4 @@ Thank you for understanding. We hope this codebase serves as a valuable learning
 
 ---
 
-**JOLT-dailyAi**  
-Building tools that bridge GitHub and AI
+**Made with ⚡ by JOLT-dailyAi**
