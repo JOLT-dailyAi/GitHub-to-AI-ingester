@@ -185,7 +185,7 @@ GitHub to AI Ingester addresses this challenge by auto-generating structured rep
 ...
 ```
 
-Armed with this, AI assistants can:
+With this structured output, AI assistants can:
 
 1. **Access complete project structure** – e.g., 892 files, 156 packages, floating-label package at 2.1KB
 2. **Read actual implementation details**
