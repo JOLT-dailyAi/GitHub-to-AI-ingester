@@ -3,7 +3,7 @@
 
 ## The Real Problem Developers Face
 + Finding GitHub repositories is easy. A quick search for "material design floating labels" returns dozens of results through Google, GitHub's search, or AI assistants.
-+ 
+  
 + The hard part comes next: which repository is actually worth using?
 
 ## What Search Actually Provides
