@@ -42,12 +42,6 @@ While we're not accepting PRs, this repository is open source specifically so yo
 - Discuss implementation approaches in Issues (we'll engage when possible)
 - Share your own implementations inspired by this code
 
-### ✅ **Get Professional Help**
-If you want to implement similar functionality for your project:
-- Join our [Discord Server](https://discord.gg/AEJvSEWcZk) for general questions
-- Consider our consulting services for custom implementations
-- Check if we offer a "Starter Kit" package with setup guidance
-
 ## What About Bug Fixes?
 
 If you find a bug:
