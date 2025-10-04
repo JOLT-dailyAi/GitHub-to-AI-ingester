@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## v2.4 - Documentation & UI Polish
+**Comprehensive documentation additions and floating widget visual refinements.**
+
+### 📖 Documentation Expansion
+- **Blog Post Addition**: Added "Why GitHub to AI Ingester Exists" analyzing the repository discovery gap
+- **README Enhancement**: Added "Why This Exists" section explaining the problem space
+- **Third-Person Voice**: All documentation written in analytical third-person for professional tone
+- **Cross-Linking**: README links to full blog post for detailed technical analysis
+- **File Location**: Blog post placed in root as `BLOG-why-github-to-ai-ingester-exists.md`
+
+### 🎨 Floating Widget Refinements
+- **Transparent Backgrounds**: Removed solid color circles from Discord and GitHub floating buttons
+- **Sticker-Style Design**: Buttons now display as pure GIF stickers without background interference
+- **Simplified Hover Effects**: Retained scale animation, removed shadow/color transitions
+- **Cleaner Aesthetics**: GIF animations fully visible without circular containers
+- **CSS Optimization**: Removed `border-radius`, `box-shadow`, `background-color`, and `overflow` properties
+
+### 📝 Content Cleanup
+- **Removed Consulting References**: Deleted outdated "consulting options" line from README
+- **Consistent Voice**: Changed "you" to "developers/the AI" for neutral perspective
+- **Link Accuracy**: Updated blog link path to match actual file location in root
+- **Formatting**: Standardized to use regular dashes throughout (no em-dashes)
+
+### 🔧 Technical Changes
+- **CSS Simplification**: Reduced floating-widgets.css by 9 lines (removed redundant properties)
+- **Maintained Functionality**: All hover effects and responsive behavior preserved
+- **GitHub Button**: Added second floating button (right side) linking to repository
+
+---
+
 ## v2.3 - Virtual Showcase Architecture
 **Refactored showcase system from DOM-based to data-driven virtual architecture for improved performance and scalability.**
 
