@@ -1,7 +1,5 @@
 # CHANGELOG
 
----
-
 ## v2.4 - Documentation & UI Polish
 **Comprehensive documentation additions and floating widget visual refinements.**
 
