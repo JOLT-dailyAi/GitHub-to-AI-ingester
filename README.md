@@ -12,7 +12,7 @@ This project serves dual purposes:
 
 ### Why This Matters
 
-If you're looking to monetize n8n/Make/Zapier workflows or sell API execution services, you've likely discovered there are **no complete reference implementations** available. Individual pieces exist (VPN APIs, payment processors, form validators), but no cohesive system.
+If you're looking to monetize n8n/Make/Zapier workflows or sell API execution services, you’ve likely discovered there are very few comprehensive reference implementations available. While tools like Repomix address parts of the problem using a static, all-in-one dump of repository contents, GitHub-to-AI-ingester uniquely focuses on up-to-date, token-efficient, and fetch-on-demand workflows that enable real-time AI analysis.
 
 This frontend solves that gap.
 
@@ -87,6 +87,21 @@ No manual navigation, no copying files one by one, no formatting headaches.
 4. **Feed to AI**: Provide the output file to your AI model of choice
 
 The AI will process the structured output automatically. Simply paste the content and let the AI handle the rest.
+
+## Alternatives & Comparison
+
+There are other tools that aim to help AI systems analyze GitHub repositories. The most notable is **Repomix**, which creates a full, static export of a repository’s code in a single file. However, GitHub-to-AI-ingester takes a different, more flexible approach that’s optimized for modern, web-enabled AIs and scalable automation.
+
+| Feature/Aspect         | GitHub-to-AI-ingester                                      | Repomix                                  |
+|-----------------------|------------------------------------------------------------|------------------------------------------|
+| **Output focus**      | Lightweight, URL-driven, real-time, version comparison     | Full code dumped into a static file      |
+| **Token efficiency**  | Only fetch what’s needed; low token use for initial scan   | High token use for complete code review  |
+| **Use case**          | AIs with web access, dynamic/live workflows                | Offline analysis, static single-prompt   |
+| **Version awareness** | Dual URLs for version diff (cached & latest)               | Snapshot only, not for live comparison   |
+| **Suitability**       | Large or dynamic repos, scalable audits, automation        | Deep, all-in-one codebase review         |
+
+**Summary:**  
+While Repomix is great for full offline, single-shot reviews, GitHub-to-AI-ingester is purpose-built for efficiency, automation, up-to-date analysis, and modern “fetch what you need” workflows with AIs that support web access.
 
 ## Use Cases
 
@@ -179,10 +194,13 @@ Browse processed repository examples on our website to see the output quality an
 
 ## Limitations
 
-- **Public Repositories Only**: Cannot process private repositories
-- **Repository Size**: Very large repositories may take longer to process
-- **Rate Limits**: Processing queue managed to respect GitHub API limits
-- **Maintenance Window**: System maintenance 1:05-1:15 AM IST daily
+- **Public Repositories Only**: Cannot process private repositories.
+- **Repository Size**: Very large repositories may take longer to process.
+- **Rate Limits**: Processing queue managed to respect GitHub API limits.
+- **Maintenance Window**: System maintenance 19:35–19:45 UTC daily.
+- **Not Suitable for Totally Offline Use**: Designed for AIs/agents that can access URLs for on-demand code fetching, not for single-prompt, all-in-one/offline code reviews.
+- **Snapshot-Based Alternatives Exist**: Tools like Repomix create static codebase snapshots, but require re-running for every update. GitHub-to-AI-ingester generates an always-current, URL-driven map that only needs to be run once.
+- **GitHub Dependency**: Relies on GitHub remaining accessible for raw file URLs; outages or API permission changes may temporarily disrupt functionality.
 
 ## Frequently Asked Questions
 
@@ -203,6 +221,18 @@ A: No, purchased credits never expire.
 
 **Q: What AI models are supported?**  
 A: The output works with any AI model that can process text input, including Claude, GPT-4, Gemini, and others.
+
+**Q: Isn’t this already solved by other tools like Repomix?**
+
+**A:** Repomix and similar tools offer a static, snapshot-based export of GitHub repositories—meaning you need to run them again every time the repo updates, and each output is a heavy one-off dump.  
+GitHub-to-AI-ingester is different:  
+- It only needs to be run **once** to generate an output that always points to both the stable (cached) and latest versions of every file in the repository.  
+- The output contains direct URLs for all files, so your AI or agent can be instructed to fetch only the files (or versions) you want, whenever you want—without needing to reprocess the repo for every update.
+- This makes it truly token-efficient, real-time, and ideal for scalable, dynamic auditing—your AI can “cherry-pick” files as needed rather than having to load everything at once.
+
+**In short:**  
+You get a lightweight, always-current file map for selective, on-demand code fetching and version comparison—unlike traditional snapshot tools that must be rerun for every change.
+
 
 ## Changelog
 
