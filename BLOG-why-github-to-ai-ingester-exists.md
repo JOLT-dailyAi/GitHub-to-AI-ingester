@@ -223,6 +223,24 @@ For developers evaluating repo options, what truly matters:
 
 Without full repo mapping, AI assistants cannot verify repository quality. GitHub to AI Ingester automates the verification and mapping process—eliminating the manual work between finding candidates and making informed decisions.
 
+## Alternatives & Comparison
+
+While some tools like Repomix offer static, all-in-one code snapshots, GitHub-to-AI-ingester uniquely provides real-time, always-current, token-efficient, URL-driven repository maps. This enables scalable, dynamic, and version-aware AI analysis, which is not possible with static snapshot tools.
+
+| Feature/Aspect         | GitHub-to-AI-ingester                                      | Repomix                                  |
+|-----------------------|------------------------------------------------------------|------------------------------------------|
+| **Output focus**      | Lightweight, URL-driven, always-current                    | Full code in a static file               |
+| **Token efficiency**  | Only fetch what’s needed; minimal up-front cost            | High token use for complete review       |
+| **Dynamic support**   | Real-time, seamless updates via URLs                       | Requires re-run for new snapshots        |
+| **AI compatibility**  | All AI models (with fallback: paste file content if needed) | Any AI, but best for single-shot review  |
+| **Use case**          | Scalable, automated, evolving workflows; version audit     | One-off, deep offline/full reviews       |
+
+> **Full AI Compatibility:**  
+> Outputs from GitHub-to-AI-ingester are usable with any AI model. For AIs with URL-fetching ability, the workflow is seamless and scalable. For AIs that cannot fetch URLs, users simply paste any needed file's content (guided by the AI Note). This keeps the solution universally accessible while providing advanced automation for capable agents.
+
+**Summary:**  
+GitHub-to-AI-ingester excels in workflows demanding current, granular, scalable analysis—while still remaining compatible with all AI models through its flexible AI Note.
+
 ## Accessing the Service
 
 A free trial is available for one repository—no payment required. Credit packs start at $25 for 10 repositories.
