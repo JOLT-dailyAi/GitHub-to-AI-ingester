@@ -198,7 +198,7 @@ Browse processed repository examples on our website to see the output quality an
 - **Repository Size**: Very large repositories may take longer to process.
 - **Rate Limits**: Processing queue managed to respect GitHub API limits.
 - **Maintenance Window**: System maintenance 19:35–19:45 UTC daily.
-- **Not Suitable for Totally Offline Use**: Designed for AIs/agents that can access URLs for on-demand code fetching, not for single-prompt, all-in-one/offline code reviews.
+- **Flexible AI Compatibility**: While designed for AIs (and workflows) that can access URLs for direct, on-demand file fetching, the output is also compatible with any AI model. For AIs that cannot follow URLs automatically, simply provide (paste) the needed file contents when requested—as indicated in the AI Note.
 - **Snapshot-Based Alternatives Exist**: Tools like Repomix create static codebase snapshots, but require re-running for every update. GitHub-to-AI-ingester generates an always-current, URL-driven map that only needs to be run once.
 - **GitHub Dependency**: Relies on GitHub remaining accessible for raw file URLs; outages or API permission changes may temporarily disrupt functionality.
 
